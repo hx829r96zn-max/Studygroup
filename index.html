@@ -778,41 +778,41 @@ nav{background:var(--white);border-bottom:2px solid var(--line);padding:0 8px;di
     </div>
 
     <div style="font-size:.7rem;color:var(--ink2);margin:10px 0 6px;font-weight:600">과목별 점수 입력</div>
-
-    <!-- 국어 -->
-    <div style="display:grid;grid-template-columns:70px 1fr 60px;gap:6px;align-items:center;margin-bottom:8px">
-      <select class="inp mock-type" id="type_korean" onchange="previewGrade('korean',(document.getElementById('mock_korean')||{}).value)" style="margin:0;padding:6px;font-size:.74rem"><option value="공통">국어</option><option value="언매">언매</option><option value="화작">화작</option></select>
-      <input class="inp" id="mock_korean" type="number" min="0" max="100" placeholder="원점수"
+    <div style="display:grid;grid-template-columns:72px 1fr 60px;gap:6px;align-items:center;margin-bottom:8px">
+      <div style="font-size:.82rem;font-weight:700;padding:0 4px;color:var(--ink)">국어</div>
+      <input class="inp" id="mock_korean" type="number" min="0" max="100" placeholder="원점수 (/100)"
         style="margin:0" oninput="previewGrade('korean',this.value)">
       <div id="grade_korean" style="font-family:monospace;font-size:.9rem;font-weight:700;text-align:center;color:var(--acc)">-</div>
     </div>
-    <!-- 수학 -->
-    <div style="display:grid;grid-template-columns:70px 1fr 60px;gap:6px;align-items:center;margin-bottom:8px">
-      <select class="inp mock-type" id="type_math" onchange="previewGrade('math',(document.getElementById('mock_math')||{}).value)" style="margin:0;padding:6px;font-size:.74rem"><option value="공통">수학</option><option value="미적">미적분</option><option value="확통">확통</option><option value="기하">기하</option></select>
-      <input class="inp" id="mock_math" type="number" min="0" max="100" placeholder="원점수"
+    <div style="display:grid;grid-template-columns:72px 1fr 60px;gap:6px;align-items:center;margin-bottom:8px">
+      <div style="font-size:.82rem;font-weight:700;padding:0 4px;color:var(--ink)">수학</div>
+      <input class="inp" id="mock_math" type="number" min="0" max="100" placeholder="원점수 (/100)"
         style="margin:0" oninput="previewGrade('math',this.value)">
       <div id="grade_math" style="font-family:monospace;font-size:.9rem;font-weight:700;text-align:center;color:var(--acc)">-</div>
     </div>
-    <!-- 영어 -->
-    <div style="display:grid;grid-template-columns:70px 1fr 60px;gap:6px;align-items:center;margin-bottom:8px">
-      <select class="inp mock-type" id="type_english" style="margin:0;padding:6px;font-size:.74rem"><option value="영어">영어</option></select>
-      <input class="inp" id="mock_english" type="number" min="0" max="100" placeholder="원점수"
+    <div style="display:grid;grid-template-columns:72px 1fr 60px;gap:6px;align-items:center;margin-bottom:8px">
+      <div style="font-size:.82rem;font-weight:700;padding:0 4px;color:var(--ink)">영어</div>
+      <input class="inp" id="mock_english" type="number" min="0" max="100" placeholder="원점수 (/100)"
         style="margin:0" oninput="previewGrade('english',this.value)">
       <div id="grade_english" style="font-family:monospace;font-size:.9rem;font-weight:700;text-align:center;color:var(--acc)">-</div>
     </div>
-    <!-- 탐구1 -->
-    <div style="display:grid;grid-template-columns:70px 1fr 60px;gap:6px;align-items:center;margin-bottom:8px">
-      <select class="inp mock-type" id="type_exp1" onchange="previewGrade('exp1',(document.getElementById('mock_exp1')||{}).value)" style="margin:0;padding:6px;font-size:.74rem"><option value="탐구1">탐구1</option><option value="생명">생명</option><option value="지구">지구</option><option value="화학">화학</option><option value="물리">물리</option><option value="사문">사문</option><option value="생윤">생윤</option><option value="한지">한지</option><option value="세지">세지</option><option value="정법">정법</option><option value="경제">경제</option><option value="윤사">윤사</option><option value="동사">동사</option><option value="세사">세사</option></select>
-      <input class="inp" id="mock_exp1" type="number" min="0" max="100" placeholder="원점수"
-        style="margin:0" oninput="previewGrade('exp1',this.value)">
-      <div id="grade_exp1" style="font-family:monospace;font-size:.9rem;font-weight:700;text-align:center;color:var(--acc)">-</div>
+    <div style="display:grid;grid-template-columns:72px 1fr 60px;gap:6px;align-items:center;margin-bottom:8px">
+      <div style="font-size:.82rem;font-weight:700;padding:0 4px;color:var(--ink)">한국사</div>
+      <input class="inp" id="mock_history" type="number" min="0" max="50" placeholder="원점수 (/50)"
+        style="margin:0" oninput="previewGrade('history',this.value)">
+      <div id="grade_history" style="font-family:monospace;font-size:.9rem;font-weight:700;text-align:center;color:var(--acc)">-</div>
     </div>
-    <!-- 탐구2 -->
-    <div style="display:grid;grid-template-columns:70px 1fr 60px;gap:6px;align-items:center;margin-bottom:8px">
-      <select class="inp mock-type" id="type_exp2" onchange="previewGrade('exp2',(document.getElementById('mock_exp2')||{}).value)" style="margin:0;padding:6px;font-size:.74rem"><option value="탐구2">탐구2</option><option value="생명">생명</option><option value="지구">지구</option><option value="화학">화학</option><option value="물리">물리</option><option value="사문">사문</option><option value="생윤">생윤</option><option value="한지">한지</option><option value="세지">세지</option><option value="정법">정법</option><option value="경제">경제</option><option value="윤사">윤사</option><option value="동사">동사</option><option value="세사">세사</option></select>
-      <input class="inp" id="mock_exp2" type="number" min="0" max="100" placeholder="원점수"
-        style="margin:0" oninput="previewGrade('exp2',this.value)">
-      <div id="grade_exp2" style="font-family:monospace;font-size:.9rem;font-weight:700;text-align:center;color:var(--acc)">-</div>
+    <div style="display:grid;grid-template-columns:72px 1fr 60px;gap:6px;align-items:center;margin-bottom:8px">
+      <div style="font-size:.82rem;font-weight:700;padding:0 4px;color:var(--ink)">통합사회</div>
+      <input class="inp" id="mock_society" type="number" min="0" max="50" placeholder="원점수 (/50)"
+        style="margin:0" oninput="previewGrade('society',this.value)">
+      <div id="grade_society" style="font-family:monospace;font-size:.9rem;font-weight:700;text-align:center;color:var(--acc)">-</div>
+    </div>
+    <div style="display:grid;grid-template-columns:72px 1fr 60px;gap:6px;align-items:center;margin-bottom:8px">
+      <div style="font-size:.82rem;font-weight:700;padding:0 4px;color:var(--ink)">통합과학</div>
+      <input class="inp" id="mock_science" type="number" min="0" max="50" placeholder="원점수 (/50)"
+        style="margin:0" oninput="previewGrade('science',this.value)">
+      <div id="grade_science" style="font-family:monospace;font-size:.9rem;font-weight:700;text-align:center;color:var(--acc)">-</div>
     </div>
 
     <!-- 총점 미리보기 -->
@@ -1130,10 +1130,19 @@ nav{background:var(--white);border-bottom:2px solid var(--line);padding:0 8px;di
         <div style="font-size:.7rem;color:var(--ink3);margin-bottom:4px">순공시간</div>
         <div style="font-family:monospace;font-size:2rem;font-weight:700;color:var(--acc)" id="dayDetailSecs">-</div>
       </div>
-      <!-- 플래너 타임라인 -->
-      <div style="font-weight:700;font-size:.85rem;margin-bottom:10px">⏱ 시간 플래너</div>
-      <div style="position:relative;height:240px;background:#111;border-radius:12px;margin-bottom:14px;overflow:hidden" id="dayDetailTimeline">
-        <div style="display:flex;align-items:center;justify-content:center;height:100%;color:rgba(255,255,255,.4);font-size:.8rem">공부 기록 없음</div>
+      <!-- 플래너 + 시간격자 나란히 -->
+      <div style="font-weight:700;font-size:.85rem;margin-bottom:10px">플래너 / 공부 기록</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+        <!-- 왼쪽: 플래너(계획) -->
+        <div>
+          <div style="font-size:.64rem;color:var(--ink3);margin-bottom:4px;text-align:center;font-weight:600">계획</div>
+          <div style="position:relative;height:300px;background:#111;border-radius:10px;overflow:hidden" id="dayDetailPlan"></div>
+        </div>
+        <!-- 오른쪽: 시간격자(공부기록) -->
+        <div>
+          <div style="font-size:.64rem;color:var(--ink3);margin-bottom:4px;text-align:center;font-weight:600">공부 기록</div>
+          <div style="position:relative;height:300px;background:#111;border-radius:10px;overflow:hidden" id="dayDetailTimeline"></div>
+        </div>
       </div>
       <!-- 평가 -->
       <div style="font-weight:700;font-size:.85rem;margin-bottom:8px">✏️ 이 날의 평가</div>
@@ -1396,7 +1405,7 @@ window.addEventListener('load',function(){setTimeout(_loadFirebase,100);});
 // DATA
 // ══════════════════════════════════════════════
 var COLORS=['#ff6b9d','#ff9a3c','#a78bfa','#34d399','#38bdf8','#f59e0b','#f472b6','#fb7185','#4ade80','#60a5fa'];
-var DEF_SUBJS=[{id:'s1',name:'국어',color:'#ff6b9d'},{id:'s2',name:'영어',color:'#ff9a3c'},{id:'s3',name:'수학',color:'#a78bfa'},{id:'s4',name:'사회',color:'#34d399'},{id:'s5',name:'과학',color:'#38bdf8'},{id:'s6',name:'한국사',color:'#f59e0b'},{id:'s7',name:'정보',color:'#f472b6'}];
+var DEF_SUBJS=[{id:'s1',name:'국어',color:'#ff6b9d'},{id:'s2',name:'영어',color:'#38bdf8'},{id:'s3',name:'수학',color:'#a78bfa'},{id:'s4',name:'사회',color:'#34d399'},{id:'s5',name:'과학',color:'#f59e0b'},{id:'s6',name:'한국사',color:'#fb7185'}];
 
 var subjs=JSON.parse(localStorage.getItem('sg_s')||'null')||DEF_SUBJS.map(function(s){return{id:s.id,name:s.name,color:s.color};});
 var sess=JSON.parse(localStorage.getItem('sg_ss')||'[]');
@@ -1410,7 +1419,19 @@ var alertCfg=JSON.parse(localStorage.getItem('sg_alert')||'{"on":false,"times":[
 
 // timer state
 var aId=null,aStart=null,aInt=null,selId=null;
-var pRun=false,pFocus=true,pSec=(cfg.pf||70)*60,pBrk=(cfg.pb||10)*60,pCur=0,pSN=0,pInt=null;
+var _pomoSaved=JSON.parse(localStorage.getItem('sg_pomo_state')||'null');
+var pRun=false;
+var pFocus=_pomoSaved?_pomoSaved.pFocus:true;
+var pSec=(cfg.pf||70)*60,pBrk=(cfg.pb||10)*60;
+var pCur=_pomoSaved?_pomoSaved.pCur:0;
+var pSN=_pomoSaved?_pomoSaved.pSN:0;
+var pInt=null;
+function svPomoState(){
+  localStorage.setItem('sg_pomo_state', JSON.stringify({
+    pFocus:pFocus, pCur:pCur, pSN:pSN
+  }));
+}
+function clearPomoState(){ localStorage.removeItem('sg_pomo_state'); }
 var ncRules=[],pickedC=COLORS[0];
 var calY=new Date().getFullYear(),calM=new Date().getMonth();
 var _pickY=new Date().getFullYear();
@@ -1506,6 +1527,7 @@ function togglePomo(){
     clearInterval(pInt); pRun=false;
     _pomoPausedAt = pCur; _pomoStartAt = null;
     var pb=document.getElementById('pBtn'); if(pb){pb.textContent='▶ 계속'; pb.classList.remove('running');}
+    svPomoState(); // 멈춤 상태 저장
     // 공부 타이머도 정지
     if(aId && aId===pomoSubjId) stopSubj();
     renderHomeSubjGrid();
@@ -1528,11 +1550,11 @@ function togglePomo(){
           pSN++;
           var dot=document.querySelectorAll('.p-dot')[pSN-1];
           if(dot)dot.classList.add('done');
-          pFocus=false; pCur=pBrk; startCur=pBrk; _pomoStartAt=Date.now();
+          pFocus=false; pCur=pBrk; startCur=pBrk; _pomoStartAt=Date.now(); svPomoState();
           if(aId===pomoSubjId) stopSubj(); // 휴식 시 공부 정지
           toast('집중 완료 · 휴식 시작');
         } else {
-          pFocus=true; pCur=pSec; startCur=pSec; _pomoStartAt=Date.now();
+          pFocus=true; pCur=pSec; startCur=pSec; _pomoStartAt=Date.now(); svPomoState();
           if(pomoSubjId && aId!==pomoSubjId) startSubj(pomoSubjId); // 휴식 끝 공부 재개
           toast('휴식 끝 · 집중 시작');
         }
@@ -1544,16 +1566,12 @@ function togglePomo(){
 }
 
 // 홈 과목 그리드
-var HOME_SUBJ_ORDER = ['국어','수학','영어','한국사','사회','과학'];
+var HOME_SUBJ_ORDER = ['국어','영어','수학','사회','과학','한국사'];
 function ensureHomeSubjs(){
-  // 6과목 기본 보장
-  HOME_SUBJ_ORDER.forEach(function(nm,i){
-    if(!subjs.find(function(s){return s.name===nm;})){
-      var colors=['#ff6b9d','#a78bfa','#38bdf8','#fb7185','#34d399','#f59e0b'];
-      subjs.push({id:'s'+Date.now()+i,name:nm,color:colors[i%6]});
-    }
-  });
-  sv();
+  if(!subjs.length){
+    subjs=DEF_SUBJS.map(function(s){return{id:s.id,name:s.name,color:s.color};});
+    sv();
+  }
 }
 function renderHomeSubjGrid(){
   var el=document.getElementById('homeSubjGrid'); if(!el)return;
@@ -1580,7 +1598,7 @@ function renderHomeSubjGrid(){
   });
 }
 
-function resetPomo(){clearInterval(pInt);pRun=false;pFocus=true;pCur=pSec;pSN=0;document.querySelectorAll('.p-dot').forEach(function(d){d.classList.remove('done');});var pb=document.getElementById('pBtn');if(pb){pb.textContent='▶ 시작';pb.classList.remove('running');}if(aId===pomoSubjId)stopSubj();renderHomeSubjGrid();updatePUI();}
+function resetPomo(){clearInterval(pInt);pRun=false;pFocus=true;pCur=pSec;pSN=0;clearPomoState();document.querySelectorAll('.p-dot').forEach(function(d){d.classList.remove('done');});var pb=document.getElementById('pBtn');if(pb){pb.textContent='▶ 시작';pb.classList.remove('running');}if(aId===pomoSubjId)stopSubj();renderHomeSubjGrid();updatePUI();}
 
 // ══ HOME ══
 // ══════════════════════════════════════════════
@@ -2272,7 +2290,11 @@ function rTab(id){
   var rp=document.getElementById('rp-'+id);
   if(rp) rp.classList.add('on');
   if(id==='sh'){ updateShareLive(); renderShareFeed(); }
-  if(id==='live'){ renderMemberCards(); renderLiveTimeline(); }
+  if(id==='live'){
+    renderMemberCards();
+    frds.forEach(function(f){ if(f.shareCode) fetchFriendLatest(f.shareCode); });
+    renderLiveTimeline();
+  }
   if(id==='contract'){ renderContractTab(); }
   if(id==='bet'){ renderBetList(); renderBetStats(); }
   if(id==='academy'){ renderAcademy(); }
@@ -2533,7 +2555,48 @@ function renderProfUI(){
   var gv=document.getElementById('profGradeView');if(gv)gv.textContent=prof.grade||'학년 미입력';
   var phv=document.getElementById('profPhoneView');if(phv)phv.textContent=prof.phone||'연락처 미입력';
 }
-function renderScList(){var l=document.getElementById('scList');if(!l)return;l.innerHTML='';subjs.forEach(function(s,i){var row=document.createElement('div');row.className='crow';var lft=document.createElement('div');lft.style.cssText='display:flex;align-items:center;gap:7px';var dot=document.createElement('div');dot.style.cssText='width:11px;height:11px;border-radius:50%;background:'+s.color;var lbl=document.createElement('div');lbl.className='clbl';lbl.textContent=s.name;lft.appendChild(dot);lft.appendChild(lbl);var pick=document.createElement('input');pick.type='color';pick.className='cpick';pick.value=s.color;(function(idx){pick.onchange=function(){chSC(idx,this.value);};})(i);row.appendChild(lft);row.appendChild(pick);l.appendChild(row);});}
+function renderScList(){
+  var l=document.getElementById('scList'); if(!l) return;
+  l.innerHTML='';
+  subjs.forEach(function(s,idx){
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)';
+    // 색 선택 (컬러피커 직접)
+    var pick=document.createElement('input');
+    pick.type='color'; pick.value=s.color;
+    pick.style.cssText='width:28px;height:28px;border-radius:50%;border:none;cursor:pointer;padding:0;background:none;flex-shrink:0;';
+    pick.title='색 변경';
+    (function(sid){ pick.oninput=function(){ var f=subjs.find(function(x){return x.id===sid;}); if(f){f.color=pick.value;sv();renderSL();renderHomeSubjGrid();} }; })(s.id);
+    // 과목명
+    var lbl=document.createElement('div');
+    lbl.style.cssText='flex:1;font-size:.88rem;font-weight:600';
+    lbl.textContent=s.name;
+    // 삭제 버튼
+    var del=document.createElement('button');
+    del.textContent='삭제';
+    del.style.cssText='background:none;border:1px solid #fecaca;color:#b91c1c;border-radius:8px;padding:4px 10px;font-size:.72rem;cursor:pointer;font-family:inherit;flex-shrink:0';
+    (function(sid,snm){
+      del.onclick=function(){
+        if(!confirm('"'+snm+'" 과목을 삭제할까요? 공부 기록은 유지됩니다.')) return;
+        subjs=subjs.filter(function(x){return x.id!==sid;});
+        sv(); renderScList(); renderSL(); renderHomeSubjGrid();
+        toast(snm+' 삭제됨');
+      };
+    })(s.id, s.name);
+    row.appendChild(pick); row.appendChild(lbl); row.appendChild(del);
+    l.appendChild(row);
+  });
+  // + 추가 버튼
+  var addRow=document.createElement('div');
+  addRow.style.cssText='padding:10px 0';
+  var addBtn=document.createElement('button');
+  addBtn.textContent='+ 과목 추가';
+  addBtn.style.cssText='background:none;border:1.5px dashed var(--line);color:var(--ink2);border-radius:10px;padding:9px 16px;font-size:.82rem;cursor:pointer;font-family:inherit;width:100%';
+  addBtn.onclick=function(){ openAddSM(); };
+  addRow.appendChild(addBtn);
+  l.appendChild(addRow);
+}
+
 function chSC(i,v){subjs[i].color=v;sv();renderScList();renderSL();}
 function applyTheme(k,v){document.documentElement.style.setProperty(k,v);if(!cfg.themeC)cfg.themeC={};cfg.themeC[k]=v;svcfg();}
 function switchColorTab(n){var p1=document.getElementById('colorPane1'),p2=document.getElementById('colorPane2');if(p1)p1.style.display=n===1?'block':'none';if(p2)p2.style.display=n===2?'block':'none';var b1=document.getElementById('colorTab1'),b2=document.getElementById('colorTab2');if(b1){b1.style.background=n===1?'var(--acc)':'transparent';b1.style.color=n===1?'#fff':'var(--ink)';}if(b2){b2.style.background=n===2?'var(--acc)':'transparent';b2.style.color=n===2?'#fff':'var(--ink)';}}
@@ -2598,6 +2661,24 @@ function restartFbSync(){
   _fbSyncInt = null;
   startFbSync();
 }
+// 친구 최신 데이터 1회 가져오기 (실시간 아니어도 새로고침 시 최신값)
+function fetchFriendLatest(code){
+  if(!code||!window._fbReady) return;
+  try{
+    window._fbGet('users/'+code).then(function(data){
+      if(!data) return;
+      var f=frds.find(function(x){return x.shareCode===code;});
+      if(!f) return;
+      // 오늘 공부 시간 갱신
+      if(data.todayStudy) f.fbStudy=data.todayStudy;
+      // 라이브 타이머 갱신
+      if(data.live) f.fbLiveTimer=data.live;
+      f.fbLastSeen=data.lastSeen||Date.now();
+      renderLiveTimeline();
+    }).catch(function(){});
+  }catch(e){}
+}
+
 function subscribeToFriend(code){
   if(!code) return;
   if(!window._fbReady){ setTimeout(function(){ subscribeToFriend(code); }, 1000); return; }
@@ -2880,6 +2961,50 @@ function renderDayDetail(){
   var secEl=document.getElementById('dayDetailSecs');
   if(secEl) secEl.textContent = sc>0?(sh+'h '+String(sm2).padStart(2,'0')+'m '+String(ss2).padStart(2,'0')+'s'):'기록 없음';
 
+  // 플래너(계획) 그리기
+  var planEl=document.getElementById('dayDetailPlan');
+  if(planEl){
+    planEl.innerHTML='';
+    var planKey2='sg_plancells_'+new Date(y,m,d).toDateString();
+    var dayCells=JSON.parse(localStorage.getItem(planKey2)||'{}');
+    var H2=planEl.offsetHeight||300, W2=planEl.offsetWidth||120;
+    var AXIS2=18, cellH2=H2/24, cellW2=(W2-AXIS2)/6;
+    // 시간 라벨 + 격자
+    for(var pi=0;pi<24;pi++){
+      var rowY2=pi*cellH2;
+      var gl2=document.createElement('div');
+      gl2.style.cssText='position:absolute;left:'+AXIS2+'px;right:0;top:'+rowY2+'px;height:1px;background:rgba(255,255,255,.08);';
+      planEl.appendChild(gl2);
+      var actualH2=(pi+GRID_START_HOUR)%24;
+      if(actualH2%6===0||pi===0){
+        var hl2=document.createElement('div');
+        hl2.style.cssText='position:absolute;left:0;width:'+(AXIS2-2)+'px;top:'+(rowY2)+'px;font-size:.38rem;color:rgba(255,255,255,.4);text-align:right;line-height:1;';
+        hl2.textContent=actualH2;
+        planEl.appendChild(hl2);
+      }
+    }
+    // 계획 칸 그리기
+    var hasPlan=false;
+    Object.keys(dayCells).forEach(function(idx){
+      var cv=dayCells[idx]; if(!cv) return;
+      hasPlan=true;
+      var actualH3=Math.floor(parseInt(idx)/6);
+      var c3=parseInt(idx)%6;
+      var dRow3=hourToRow(actualH3);
+      var col3=hexToRGBA(typeof cv==='string'?cv:planHex(),.35);
+      var bdr3=hexToRGBA(typeof cv==='string'?cv:planHex(),.7);
+      var blk=document.createElement('div');
+      blk.style.cssText='position:absolute;top:'+(dRow3*cellH2+1)+'px;height:'+(cellH2-2)+'px;left:'+(AXIS2+c3*cellW2)+'px;width:'+cellW2+'px;background:'+col3+';border:1px solid '+bdr3+';box-sizing:border-box;';
+      planEl.appendChild(blk);
+    });
+    if(!hasPlan){
+      var noP=document.createElement('div');
+      noP.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.3);font-size:.72rem;';
+      noP.textContent='계획 없음';
+      planEl.appendChild(noP);
+    }
+  }
+
   // 타임라인 그리기
   var tlEl=document.getElementById('dayDetailTimeline');
   if(tlEl){
@@ -2893,16 +3018,17 @@ function renderDayDetail(){
     } else {
       var W=tlEl.offsetWidth||360, H=240, AXIS=24, GW=W-AXIS, CH=H-20;
       var colW=Math.floor(GW/6);
-      // 24행 그리기
+      // 24행 그리기 (5시 시작 기준)
       for(var hi=0;hi<24;hi++){
         var rowY=hi*(CH/24);
         var gl=document.createElement('div');
         gl.style.cssText='position:absolute;left:'+AXIS+'px;right:0;top:'+rowY+'px;height:1px;background:rgba(255,255,255,.08);';
         tlEl.appendChild(gl);
-        if(hi%6===0){
+        var actualHi=(hi+GRID_START_HOUR)%24;
+        if(actualHi%6===0||hi===0){
           var hl=document.createElement('div');
-          hl.style.cssText='position:absolute;left:0;width:'+(AXIS-2)+'px;top:'+(rowY-5)+'px;font-size:.42rem;color:rgba(255,255,255,.4);text-align:right;';
-          hl.textContent=hi+'시';
+          hl.style.cssText='position:absolute;left:0;width:'+(AXIS-2)+'px;top:'+(rowY)+'px;font-size:.38rem;color:rgba(255,255,255,.4);text-align:right;line-height:1;';
+          hl.textContent=actualHi;
           tlEl.appendChild(hl);
         }
       }
@@ -3986,6 +4112,11 @@ var GRADE_CUTS = {
   'english':[90, 80, 70, 60, 50, 40, 30, 20],
   // 탐구 50점 만점 (절대평가, 사/과탐 평균)
   'exp':    [45, 42, 38, 33, 28, 22, 17, 12],
+  // 한국사 절대평가 (50점 만점: 40점이상 1등급)
+  'history':[40, 35, 30, 25, 20, 15, 10,  5],
+  // 통합사회·통합과학 (100점 만점, 학평 평균 기준 상대평가)
+  'society':[45, 40, 35, 29, 23, 17, 12,  8],
+  'science':[45, 40, 35, 29, 23, 17, 12,  8],
 };
 // 학년별 보정: 고1·고2 학평은 평균적으로 약간 쉬워 컷이 높음 (가산점)
 var GRADE_OFFSET = { '1': 2, '2': 1, '3': 0 };
@@ -4006,6 +4137,9 @@ function cutsKeyFor(subject, subtype){
   if(subject==='math'){ if(subtype==='확통')return'확통'; if(subtype==='미적')return'미적'; if(subtype==='기하')return'기하'; return'수학공통'; }
   if(subject==='english') return 'english';
   if(subject==='exp1'||subject==='exp2') return 'exp';
+  if(subject==='history') return 'history';
+  if(subject==='society') return 'society';
+  if(subject==='science') return 'science';
   return null;
 }
 // 공유 등급컷 (관리자가 grade_input에서 설정 → 전체 사용자 적용)
@@ -4048,23 +4182,22 @@ function gradeColor(g){
 
 // 점수 입력 시 실시간 등급 미리보기
 function previewGrade(subj, val){
-  function tv(id){var el=document.getElementById(id);return el?el.value:'';}
-  var gradeLvl=parseInt((document.getElementById('mock_grade')||{}).value)||3;
+  var gradeLvl=parseInt((document.getElementById('mock_grade')||{}).value)||2;
   var yr=parseInt((document.getElementById('mock_year')||{}).value)||0;
   var mo=parseInt((document.getElementById('mock_month')||{}).value)||0;
-  var subtype = subj==='korean'?tv('type_korean') : subj==='math'?tv('type_math') : subj==='exp1'?tv('type_exp1') : subj==='exp2'?tv('type_exp2') : null;
-  var grade = calcGrade(subj, val, subtype, gradeLvl, yr, mo);
+  var grade = calcGrade(subj, val, null, gradeLvl, yr, mo);
   var el = document.getElementById('grade_'+subj);
   if(el){
     el.textContent = grade ? grade+'등급' : '-';
     el.style.color = grade ? gradeColor(grade) : 'var(--ink3)';
   }
   // 총점 업데이트
-  var k=parseInt(document.getElementById('mock_korean').value)||0;
-  var m=parseInt(document.getElementById('mock_math').value)||0;
-  var e=parseInt(document.getElementById('mock_english').value)||0;
-  var e1=parseInt(document.getElementById('mock_exp1').value)||0;
-  var e2=parseInt(document.getElementById('mock_exp2').value)||0;
+  var k=parseInt((document.getElementById('mock_korean')||{}).value)||0;
+  var m=parseInt((document.getElementById('mock_math')||{}).value)||0;
+  var e=parseInt((document.getElementById('mock_english')||{}).value)||0;
+  var e1=parseInt((document.getElementById('mock_history')||{}).value)||0;
+  var e2=parseInt((document.getElementById('mock_society')||{}).value)||0;
+  var e3=parseInt((document.getElementById('mock_science')||{}).value)||0;
   var total=k+m+e+e1+e2;
   var tp=document.getElementById('mock_total_preview');
   if(tp) tp.textContent=total>0?total+'점':'-';
@@ -4072,47 +4205,45 @@ function previewGrade(subj, val){
 
 // 저장
 function saveMockScore(){
-  var year=parseInt(document.getElementById('mock_year').value)||new Date().getFullYear();
-  var month=parseInt(document.getElementById('mock_month').value)||6;
-  var k=parseInt(document.getElementById('mock_korean').value)||0;
-  var m=parseInt(document.getElementById('mock_math').value)||0;
-  var e=parseInt(document.getElementById('mock_english').value)||0;
-  var e1=parseInt(document.getElementById('mock_exp1').value)||0;
-  var e2=parseInt(document.getElementById('mock_exp2').value)||0;
-  if(!k&&!m&&!e){ toast('점수를 입력해주세요'); return; }
-  function tv(id){var el=document.getElementById(id);return el?el.value:'';}
-  var grade=parseInt((document.getElementById('mock_grade')||{}).value)||3;
-  var kt=tv('type_korean'), mt=tv('type_math'), e1t=tv('type_exp1'), e2t=tv('type_exp2');
-  // 기존 같은 연/월 데이터의 실제등급은 보존
+  var year=parseInt((document.getElementById('mock_year')||{}).value)||new Date().getFullYear();
+  var month=parseInt((document.getElementById('mock_month')||{}).value)||3;
+  function iv(id){var v=parseInt((document.getElementById(id)||{}).value);return isNaN(v)?0:v;}
+  var k=iv('mock_korean'),m=iv('mock_math'),e=iv('mock_english');
+  var hist=iv('mock_history'),soc=iv('mock_society'),sci=iv('mock_science');
+  if(!k&&!m&&!e&&!hist&&!soc&&!sci){toast('점수를 입력해주세요');return;}
+  var grade=parseInt((document.getElementById('mock_grade')||{}).value)||2;
+  var yr=year, mo=month;
   var idx=mockScores.findIndex(function(s){return s.year===year&&s.month===month;});
   var prev=idx>=0?mockScores[idx]:{};
   var score={
     id:(prev.id)||('s'+Date.now()), year:year, month:month, grade:grade,
-    korean:k, math:m, english:e, exp1:e1, exp2:e2,
-    // 예상등급 (자동 계산)
-    koreanGradeEst:calcGrade('korean',k,kt,grade,year,month),
-    mathGradeEst:calcGrade('math',m,mt,grade,year,month),
-    englishGradeEst:calcGrade('english',e,null,grade,year,month),
-    exp1GradeEst:calcGrade('exp1',e1,e1t,grade,year,month),
-    exp2GradeEst:calcGrade('exp2',e2,e2t,grade,year,month),
-    // 실제등급 (발표 후 입력, 기존값 보존)
+    korean:k, math:m, english:e,
+    history:hist, society:soc, science:sci,
+    // 예상등급
+    koreanGradeEst:calcGrade('korean',k,'공통',grade,yr,mo),
+    mathGradeEst:calcGrade('math',m,'공통',grade,yr,mo),
+    englishGradeEst:calcGrade('english',e,null,grade,yr,mo),
+    historyGradeEst:calcGrade('history',hist,null,grade,yr,mo),
+    societyGradeEst:calcGrade('society',soc,null,grade,yr,mo),
+    scienceGradeEst:calcGrade('science',sci,null,grade,yr,mo),
+    // 실제등급 (기존 보존)
     koreanGradeReal:prev.koreanGradeReal||null,
     mathGradeReal:prev.mathGradeReal||null,
     englishGradeReal:prev.englishGradeReal||null,
-    exp1GradeReal:prev.exp1GradeReal||null,
-    exp2GradeReal:prev.exp2GradeReal||null,
-    koreanType:kt, mathType:mt, exp1Type:e1t, exp2Type:e2t,
-    total:k+m+e+e1+e2, ts:Date.now()
+    historyGradeReal:prev.historyGradeReal||null,
+    societyGradeReal:prev.societyGradeReal||null,
+    scienceGradeReal:prev.scienceGradeReal||null,
+    koreanType:'공통', mathType:'공통',
+    total:k+m+e+hist+soc+sci, ts:Date.now()
   };
   if(idx>=0) mockScores[idx]=score; else mockScores.push(score);
   mockScores.sort(function(a,b){return (a.year*100+a.month)-(b.year*100+b.month);});
   svMock();
   closeModal('addMockM');
   renderMockPage();
-  toast(year+'년 '+month+'월 성적 저장됨!');
+  toast('성적이 저장되었습니다');
 }
 
-// 탭 전환
 function mockTab(id){
   document.querySelectorAll('#pg-mock .rtab').forEach(function(t,i){
     t.classList.toggle('on',['table','chart'][i]===id);
@@ -4128,7 +4259,7 @@ function renderMockPage(){
   var yr=document.getElementById('mock_year');
   if(yr&&!yr.options.length){
     var now=new Date().getFullYear();
-    for(var y=now;y>=now-3;y--){var op=document.createElement('option');op.value=y;op.textContent=y+'년';yr.appendChild(op);}
+    for(var y=now;y>=2025;y--){var op=document.createElement('option');op.value=y;op.textContent=y+'년';yr.appendChild(op);}
   }
   renderGradeTable();
   renderCurveCharts();
@@ -4240,11 +4371,12 @@ function gradeColorSafe(g){ try{return gradeColor(g);}catch(e){return '#4f46e5';
 
 // 과목 컬럼 정의 + 세부영역 선택 상태
 var GRADE_COLS=[
-  {base:'korean',name:'국어',typeKey:'koreanType'},
-  {base:'math',name:'수학',typeKey:'mathType'},
+  {base:'korean',name:'국어',typeKey:null},
+  {base:'math',name:'수학',typeKey:null},
   {base:'english',name:'영어',typeKey:null},
-  {base:'exp1',name:'탐구1',typeKey:'exp1Type'},
-  {base:'exp2',name:'탐구2',typeKey:'exp2Type'},
+  {base:'history',name:'한국사',typeKey:null},
+  {base:'society',name:'통합사회',typeKey:null},
+  {base:'science',name:'통합과학',typeKey:null},
 ];
 var show3Sum=false;
 function toggle3Sum(){
@@ -4264,8 +4396,9 @@ function openMockEdit(id){
     {base:'korean',name:'국어',score:s.korean},
     {base:'math',name:'수학',score:s.math},
     {base:'english',name:'영어',score:s.english},
-    {base:'exp1',name:'탐구1',score:s.exp1},
-    {base:'exp2',name:'탐구2',score:s.exp2},
+    {base:'history',name:'한국사',score:s.history},
+    {base:'society',name:'통합사회',score:s.society},
+    {base:'science',name:'통합과학',score:s.science},
   ];
   var html='';
   subs.forEach(function(sub){
@@ -4285,7 +4418,7 @@ function saveRealGrades(){
   var id=document.getElementById('editMockId').value;
   var s=mockScores.find(function(x){return x.id===id;});
   if(!s)return;
-  ['korean','math','english','exp1','exp2'].forEach(function(b){
+  ['korean','math','english','history','society','science'].forEach(function(b){
     var el=document.getElementById('real_'+b);
     if(!el)return;
     var v=parseInt(el.value);
@@ -4348,7 +4481,7 @@ function renderGradeTable(){
 // 성적곡선: 전체 등급합 + 3합 각각
 function gradeSumOf(s){
   var sum=0,cnt=0;
-  ['korean','math','english','exp1','exp2'].forEach(function(b){var g=effGrade(s,b);if(g){sum+=g;cnt++;}});
+  ['korean','math','english','history','society','science'].forEach(function(b){var g=effGrade(s,b);if(g){sum+=g;cnt++;}});
   return cnt?sum:null;
 }
 function sum3Of(s){
@@ -4369,8 +4502,9 @@ var SUBJ_CHART=[
   {key:'korean',base:'korean',name:'국어',color:'#ff6b9d'},
   {key:'math',base:'math',name:'수학',color:'#a78bfa'},
   {key:'english',base:'english',name:'영어',color:'#38bdf8'},
-  {key:'exp1',base:'exp1',name:'탐구1',color:'#34d399'},
-  {key:'exp2',base:'exp2',name:'탐구2',color:'#f59e0b'},
+  {key:'history',base:'history',name:'한국사',color:'#fb7185'},
+  {key:'society',base:'society',name:'통합사회',color:'#34d399'},
+  {key:'science',base:'science',name:'통합과학',color:'#f59e0b'},
 ];
 function renderSubjPicker(){
   var el=document.getElementById('subjChartPick'); if(!el)return;
@@ -4391,7 +4525,7 @@ function drawSubjBar(key){
   wrap.innerHTML='';
   var W=wrap.offsetWidth||320,H=210,PAD={l:30,r:12,t:30,b:30};
   var cW=W-PAD.l-PAD.r,cH=H-PAD.t-PAD.b;
-  var isExp=(key==='exp1'||key==='exp2');
+  var isExp=(key==='exp1'||key==='exp2'||key==='history'||key==='society'||key==='science');
   var maxScore=isExp?50:100;
   var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
   svg.setAttribute('width',W);svg.setAttribute('height',H);svg.style.cssText='display:block;overflow:visible';
@@ -4805,7 +4939,9 @@ function openRoomInfoFromRoom(){
 // ══ INIT ══
 applyAllTheme();
 pSec=(cfg.pf||70)*60;pBrk=(cfg.pb||10)*60;pCur=pSec;
-updatePUI();renderHomeSubjGrid();buildHm('hmHome');buildStreak();renderAgeCompare();pushAgeData();updateHome();renderHBet();renderProfUI();updatePomoSubjLabel();autoCheckAttendance();
+updatePUI();renderHomeSubjGrid();buildHm('hmHome');
+// 뽀모도로 이어서 하기 복원
+if(_pomoSaved&&pCur>0){ var pb0=document.getElementById('pBtn'); if(pb0){pb0.textContent='▶ 계속';pb0.classList.remove('running');} }buildStreak();renderAgeCompare();pushAgeData();updateHome();renderHBet();renderProfUI();updatePomoSubjLabel();autoCheckAttendance();
 startAlertSchedule();
 subscribeMockScores();
 subscribeSharedCuts();
