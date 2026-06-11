@@ -5126,12 +5126,7 @@ function _onScDragEnd(e) {
   document.removeEventListener('touchend',  _onScDragEnd);
   document.removeEventListener('mousemove', _onScDragMove);
   document.removeEventListener('mouseup',   _onScDragEnd);
-  sv();
-  renderScList();
-  renderSL();
-  if(typeof renderHomeSubjGrid === 'function') renderHomeSubjGrid();
-  renderTL();
-}
+  
 
 // ── renderScList 재정의 ──
 function renderScList() {
