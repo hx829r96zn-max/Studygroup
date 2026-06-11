@@ -5119,13 +5119,7 @@ function _onScDragMove(e) {
   }
 }
 
-function _onScDragEnd(e) {
-  if(_scDrag.el){ _scDrag.el.style.opacity=''; _scDrag.el.style.background=''; _scDrag.el.style.borderRadius=''; }
-  _scDrag.active = false; _scDrag.idx = -1; _scDrag.el = null;
-  document.removeEventListener('touchmove', _onScDragMove);
-  document.removeEventListener('touchend',  _onScDragEnd);
-  document.removeEventListener('mousemove', _onScDragMove);
-  document.removeEventListener('mouseup',   _onScDragEnd);
+
   
 
 // ── renderScList 재정의 ──
