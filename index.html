@@ -2,9 +2,8 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#f0eff6">
 <title>StudyGroup</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -13,135 +12,130 @@
 <body>
 
 <!-- ── 로그인 화면 ── -->
-<div id="loginScreen" style="display:none;position:fixed;inset:0;background:var(--white);z-index:9999;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;gap:18px;">
-  <div style="font-family:'DM Mono',monospace;font-size:1.5rem;font-weight:500;margin-bottom:8px;">StudyGroup</div>
-  <div style="font-size:.88rem;color:var(--ink2);text-align:center;margin-bottom:4px;">공부를 함께하면 더 잘 할 수 있어요</div>
-  <button onclick="loginWithGoogle()" style="width:100%;max-width:320px;padding:14px;border-radius:13px;border:1.5px solid var(--line);background:var(--white);font-size:.9rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
-    <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-    Google로 로그인
+<div id="loginScreen" style="display:none;position:fixed;inset:0;z-index:9999;background:var(--ink);color:#fff;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center">
+  <div style="font-family:monospace;font-size:1.5rem;font-weight:700;color:#fff;margin-bottom:8px">StudyGroup</div>
+  <div style="font-size:.82rem;color:rgba(255,255,255,.5);margin-bottom:36px">친구와 함께 공부 습관 만들기</div>
+  <button onclick="loginWithGoogle()" style="display:flex;align-items:center;gap:12px;background:#fff;color:#111;border:none;border-radius:12px;padding:14px 24px;font-size:.9rem;font-weight:700;cursor:pointer;width:100%;max-width:300px;justify-content:center;font-family:'Noto Sans KR',sans-serif;">
+    <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#4285F4" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/></svg>
+    Google로 계속하기
   </button>
-  <button onclick="useOfflineMode()" style="width:100%;max-width:320px;padding:12px;border-radius:13px;border:1.5px solid var(--line);background:transparent;font-size:.85rem;color:var(--ink2);cursor:pointer;font-weight:600;">오프라인으로 시작</button>
-  <div id="loginError" style="display:none;color:var(--red);font-size:.8rem;text-align:center;padding:8px;background:var(--rbg);border-radius:8px;width:100%;max-width:320px;"></div>
-  <div id="fbStatus" style="font-size:.68rem;color:var(--ink3);margin-top:4px;">Firebase 로딩 중...</div>
+  <button onclick="useOfflineMode()" style="margin-top:14px;background:none;border:none;color:rgba(255,255,255,.35);font-size:.75rem;cursor:pointer;font-family:'Noto Sans KR',sans-serif;text-decoration:underline">오프라인으로 사용하기</button>
+  <div id="loginError" style="margin-top:14px;font-size:.78rem;color:#ff6b6b;display:none"></div>
 </div>
 
-<!-- ── NAV ── -->
+<!-- ── NAV (작게) ── -->
 <nav style="display:none;">
   <div class="logo">StudyGroup</div>
   <button class="av-btn" id="myAv" onclick="go('settings')">나</button>
 </nav>
 
+<!-- ── 알림 배너 ── -->
+<div class="alert-banner" id="alertBanner">
+  <div class="alert-inner">
+    <button class="alert-close" onclick="dismissAlert()">✕</button>
+    <div class="alert-top"><span class="alert-icon">📚</span><span class="alert-title">공부 재촉 알림</span></div>
+    <div class="alert-msg" id="alertMsg">지금 공부할 시간이야!</div>
+    <div class="alert-sub" id="alertSub">StudyGroup</div>
+  </div>
+</div>
+
 <!-- ══════════ HOME ══════════ -->
 <div class="page on" id="pg-home">
 
-  <!-- D-DAY 카드 -->
-  <div id="ddayCard" style="display:none;background:#111217;border-radius:14px;padding:14px 16px;margin-bottom:11px;border:1px solid rgba(255,255,255,.06);">
-  </div>
-  <button onclick="openDdayModal()" style="background:none;border:none;color:var(--ink3);font-size:.72rem;cursor:pointer;margin-bottom:11px;padding:0;display:flex;align-items:center;gap:4px;">＋ D-day 추가</button>
+  <!-- D-DAY -->
+  <div id="ddayCard" style="display:none;"></div>
+  <button onclick="openDdayModal()" style="background:none;border:none;color:rgba(255,255,255,.3);font-size:.7rem;cursor:pointer;margin-bottom:10px;padding:0;display:flex;align-items:center;gap:4px;">＋ D-day 추가</button>
 
-  <!-- 뽀모도로 -->
-  <div class="card" style="text-align:center;">
-    <div class="lbl" style="text-align:left;display:flex;align-items:center;justify-content:space-between;">
-      뽀모도로
-      <button onclick="openModal('pomoSubjM')" style="background:none;border:none;font-size:.72rem;font-weight:700;cursor:pointer;padding:0;" id="pomoSubjLabel">과목 미선택</button>
-    </div>
-    <div class="pomo-wrap">
-      <div class="p-ring-big">
-        <svg class="p-svg-big" viewBox="0 0 270 270">
-          <circle class="p-track-big" cx="135" cy="135" r="135"/>
-          <circle class="p-prog-big" id="pProg" cx="135" cy="135" r="135"
-            stroke-dasharray="848.2" stroke-dashoffset="0"/>
-        </svg>
-        <div class="p-center">
-          <div class="p-time-row" id="pFocusRow">
-            <div class="p-time-num" id="pNumFocus">70:00</div>
-            <div class="p-time-lbl">FOCUS</div>
-          </div>
-          <div class="p-divider"></div>
-          <div class="p-time-row dim" id="pBreakRow">
-            <div class="p-time-num" id="pNumBreak">10:00</div>
-            <div class="p-time-lbl">BREAK</div>
-          </div>
+  <!-- 현재 공부 과목 배지 (오른쪽 위) -->
+  <div class="pomo-top">
+    <div id="pomoSubjBadge"></div>
+  </div>
+
+  <!-- 뽀모도로 대형 링 -->
+  <div class="pomo-wrap">
+    <div class="p-ring-big">
+      <svg class="p-svg-big" viewBox="0 0 300 300">
+        <circle class="p-track-big" cx="150" cy="150" r="135"/>
+        <circle class="p-prog-big" id="pProg" cx="150" cy="150" r="135" stroke-dasharray="848.2" stroke-dashoffset="0"/>
+      </svg>
+      <div class="p-center">
+        <div class="p-time-row" id="pFocusRow">
+          <div class="p-time-num" id="pNumFocus">70:00</div>
+          <div class="p-time-lbl">집중</div>
+        </div>
+        <div class="p-divider"></div>
+        <div class="p-time-row" id="pBreakRow">
+          <div class="p-time-num" id="pNumBreak">10:00</div>
+          <div class="p-time-lbl">휴식</div>
         </div>
       </div>
-      <div class="p-dots">
-        <div class="p-dot"></div><div class="p-dot"></div>
-        <div class="p-dot"></div><div class="p-dot"></div>
-      </div>
-      <div class="p-ctrl">
-        <button class="p-start" id="pBtn" onclick="togglePomo()">▶ 시작</button>
-        <button class="p-reset" onclick="resetPomo()">↺</button>
-      </div>
     </div>
-    <div id="homeSubjGrid" class="subj-grid" style="margin-top:8px;"></div>
+
+    <div class="p-dots" id="pDots">
+      <div class="p-dot"></div><div class="p-dot"></div>
+      <div class="p-dot"></div><div class="p-dot"></div>
+    </div>
+    <div class="p-ctrl">
+      <button class="p-start" id="pBtn" onclick="togglePomo()">▶ 시작</button>
+      <button class="p-reset" onclick="resetPomo()">↺</button>
+    </div>
+    <!-- 과목 선택 버튼 -->
+    <div style="margin-top:12px;text-align:center;">
+      <button onclick="openModal('pomoSubjM')" style="background:none;border:1px solid rgba(255,255,255,.2);border-radius:20px;color:rgba(255,255,255,.6);font-size:.72rem;padding:5px 14px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;" id="pomoSubjLabel">과목 미선택</button>
+    </div>
+    <div class="subj-grid" id="homeSubjGrid"></div>
   </div>
 
-  <!-- 오늘 순공 -->
-  <div class="card">
-    <div class="lbl" style="display:flex;justify-content:space-between;align-items:center;">
-      오늘 순공 <span id="goalLbl" style="font-size:.68rem;color:var(--ink3);font-weight:500;"></span>
+  <!-- 오늘 순공시간 (다크) -->
+  <div class="card home-suntime">
+    <div class="row" style="margin-bottom:7px">
+      <div class="lbl" style="margin-bottom:0">오늘 순공시간</div>
+      <div style="font-size:.68rem;color:rgba(255,255,255,.4)" id="goalLbl">목표 6h 30m</div>
     </div>
-    <div id="homeTotal" style="font-family:'DM Mono',monospace;font-size:2rem;font-weight:500;line-height:1.1;margin-bottom:8px;">0<span style="font-size:.85rem;color:var(--ink2)">h</span>00<span style="font-size:.85rem;color:var(--ink2)">m</span>00<span style="font-size:.85rem;color:var(--ink2)">s</span></div>
-    <div style="height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:5px;">
-      <div id="homeBar" style="height:100%;border-radius:3px;background:var(--green);width:0%;transition:width .5s;"></div>
+    <div style="display:flex;align-items:flex-end;gap:7px;margin-bottom:7px">
+      <div style="font-family:monospace;font-size:1.9rem;font-weight:500;line-height:1;color:#fff" id="homeTotal">0<span style="font-size:.85rem;color:rgba(255,255,255,.4)">h</span>00<span style="font-size:.85rem;color:rgba(255,255,255,.4)">m</span>00<span style="font-size:.85rem;color:rgba(255,255,255,.4)">s</span></div>
+      <div style="font-size:.7rem;color:rgba(255,255,255,.5);margin-bottom:2px" id="homePct">0%</div>
     </div>
-    <div style="display:flex;justify-content:flex-end;margin-bottom:10px;"><span id="homePct" style="font-size:.7rem;font-weight:700;color:var(--green)">0%</span></div>
+    <div style="height:5px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;margin-bottom:9px"><div id="homeBar" style="height:100%;border-radius:3px;background:var(--green);width:0%"></div></div>
     <div id="homeSubjBars"></div>
   </div>
-
-  <!-- 히트맵 -->
-  <div class="card">
-    <div class="lbl">이번 달 공부 현황</div>
-    <div id="hmHome" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
-  </div>
-
-  <!-- 내기 현황 -->
-  <div class="card">
-    <div class="lbl">내기 현황</div>
-    <div id="homeBetContent"></div>
-  </div>
-
 </div>
 
-<!-- ══════════ TIMER ══════════ -->
+<!-- ══════════ TIMER (플래너) ══════════ -->
 <div class="page" id="pg-timer">
   <div class="t-hd">
     <div>
       <div class="t-date" id="timerDay"></div>
       <div class="t-total" id="timerTotal">0H 00M 00S</div>
-      <div class="plan-stat">
-        <span class="ps-lbl">계획</span><span id="planTarget">0h 00m</span>
-        <span class="ps-lbl">실제</span><span id="planActual">0h 00m</span>
-        <span id="planPct" style="color:var(--green);font-weight:700;">0%</span>
-      </div>
     </div>
-    <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+    <div style="text-align:right">
       <button class="plan-toggle" id="planToggle" onclick="togglePlanMode()">계획짜기</button>
-      <button class="btn btn-sm btn-ac" id="planSaveBtn" onclick="savePlan()" style="display:none;font-size:.7rem;">저장</button>
-      <div style="display:flex;gap:5px;">
-        <button class="btn btn-sm" id="planUndoBtn" onclick="undoPlan()" style="display:none;opacity:.35;font-size:.72rem;">↩</button>
-        <button class="btn btn-sm" id="planRedoBtn" onclick="redoPlan()" style="display:none;opacity:.35;font-size:.72rem;">↪</button>
+      <button class="plan-toggle" id="planUndoBtn" onclick="undoPlan()" style="display:none;margin-left:4px;padding:7px 9px">↩</button>
+      <button class="plan-toggle" id="planRedoBtn" onclick="redoPlan()" style="display:none;margin-left:3px;padding:7px 9px">↪</button>
+      <button class="plan-toggle" id="planSaveBtn" onclick="savePlan()" style="display:none;margin-left:4px;background:#22c55e;color:#000;border-color:#22c55e">저장</button>
+      <div class="plan-stat">
+        <div><span class="ps-lbl">목표</span> <span id="planTarget">0h 00m</span></div>
+        <div><span class="ps-lbl">순공</span> <span id="planActual" style="color:#22c55e">0h 00m</span></div>
+        <div><span class="ps-lbl">달성</span> <span id="planPct" style="color:#60a5fa">0%</span></div>
       </div>
     </div>
   </div>
-
   <div class="abar" id="activeBar">
-    <div class="adot" id="adot"></div>
-    <div id="aname" style="font-size:.78rem;color:rgba(255,255,255,.6);flex:1;"></div>
+    <div class="adot" id="adot" style="width:8px;height:8px;border-radius:50%;flex-shrink:0"></div>
+    <div id="aname" style="font-weight:700;font-size:.8rem;color:#fff;flex:1">-</div>
     <div class="atime" id="atime">00:00:00</div>
   </div>
-
   <div class="tsplit">
     <div class="tleft">
       <div class="sli" id="subjList"></div>
       <div class="tc-ctrl">
-        <button class="tc-go" id="tcBtn" disabled onclick="toggleSubj()">과목 선택</button>
+        <button class="tc-go" id="tcBtn" onclick="toggleSubj()" disabled>선택</button>
         <button class="tc-stop" id="tcStop" onclick="stopSubj()">■</button>
       </div>
     </div>
     <div class="tright">
-      <div class="pscroll" id="pScroll" style="flex:1;overflow-y:auto;position:relative;background:#1a1a1a;border-radius:11px;">
-        <div class="pgwrap" id="pGrid" style="position:relative;width:100%;"></div>
+      <div class="pscroll">
+        <div class="pgwrap" id="pScroll"><div class="pgrid" id="pGrid"></div></div>
       </div>
     </div>
   </div>
@@ -149,17 +143,10 @@
 
 <!-- ══════════ ROOM ══════════ -->
 <div class="page" id="pg-room">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;">
-    <div>
-      <div style="font-size:1rem;font-weight:900;">스터디룸</div>
-      <div id="roomMeta" style="font-size:.72rem;color:var(--ink3);margin-top:2px;"></div>
-    </div>
-    <button onclick="openNewContract()" class="btn btn-sm">📋 계약서</button>
-  </div>
+  <div style="font-size:.95rem;font-weight:900;margin-bottom:4px">스터디룸</div>
+  <div style="font-size:.7rem;color:var(--ink3);margin-bottom:12px" id="roomMeta">멤버 1명</div>
 
-  <div id="penPanel" style="margin-bottom:11px;"></div>
-
-  <div class="rtabs" style="margin-bottom:12px;">
+  <div class="rtabs">
     <button class="rtab on" onclick="rTab('live')">멤버</button>
     <button class="rtab" onclick="rTab('contract')">계약서</button>
     <button class="rtab" onclick="rTab('bet')">내기</button>
@@ -167,334 +154,341 @@
     <button class="rtab" onclick="rTab('academy')">학원</button>
   </div>
 
-  <!-- LIVE -->
+  <!-- 실시간 멤버 -->
   <div class="rpanel on" id="rp-live">
-    <div class="card" style="margin-bottom:10px;">
-      <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;">
-        <div id="liveMyDot" style="width:8px;height:8px;border-radius:50%;background:#ddd;flex-shrink:0;"></div>
-        <div id="liveMyName" style="font-size:.85rem;font-weight:700;flex:1;"></div>
-        <div id="liveMyTime" style="font-family:monospace;font-size:.8rem;color:var(--green);"></div>
+    <div class="card" style="margin-bottom:11px">
+      <div style="font-size:.72rem;font-weight:700;color:var(--ink3);margin-bottom:10px">실시간 공부 현황</div>
+      <div style="margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+          <div id="liveMyDot" style="width:8px;height:8px;border-radius:50%;background:#ddd;flex-shrink:0"></div>
+          <div style="font-size:.8rem;font-weight:700" id="liveMyName">나</div>
+          <div style="font-size:.7rem;color:var(--ink3)" id="liveMySubj">대기 중</div>
+          <div style="margin-left:auto;font-family:monospace;font-size:.78rem;font-weight:600;color:var(--green)" id="liveMyTime">0h 00m 00s</div>
+        </div>
+        <div style="height:10px;background:var(--bg);border-radius:5px;overflow:hidden">
+          <div id="liveMyBar" style="height:100%;border-radius:5px;background:var(--acc);width:0%;transition:width .5s"></div>
+        </div>
       </div>
-      <div id="liveMySubj" style="font-size:.75rem;color:var(--ink2);margin-bottom:6px;"></div>
-      <div style="height:8px;background:var(--line);border-radius:4px;overflow:hidden;">
-        <div id="liveMyBar" style="height:100%;border-radius:4px;background:var(--acc);width:0%;transition:width .5s;"></div>
-      </div>
+      <div id="liveFriendTimelines"></div>
     </div>
-    <div id="liveFriendTimelines"></div>
     <div id="memberCards"></div>
   </div>
 
-  <!-- CONTRACT -->
+  <!-- 계약서 -->
   <div class="rpanel" id="rp-contract">
-    <div id="cpset" style="margin-bottom:10px;"></div>
-    <div class="lbl" style="margin-bottom:6px;">규칙 목록</div>
-    <div id="contractRulesList"></div>
-    <button onclick="openPenM()" class="btn btn-full" style="margin-top:10px;background:var(--red);">⚠ 벌점 신고</button>
-  </div>
-
-  <!-- BET -->
-  <div class="rpanel" id="rp-bet">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-      <div style="font-size:.8rem;color:var(--ink2);">승 <span id="betWins" style="color:var(--green);font-weight:700">0</span> / 패 <span id="betLosses" style="color:var(--red);font-weight:700">0</span></div>
-      <button onclick="openBetModal()" class="btn btn-ac btn-sm">+ 내기</button>
+    <div class="card" style="margin-bottom:11px">
+      <div class="row" style="margin-bottom:10px">
+        <div class="lbl" style="margin-bottom:0">스터디 계약서</div>
+        <button class="btn btn-ac btn-sm" onclick="openNewContract()">작성</button>
+      </div>
+      <div id="cpset" style="font-size:.82rem;color:var(--ink2)">계약서 없음</div>
     </div>
-    <div id="betList"></div>
+    <div class="card" style="margin-bottom:11px">
+      <div class="lbl">규칙 목록</div>
+      <div id="contractRulesList"></div>
+    </div>
+    <div class="card">
+      <div class="row" style="margin-bottom:9px">
+        <div class="lbl" style="margin-bottom:0">벌점 현황</div>
+        <button class="btn btn-ol btn-sm" onclick="openPenM()">신고</button>
+      </div>
+      <div id="penPanel"><div style="font-size:.78rem;color:var(--ink3)">계약서를 먼저 작성해주세요</div></div>
+    </div>
   </div>
 
-  <!-- SHARE -->
+  <!-- 내기 -->
+  <div class="rpanel" id="rp-bet">
+    <div class="card" style="margin-bottom:11px">
+      <div class="row" style="margin-bottom:10px">
+        <div class="lbl" style="margin-bottom:0">진행 중인 내기</div>
+        <button class="btn btn-ac btn-sm" onclick="openBetModal()">+ 내기</button>
+      </div>
+      <div id="betList"><div style="font-size:.78rem;color:var(--ink3)">내기 없음</div></div>
+    </div>
+    <div class="card">
+      <div class="lbl">내기 전적</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0">
+        <div style="text-align:center;padding:10px 0"><div style="font-family:monospace;font-size:1.5rem;font-weight:700;color:var(--green)" id="betWins">0</div><div style="font-size:.68rem;color:var(--ink3);margin-top:2px">승</div></div>
+        <div style="text-align:center;padding:10px 0;border-left:1px solid var(--line);border-right:1px solid var(--line)"><div style="font-family:monospace;font-size:1.5rem;font-weight:700;color:var(--red)" id="betLosses">0</div><div style="font-size:.68rem;color:var(--ink3);margin-top:2px">패</div></div>
+        <div style="text-align:center;padding:10px 0"><div style="font-family:monospace;font-size:1rem;font-weight:700;color:var(--acc)" id="betEarnings">0원</div><div style="font-size:.68rem;color:var(--ink3);margin-top:2px">순수익</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 공유 -->
   <div class="rpanel" id="rp-sh">
-    <div style="background:#111;border-radius:13px;padding:14px 16px;margin-bottom:12px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-        <div id="shareLiveStatus" style="font-size:.65rem;font-weight:700;padding:3px 9px;border-radius:20px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);">대기 중</div>
+    <div class="card" style="margin-bottom:11px;background:#111;color:#fff;border:1px solid rgba(255,255,255,.08)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:.7rem;color:rgba(255,255,255,.5);font-weight:700">내 순공시간 (실시간)</div>
+        <div id="shareLiveStatus" style="font-size:.64rem;padding:3px 8px;border-radius:10px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.6)">대기 중</div>
       </div>
-      <div id="shareLiveTime" style="font-family:monospace;font-size:1.4rem;font-weight:700;color:#fff;margin-bottom:8px;">0h 00m 00s</div>
-      <div style="height:6px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;">
-        <div id="shareLiveBar" style="height:100%;border-radius:3px;background:var(--acc);width:0%;"></div>
+      <div style="font-family:monospace;font-size:2rem;font-weight:700;color:#fff;margin-bottom:8px" id="shareLiveTime">0h 00m 00s</div>
+      <div style="height:8px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden">
+        <div id="shareLiveBar" style="height:100%;border-radius:4px;background:#22c55e;width:0%;transition:width .5s"></div>
       </div>
-      <div style="display:flex;gap:7px;margin-top:10px;">
-        <button onclick="shareCapture()" class="btn btn-sm" style="flex:1;background:#fff;font-size:.75rem;">📸 촬영 인증</button>
-      </div>
+      <button onclick="shareCapture()" class="btn btn-sm" style="width:100%;margin-top:10px;background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.2);font-size:.75rem;">촬영 인증</button>
     </div>
     <div id="shareFeed"></div>
   </div>
 
-  <!-- ACADEMY -->
+  <!-- 학원 -->
   <div class="rpanel" id="rp-academy">
     <div id="academyNoRoom">
-      <div class="card" style="margin-bottom:10px;">
+      <div class="card" style="margin-bottom:11px">
         <div class="lbl">학원방 만들기</div>
-        <input class="inp" id="newAcademyName" placeholder="학원방 이름">
-        <button onclick="createAcademy()" class="btn btn-ac btn-sm" style="width:100%;">만들기</button>
+        <input class="inp" id="newAcademyName" placeholder="학원/반 이름">
+        <button onclick="createAcademy()" class="btn btn-ac" style="width:100%;padding:12px;">만들기</button>
       </div>
       <div class="card">
-        <div class="lbl">학원방 참가</div>
-        <input class="inp" id="joinAcademyCode" placeholder="6자리 코드" style="text-transform:uppercase;letter-spacing:3px;">
-        <button onclick="joinAcademy()" class="btn btn-sm" style="width:100%;">참가</button>
+        <div class="lbl">학원방 입장</div>
+        <div style="display:flex;gap:7px">
+          <input class="inp" id="joinAcademyCode" placeholder="코드 6자리" maxlength="6" style="flex:1;text-transform:uppercase;letter-spacing:3px;font-family:monospace;text-align:center;margin:0" oninput="this.value=this.value.toUpperCase()">
+          <button class="btn btn-dk btn-sm" onclick="joinAcademy()">입장</button>
+        </div>
       </div>
     </div>
-    <div id="academyView" style="display:none;">
-      <div class="card" style="margin-bottom:10px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-          <div id="academyName" style="font-weight:800;font-size:.92rem;"></div>
-          <div style="font-family:monospace;font-size:.78rem;color:var(--acc);font-weight:700;" id="academyCode"></div>
+    <div id="academyView" style="display:none">
+      <div class="card" style="margin-bottom:11px">
+        <div class="row" style="margin-bottom:6px"><div class="lbl" style="margin-bottom:0" id="academyName">학원방</div><button class="btn btn-ol btn-sm" onclick="leaveAcademy()">나가기</button></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg);border-radius:9px;padding:9px 12px">
+          <span style="font-size:.72rem;color:var(--ink3)">초대 코드</span>
+          <span style="font-family:monospace;font-weight:700;letter-spacing:3px;color:var(--acc)" id="academyCode">------</span>
         </div>
-        <div id="academyNoticeBox" style="font-size:.8rem;color:var(--ink2);background:var(--bg);padding:8px;border-radius:8px;margin-bottom:8px;"></div>
-        <div id="academyNoticeInputWrap" style="display:none;">
-          <input class="inp" id="academyNoticeInput" placeholder="공지사항 입력">
-          <button onclick="postAcademyNotice()" class="btn btn-ac btn-sm" style="width:100%;margin-top:-4px;">공지 등록</button>
-        </div>
-        <button onclick="leaveAcademy()" class="btn btn-sm" style="width:100%;color:var(--red);font-size:.7rem;">나가기</button>
       </div>
-      <div class="lbl">학생 목록</div>
-      <div id="academyStudents"></div>
+      <div class="card" style="margin-bottom:11px">
+        <div class="lbl">공지사항</div>
+        <div id="academyNoticeBox" style="font-size:.82rem;color:var(--ink2);line-height:1.6;min-height:20px">등록된 공지 없음</div>
+        <div id="academyNoticeInputWrap" style="display:none;margin-top:9px">
+          <div style="display:flex;gap:6px">
+            <input class="inp" id="academyNoticeInput" placeholder="공지 입력" style="flex:1;margin:0;font-size:.82rem">
+            <button class="btn btn-ac btn-sm" onclick="postAcademyNotice()">등록</button>
+          </div>
+        </div>
+      </div>
+      <div class="card"><div class="lbl">학생 현황</div><div id="academyStudents"></div></div>
     </div>
   </div>
 </div>
 
 <!-- ══════════ STATS ══════════ -->
 <div class="page" id="pg-stats">
-  <div class="stg" style="margin-bottom:13px;">
-    <div class="stc"><div class="stn" id="stTotal">-</div><div class="stl">오늘 순공</div></div>
-    <div class="stc"><div class="stn" id="stAvg">-</div><div class="stl">일평균</div></div>
-    <div class="stc"><div class="stn" id="stStrk">-</div><div class="stl">스트릭</div></div>
+  <div style="font-size:.95rem;font-weight:900;margin-bottom:13px">통계</div>
+
+  <!-- 스트릭 배너 (색 변경 가능) -->
+  <div class="streak-banner">
+    <span class="sb-fire">🔥</span>
+    <div class="sb-mid"><div class="sb-num" id="streakDays">0</div><div class="sb-lbl">일 연속</div></div>
+    <span class="sb-fire">🔥</span>
   </div>
 
-  <div class="streak-banner" style="margin-bottom:13px;">
-    <div class="sb-fire">🔥</div>
-    <div class="sb-mid">
-      <div class="sb-num" id="streakDays">0</div>
-      <div class="sb-lbl">일 연속</div>
-    </div>
+  <div class="stg">
+    <div class="stc"><div class="stn" style="color:var(--green)" id="stTotal">0h</div><div class="stl">오늘</div></div>
+    <div class="stc"><div class="stn" id="stAvg">0h</div><div class="stl">일평균</div></div>
+    <div class="stc"><div class="stn" style="color:var(--acc)" id="stStrk">0일</div><div class="stl">스트릭</div></div>
   </div>
 
-  <div style="display:flex;gap:10px;margin-bottom:13px;">
-    <div id="streakGrid" style="display:flex;gap:3px;flex-wrap:wrap;flex:1;"></div>
+  <!-- 히트맵 -->
+  <div class="card" style="margin-bottom:11px">
+    <div class="lbl">이번 달</div>
+    <div id="hmHome" class="hmg"></div>
+    <div class="hmleg"><div class="hmd" style="background:var(--line)"></div>0h <div class="hmd lv1"></div>~2h <div class="hmd lv2"></div>~4h <div class="hmd lv3"></div>~6h <div class="hmd lv4"></div>6h+</div>
   </div>
 
   <!-- 캘린더 -->
-  <div class="card">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <button onclick="calNav(-1)" style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--ink2);">‹</button>
-      <button onclick="openCalPicker()" style="background:none;border:none;font-weight:800;font-size:.92rem;cursor:pointer;" id="calTitle"></button>
-      <button onclick="calNav(1)" style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--ink2);">›</button>
+  <div class="card" style="margin-bottom:11px">
+    <div class="row" style="margin-bottom:9px">
+      <button class="btn btn-ol btn-sm" onclick="calNav(-1)">‹</button>
+      <div style="font-weight:700;font-size:.86rem;cursor:pointer;padding:4px 8px;border-radius:8px;background:var(--bg)" id="calTitle" onclick="openCalPicker()"></div>
+      <button class="btn btn-ol btn-sm" onclick="calNav(1)">›</button>
     </div>
     <div class="calyh">
-      <div style="text-align:center;font-size:.55rem;color:var(--red);font-weight:700;">일</div>
-      <div style="text-align:center;font-size:.55rem;color:var(--ink3);font-weight:700;">월</div>
-      <div style="text-align:center;font-size:.55rem;color:var(--ink3);font-weight:700;">화</div>
-      <div style="text-align:center;font-size:.55rem;color:var(--ink3);font-weight:700;">수</div>
-      <div style="text-align:center;font-size:.55rem;color:var(--ink3);font-weight:700;">목</div>
-      <div style="text-align:center;font-size:.55rem;color:var(--ink3);font-weight:700;">금</div>
-      <div style="text-align:center;font-size:.55rem;color:var(--blue);font-weight:700;">토</div>
+      <div style="text-align:center;font-size:.6rem;color:var(--red)">일</div>
+      <div style="text-align:center;font-size:.6rem;color:var(--ink3)">월</div><div style="text-align:center;font-size:.6rem;color:var(--ink3)">화</div>
+      <div style="text-align:center;font-size:.6rem;color:var(--ink3)">수</div><div style="text-align:center;font-size:.6rem;color:var(--ink3)">목</div>
+      <div style="text-align:center;font-size:.6rem;color:var(--ink3)">금</div>
+      <div style="text-align:center;font-size:.6rem;color:#2563eb">토</div>
     </div>
-    <div id="calGrid" class="calg"></div>
-    <div class="hmleg" style="margin-top:8px;justify-content:flex-end;">
-      <span>적음</span>
-      <div class="hmd lv1" style="background:#b2dfc9;"></div>
-      <div class="hmd lv2" style="background:#6cc49a;"></div>
-      <div class="hmd lv3" style="background:#2fa66c;"></div>
-      <div class="hmd lv4" style="background:var(--green);"></div>
-      <span>많음</span>
+    <div class="calg" id="calGrid"></div>
+    <div class="hmleg" style="margin-top:8px">
+      <div class="hmd" style="background:var(--line)"></div>0h
+      <div class="hmd lv1"></div>~3h <div class="hmd lv2"></div>~5h
+      <div class="hmd lv3"></div>~7h <div class="hmd lv4"></div>7h+
     </div>
   </div>
 
-  <!-- 또래 비교 -->
-  <div class="card">
-    <div class="lbl" style="display:flex;justify-content:space-between;align-items:center;">
-      또래 비교 <span id="ageCompareLabel" style="font-size:.7rem;color:var(--ink3);font-weight:500;"></span>
+  <!-- 오늘의 평가 -->
+  <div class="card" style="margin-bottom:11px">
+    <div class="row" style="margin-bottom:9px">
+      <div class="lbl" style="margin-bottom:0">오늘의 평가</div>
+      <div style="font-size:.68rem;color:var(--ink3)" id="evalDateLbl"></div>
     </div>
-    <div id="ageCompareContent"></div>
-  </div>
-
-  <!-- 일일 평가 -->
-  <div class="card">
-    <div class="lbl" style="display:flex;justify-content:space-between;align-items:center;">
-      오늘의 기록 <span id="evalDateLbl" style="font-size:.68rem;color:var(--ink3);font-weight:500;"></span>
-    </div>
-    <textarea class="inp" id="dailyEvalInput" placeholder="오늘 공부는 어땠나요? 느낀 점, 목표 달성 여부 등" oninput="saveDailyEval()" style="margin-bottom:0;"></textarea>
+    <textarea id="dailyEvalInput" class="inp" rows="3" style="resize:none;line-height:1.6;font-size:.85rem;margin-bottom:0" placeholder="오늘 하루를 기록해보세요..." oninput="saveDailyEval()"></textarea>
   </div>
 
   <!-- 랭킹 -->
+  <div class="card" style="margin-bottom:11px"><div class="lbl">순공시간 랭킹</div><div id="rankPanel"></div></div>
+
+  <!-- 또래 비교 -->
   <div class="card">
-    <div class="lbl">그룹 랭킹</div>
-    <div id="rankPanel"></div>
+    <div class="row" style="margin-bottom:10px">
+      <div class="lbl" style="margin-bottom:0">또래 비교</div>
+      <div style="font-size:.7rem;color:var(--ink3)" id="ageCompareLabel">나이 설정 필요</div>
+    </div>
+    <div id="ageCompareContent"><div style="font-size:.78rem;color:var(--ink3);text-align:center;padding:10px 0">설정에서 나이를 입력하면<br>같은 나이 학생들과 비교할 수 있어요</div></div>
   </div>
 </div>
 
-<!-- ══════════ MOCK ══════════ -->
+<!-- ══════════ MOCK 성적 ══════════ -->
 <div class="page" id="pg-mock">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;">
-    <div style="font-size:1rem;font-weight:900;">모의고사</div>
-    <button onclick="openModal('addMockM')" class="btn btn-ac btn-sm">+ 성적 입력</button>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:13px">
+    <div style="font-size:.95rem;font-weight:900">성적</div>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-ol btn-sm" id="sum3Btn" onclick="toggle3Sum()">3합</button>
+      <button class="btn btn-ac btn-sm" onclick="openModal('addMockM')">+ 입력</button>
+    </div>
   </div>
-
-  <div class="rtabs" style="margin-bottom:12px;">
-    <button class="rtab on" onclick="mockTab('table')">성적표</button>
-    <button class="rtab" onclick="mockTab('chart')">차트</button>
-  </div>
-
+  <div class="rtabs"><button class="rtab on" onclick="mockTab('table')">성적표</button><button class="rtab" onclick="mockTab('chart')">성적곡선</button></div>
   <div class="rpanel on" id="mtp-table">
-    <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
-      <button id="sum3Btn" onclick="toggle3Sum()" class="btn btn-sm" style="font-size:.72rem;">3합 보기</button>
-    </div>
-    <div style="overflow-x:auto;">
+    <div class="card" style="padding:10px 8px;overflow-x:auto">
       <table class="grade-tbl" id="gradeTable"></table>
+      <div id="gradeTableEmpty" style="text-align:center;padding:26px 0;color:var(--ink3);font-size:.84rem">입력된 모의고사가 없습니다</div>
     </div>
-    <div id="gradeTableEmpty" style="display:none;text-align:center;padding:24px 0;color:var(--ink3);font-size:.82rem;">성적을 입력해주세요</div>
   </div>
-
   <div class="rpanel" id="mtp-chart">
-    <div class="card" style="margin-bottom:11px;">
-      <div class="lbl">등급합 추이</div>
-      <div id="chartTotalWrap" style="height:200px;overflow:hidden;"></div>
-    </div>
-    <div class="card" style="margin-bottom:11px;">
-      <div class="lbl">3합 추이</div>
-      <div id="chart3Wrap" style="height:200px;overflow:hidden;"></div>
-    </div>
+    <div class="card" style="margin-bottom:11px"><div class="lbl">전체 등급합 추이</div><div style="position:relative;height:200px;width:100%" id="chartTotalWrap"></div></div>
+    <div class="card" style="margin-bottom:11px"><div class="lbl">국·영·수 3합 추이</div><div style="position:relative;height:200px;width:100%" id="chart3Wrap"></div></div>
     <div class="card">
-      <div class="lbl" style="display:flex;justify-content:space-between;align-items:center;">
-        <span id="subjChartLbl">과목별 원점수</span>
-      </div>
-      <div id="subjChartPick" class="subj-pick" style="margin-bottom:10px;"></div>
-      <div id="chartSubjWrap" style="height:210px;overflow:hidden;"></div>
+      <div class="row" style="margin-bottom:10px"><div class="lbl" style="margin-bottom:0">과목별 성적</div><div style="font-size:.68rem;color:var(--ink3)" id="subjChartLbl">과목 선택</div></div>
+      <div class="subj-pick" id="subjChartPick"></div>
+      <div style="position:relative;height:210px;width:100%;margin-top:12px" id="chartSubjWrap"><div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--ink3);font-size:.82rem">과목을 선택하세요</div></div>
     </div>
   </div>
 </div>
 
 <!-- ══════════ SETTINGS ══════════ -->
 <div class="page" id="pg-settings">
+  <div style="font-size:.95rem;font-weight:900;margin-bottom:13px">설정</div>
 
   <!-- 프로필 -->
-  <div class="card">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-      <div id="profAv" style="width:48px;height:48px;border-radius:50%;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:800;flex-shrink:0;">나</div>
-      <div style="flex:1;">
-        <div id="profName" style="font-size:1rem;font-weight:800;margin-bottom:2px;">이름없음</div>
-        <div id="profSchoolView" style="font-size:.74rem;color:var(--ink2);"></div>
-      </div>
-      <button id="profEditBtn" onclick="toggleProfileEdit()" class="btn btn-sm">수정</button>
-    </div>
+  <div class="card" style="margin-bottom:10px">
+    <div class="row" style="margin-bottom:12px"><div class="lbl" style="margin-bottom:0">내 프로필</div><button class="btn btn-ol btn-sm" id="profEditBtn" onclick="toggleProfileEdit()">수정</button></div>
     <div id="profView">
-      <div style="font-size:.74rem;color:var(--ink2);" id="profGradeView"></div>
-      <div style="font-size:.74rem;color:var(--ink2);margin-top:2px;" id="profPhoneView"></div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="av-btn" style="width:48px;height:48px;font-size:1.1rem;flex-shrink:0" id="profAv">나</div>
+        <div style="flex:1">
+          <div style="font-weight:800;font-size:1rem;margin-bottom:3px" id="profName">이름 없음</div>
+          <div style="font-size:.78rem;color:var(--ink2);margin-bottom:2px" id="profSchoolView">-</div>
+          <div style="font-size:.78rem;color:var(--ink2)" id="profGradeView">-</div>
+        </div>
+      </div>
+      <div style="font-size:.74rem;color:var(--ink3);margin-top:7px" id="profPhoneView"></div>
     </div>
-    <div id="profEdit" style="display:none;">
+    <div id="profEdit" style="display:none;margin-top:12px">
       <input class="inp" id="s_name" placeholder="이름">
       <input class="inp" id="s_school" placeholder="학교">
       <input class="inp" id="s_grade" placeholder="학년 (예: 고2)">
-      <input class="inp" id="s_age" type="number" placeholder="나이 (또래 비교용)">
-      <input class="inp" id="s_goal" type="number" step="0.5" placeholder="일일 목표 시간 (기본 6.5)">
+      <input class="inp" id="s_age" type="number" min="10" max="25" placeholder="나이 (또래 비교용)">
+      <input class="inp" id="s_goal" type="number" step="0.5" min="0.5" max="24" placeholder="일일 목표 (시간, 예: 6.5)">
       <input class="inp" id="s_phone" placeholder="연락처">
-      <button onclick="saveProfile()" class="btn-full">저장</button>
+      <div style="display:flex;gap:7px"><button class="btn btn-ol btn-sm" style="flex:1" onclick="toggleProfileEdit()">취소</button><button class="btn btn-dk btn-sm" style="flex:2" onclick="saveProfile()">저장</button></div>
     </div>
-    <div id="accountInfo" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:.72rem;color:var(--ink3);">
-      <div id="accountEmail"></div>
-    </div>
-    <button id="loginBtn" onclick="loginWithGoogle()" class="btn btn-ac btn-sm" style="width:100%;margin-top:8px;display:none;">Google 로그인</button>
-    <button id="logoutBtn" onclick="logoutUser()" class="btn btn-sm" style="width:100%;margin-top:8px;display:none;color:var(--red);">로그아웃</button>
   </div>
 
   <!-- 뽀모도로 설정 -->
-  <div class="card">
-    <div class="lbl">뽀모도로 설정</div>
-    <div class="crow"><div class="clbl">집중 시간 (분)</div><input class="inp" id="s_pf" type="number" style="width:80px;margin:0;text-align:center;" value="70"></div>
-    <div class="crow"><div class="clbl">휴식 시간 (분)</div><input class="inp" id="s_pb" type="number" style="width:80px;margin:0;text-align:center;" value="10"></div>
-    <div class="crow"><div class="clbl">초기화 새벽 (시)</div><input class="inp" id="s_reset" type="number" style="width:80px;margin:0;text-align:center;" value="5" min="0" max="11"></div>
-    <button onclick="savePomoSet()" class="btn-full" style="margin-top:10px;">저장</button>
+  <div class="card" style="margin-bottom:10px">
+    <div class="lbl">뽀모도로</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div><div style="font-size:.68rem;color:var(--ink2);margin-bottom:4px">집중 (분)</div><input class="inp" id="s_pf" type="number" min="10" max="120" value="70" style="margin:0"></div>
+      <div><div style="font-size:.68rem;color:var(--ink2);margin-bottom:4px">휴식 (분)</div><input class="inp" id="s_pb" type="number" min="1" max="30" value="10" style="margin:0"></div>
+    </div>
+    <div style="margin-top:8px"><div style="font-size:.68rem;color:var(--ink2);margin-bottom:4px">초기화 시각 (시, 예:5 → 새벽5시)</div><input class="inp" id="s_reset" type="number" min="0" max="11" value="5" style="margin:0"></div>
+    <button class="btn btn-dk btn-sm" style="margin-top:9px" onclick="savePomoSet()">저장</button>
+  </div>
+
+  <!-- 과목 & 색상 -->
+  <div class="card" style="margin-bottom:10px">
+    <div class="row" style="margin-bottom:10px">
+      <div class="lbl" style="margin-bottom:0">색상 & 과목</div>
+      <div style="display:flex;gap:4px">
+        <button class="btn btn-sm" id="colorTab1" style="background:var(--acc);color:#fff;border-radius:8px;padding:5px 10px;font-size:.72rem" onclick="switchColorTab(1)">과목</button>
+        <button class="btn btn-ol btn-sm" id="colorTab2" style="border-radius:8px;padding:5px 10px;font-size:.72rem" onclick="switchColorTab(2)">테마</button>
+      </div>
+    </div>
+    <div id="colorPane1"><div id="scList"></div></div>
+    <div id="colorPane2" style="display:none">
+      <div class="crow"><div class="clbl">강조색 (버튼)</div><input type="color" class="cpick" id="tc_a" onchange="applyTheme('--acc',this.value)"></div>
+      <div class="crow"><div class="clbl">그린 (스트릭·히트맵)</div><input type="color" class="cpick" id="tc_g" onchange="applyTheme('--green',this.value)"></div>
+      <div class="crow"><div class="clbl">배경</div><input type="color" class="cpick" id="tc_b" onchange="applyTheme('--bg',this.value)"></div>
+      <div class="crow"><div class="clbl">플래너 기본색</div><input type="color" class="cpick" id="tc_plan" onchange="applyTheme('--plan',this.value)"></div>
+      <div class="crow"><div class="clbl">스트릭 배너 색</div><input type="color" class="cpick" id="tc_streak" onchange="applyTheme('--streak',this.value)"></div>
+      <button class="btn btn-ol btn-sm" style="margin-top:9px;width:100%" onclick="resetTheme()">기본값 초기화</button>
+    </div>
   </div>
 
   <!-- 친구 연동 -->
-  <div class="card">
-    <div class="lbl" style="display:flex;justify-content:space-between;align-items:center;">
-      친구 연동
-      <span style="font-family:monospace;font-size:.82rem;color:var(--acc);font-weight:700;cursor:pointer;" onclick="copyShareCode()" id="myShareCode">------</span>
+  <div class="card" style="margin-bottom:10px">
+    <div class="lbl">친구 연동</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-size:.72rem;color:var(--ink2)">내 공유코드</div>
+      <div style="font-family:monospace;font-size:1.3rem;font-weight:700;letter-spacing:4px;color:var(--acc);cursor:pointer" onclick="copyShareCode()" id="myShareCode">------</div>
     </div>
-    <div style="display:flex;gap:7px;margin-bottom:10px;">
-      <input class="inp" id="friendCodeInp" placeholder="친구 코드 6자리" style="margin:0;flex:1;text-transform:uppercase;letter-spacing:3px;" maxlength="6">
-      <button onclick="connectByCode()" class="btn btn-ac btn-sm">연동</button>
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <input class="inp" id="friendCodeInp" placeholder="친구 코드 6자리" maxlength="6" style="margin:0;flex:1;text-transform:uppercase;letter-spacing:2px;font-family:monospace;text-align:center" oninput="this.value=this.value.toUpperCase()">
+      <button class="btn btn-dk btn-sm" onclick="connectByCode()">연동</button>
     </div>
-    <button onclick="copyShareCode()" class="btn btn-sm" style="width:100%;margin-bottom:10px;font-size:.75rem;">📎 내 링크 복사</button>
-    <div id="connectedMembers"></div>
-    <div id="fbStatus" style="font-size:.68rem;margin-top:8px;color:var(--ink3);"></div>
+    <button onclick="copyShareCode()" class="btn btn-ol btn-sm" style="width:100%;margin-bottom:10px;font-size:.75rem">내 링크 복사</button>
+    <div id="connectedMembers"><div style="font-size:.78rem;color:var(--ink3);padding:4px 0">연동된 멤버 없음</div></div>
+    <div id="fbStatus" style="font-size:.7rem;margin-top:8px;padding:6px 10px;background:var(--bg);border-radius:8px;font-weight:600">Firebase 연결 중...</div>
   </div>
 
-  <!-- 과목 관리 -->
-  <div class="card">
-    <div class="lbl" style="display:flex;justify-content:space-between;align-items:center;">
-      과목 관리
-      <button onclick="openAddSM()" class="btn btn-sm btn-ac" style="font-size:.72rem;">+ 추가</button>
-    </div>
-    <div id="scList"></div>
-  </div>
-
-  <!-- 알림 설정 -->
-  <div class="card">
-    <div class="lbl">공부 알림</div>
-    <div class="trow">
-      <div class="tlbl">알림 사용</div>
-      <label class="toggle"><input type="checkbox" id="alertOn"><span class="tsl"></span></label>
-    </div>
-    <div id="alertTimeList" style="margin-top:8px;"></div>
-    <button onclick="addAlertTime()" class="btn btn-sm" style="width:100%;margin-top:6px;font-size:.75rem;">+ 알림 시간 추가</button>
-    <div class="lbl" style="margin-top:12px;margin-bottom:6px;">알림 메시지</div>
-    <div id="alertMsgPresets" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:8px;"></div>
-    <input class="inp" id="alertMsgCustom" placeholder="직접 입력" style="margin-bottom:6px;">
-    <button onclick="saveAlertSet()" class="btn-full" style="margin-top:2px;">저장</button>
-  </div>
-
-  <!-- 테마 색상 -->
-  <div class="card">
-    <div class="lbl">테마 색상</div>
-    <div style="display:flex;gap:5px;margin-bottom:10px;">
-      <button id="colorTab1" onclick="switchColorTab(1)" style="flex:1;padding:7px;border-radius:8px;border:1.5px solid var(--line);font-size:.78rem;cursor:pointer;font-weight:700;background:var(--acc);color:#fff;">앱 색상</button>
-      <button id="colorTab2" onclick="switchColorTab(2)" style="flex:1;padding:7px;border-radius:8px;border:1.5px solid var(--line);font-size:.78rem;cursor:pointer;font-weight:700;background:transparent;color:var(--ink);">플래너</button>
-    </div>
-    <div id="colorPane1">
-      <div class="crow"><div class="clbl">강조색</div><input type="color" class="cpick" id="tc_a" oninput="applyTheme('--acc',this.value)"></div>
-      <div class="crow"><div class="clbl">그린</div><input type="color" class="cpick" id="tc_g" oninput="applyTheme('--green',this.value)"></div>
-      <div class="crow"><div class="clbl">배경</div><input type="color" class="cpick" id="tc_b" oninput="applyTheme('--bg',this.value)"></div>
-    </div>
-    <div id="colorPane2" style="display:none;">
-      <div class="crow"><div class="clbl">플래너 색</div><input type="color" class="cpick" id="tc_plan" oninput="applyTheme('--plan',this.value)"></div>
-    </div>
-    <button onclick="resetTheme()" class="btn btn-sm" style="width:100%;margin-top:8px;font-size:.75rem;">초기화</button>
+  <!-- 알림 -->
+  <div class="card" style="margin-bottom:10px">
+    <div class="lbl">공부 재촉 알림</div>
+    <div class="trow" style="margin-bottom:6px"><span class="tlbl">알림 켜기</span><label class="toggle"><input type="checkbox" id="alertOn" onchange="saveAlertSet()"><span class="tsl"></span></label></div>
+    <div id="alertTimeList" style="margin-bottom:8px"></div>
+    <button class="btn btn-ol btn-sm" style="width:100%;margin-bottom:10px" onclick="addAlertTime()">+ 시간 추가</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px" id="alertMsgPresets"></div>
+    <input class="inp" id="alertMsgCustom" placeholder="직접 입력..." style="margin-bottom:6px">
+    <button class="btn btn-dk btn-sm" style="width:100%" onclick="saveAlertSet()">저장</button>
   </div>
 
   <!-- 내기 -->
-  <div class="card">
-    <div class="lbl" style="display:flex;justify-content:space-between;align-items:center;">
-      내기 목록
-      <button onclick="openBetModal()" class="btn btn-sm btn-ac" style="font-size:.72rem;">+ 내기</button>
-    </div>
-    <div id="betList"></div>
+  <div class="card" style="margin-bottom:10px">
+    <div class="row" style="margin-bottom:9px"><div class="lbl" style="margin-bottom:0">내기 목록</div><button class="btn btn-ac btn-sm" onclick="openBetModal()">+ 내기</button></div>
+    <div id="betList"><div style="font-size:.76rem;color:var(--ink3);padding:5px 0">내기 없음</div></div>
   </div>
 
-  <!-- 데이터 -->
-  <div class="card">
-    <div class="lbl">데이터</div>
-    <button onclick="exportData()" class="btn btn-sm" style="width:100%;">📥 내 데이터 내보내기</button>
+  <!-- 계정 -->
+  <div class="card" style="margin-bottom:10px">
+    <div class="lbl">계정</div>
+    <div id="accountInfo" style="display:flex;align-items:center;gap:10px;padding:8px 0;margin-bottom:10px">
+      <div id="accountAvatar" style="width:40px;height:40px;border-radius:50%;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;flex-shrink:0">?</div>
+      <div><div id="accountName" style="font-weight:700;font-size:.88rem">오프라인 모드</div><div id="accountEmail" style="font-size:.72rem;color:var(--ink3)">로그인하면 기기간 동기화 가능</div></div>
+    </div>
+    <div style="display:flex;gap:7px">
+      <button class="btn btn-ol btn-sm" style="flex:1" id="loginBtn" onclick="loginWithGoogle()">Google 로그인</button>
+      <button class="btn btn-ol btn-sm" style="flex:1;color:var(--red);border-color:var(--red);display:none" id="logoutBtn" onclick="logoutUser()">로그아웃</button>
+    </div>
   </div>
+
+  <div class="card"><div class="lbl">데이터</div><button class="btn btn-ol btn-sm" style="width:100%" onclick="exportData()">내보내기</button></div>
 </div>
 
-<!-- ══════════ TABBAR ══════════ -->
+<!-- ══════════ 하단 탭바 (이모티콘 없음) ══════════ -->
 <div class="tabbar">
-  <button class="tbtab on" onclick="go('home')">🏠<br><span style="font-size:.58rem;">홈</span></button>
-  <button class="tbtab" onclick="go('timer')">⏱<br><span style="font-size:.58rem;">타이머</span></button>
-  <button class="tbtab" onclick="go('room')">👥<br><span style="font-size:.58rem;">룸</span></button>
-  <button class="tbtab" onclick="go('stats')">📊<br><span style="font-size:.58rem;">통계</span></button>
-  <button class="tbtab" onclick="go('mock')">📝<br><span style="font-size:.58rem;">모의고사</span></button>
-  <button class="tbtab" onclick="go('settings')">⚙<br><span style="font-size:.58rem;">설정</span></button>
+  <button class="tbtab on" onclick="go('home')">홈</button>
+  <button class="tbtab" onclick="go('timer')">플래너</button>
+  <button class="tbtab" onclick="go('room')">룸</button>
+  <button class="tbtab" onclick="go('stats')">통계</button>
+  <button class="tbtab" onclick="go('mock')">성적</button>
+  <button class="tbtab" onclick="go('settings')">설정</button>
 </div>
 
 <!-- ══════════ MODALS ══════════ -->
 
-<!-- D-DAY 모달 -->
+<!-- D-DAY -->
 <div class="modal-bg" id="ddayModalBg">
-  <div class="modal">
-    <div class="m-handle"></div>
-    <div class="m-title">D-day 추가</div>
-    <button class="m-close" onclick="closeDdayModal()">✕</button>
+  <div class="modal"><div class="m-handle"></div><div class="m-title">D-day 추가</div><button class="m-close" onclick="closeDdayModal()">✕</button>
     <input class="inp" id="dday_name" placeholder="이름 (예: 수능, 기말고사)">
     <input class="inp" id="dday_date" type="date">
     <button onclick="addDdayItem()" class="btn-full">추가</button>
@@ -502,279 +496,200 @@
 </div>
 
 <!-- 뽀모도로 과목 선택 -->
-<div class="modal-bg" id="pomoSubjM">
-  <div class="modal">
-    <div class="m-handle"></div>
+<div class="modal-bg" id="pomoSubjM" onclick="if(event.target===this)closeModal('pomoSubjM')">
+  <div class="modal"><div class="m-handle"></div><button class="m-close" onclick="closeModal('pomoSubjM')">✕</button>
     <div class="m-title">공부할 과목 선택</div>
-    <button class="m-close" onclick="closeModal('pomoSubjM')">✕</button>
     <div id="pomoSubjList"></div>
-    <button onclick="clearPomoSubj()" class="btn btn-sm" style="width:100%;margin-top:8px;color:var(--ink3);">과목 선택 해제</button>
+    <button class="btn btn-ol btn-sm" style="width:100%;margin-top:10px" onclick="clearPomoSubj()">과목 선택 해제</button>
   </div>
 </div>
 
 <!-- 과목 추가 -->
-<div class="modal-bg" id="addSM">
-  <div class="modal">
-    <div class="m-handle"></div>
+<div class="modal-bg" id="addSM" onclick="if(event.target===this)closeModal('addSM')">
+  <div class="modal"><div class="m-handle"></div><button class="m-close" onclick="closeModal('addSM')">✕</button>
     <div class="m-title">과목 추가</div>
-    <button class="m-close" onclick="closeModal('addSM')">✕</button>
-    <input class="inp" id="nSubjN" placeholder="과목 이름">
-    <div class="lbl">색 선택</div>
-    <div id="colGrid"></div>
-    <button onclick="addSubj()" class="btn-full" style="margin-top:8px;">추가</button>
+    <input class="inp" id="nSubjN" placeholder="과목 이름" maxlength="8">
+    <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-bottom:13px" id="colGrid"></div>
+    <button class="btn-full" onclick="addSubj()">추가</button>
   </div>
 </div>
 
 <!-- 계약서 작성 -->
-<div class="modal-bg" id="newCtrM">
-  <div class="modal">
-    <div class="m-handle"></div>
+<div class="modal-bg" id="newCtrM" onclick="if(event.target===this)closeModal('newCtrM')">
+  <div class="modal"><div class="m-handle"></div><button class="m-close" onclick="closeModal('newCtrM')">✕</button>
     <div class="m-title">계약서 작성</div>
-    <button class="m-close" onclick="closeModal('newCtrM')">✕</button>
-    <input class="inp" id="nc_s" type="date" placeholder="시작일">
-    <input class="inp" id="nc_e" type="date" placeholder="종료일">
-    <input class="inp" id="nc_g" placeholder="공부 목표 (예: 하루 6시간 30분)">
-    <input class="inp" id="nc_th" type="number" placeholder="벌점 한계 (기본 5점)">
-    <input class="inp" id="nc_pd" placeholder="벌점 초과 시 패널티 내용">
-    <div class="lbl" style="margin-top:4px;">위반 규칙</div>
-    <div id="ncRuleList" style="margin-bottom:8px;"></div>
-    <div style="display:flex;gap:6px;margin-bottom:10px;">
-      <input class="inp" id="nc_rn" placeholder="규칙 내용" style="margin:0;flex:1;">
-      <input class="inp" id="nc_rp" type="number" placeholder="점" style="margin:0;width:54px;text-align:center;">
-      <button onclick="addCRule()" class="btn btn-ac btn-sm">추가</button>
-    </div>
-    <button onclick="saveCtr()" class="btn-full">저장</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:2px"><input type="date" class="inp" id="nc_s" style="margin:0"><input type="date" class="inp" id="nc_e" style="margin:0"></div>
+    <input class="inp" id="nc_g" placeholder="일일 목표 순공시간">
+    <div style="font-size:.68rem;font-weight:700;color:var(--ink3);margin-bottom:5px">금지 규칙 & 벌점</div>
+    <div id="ncRuleList"></div>
+    <div style="display:flex;gap:5px;margin-bottom:9px"><input class="inp" id="nc_rn" placeholder="지양행동" style="margin:0;flex:1"><input class="inp" id="nc_rp" type="number" placeholder="점" min="1" max="10" value="1" style="margin:0;width:50px"><button class="btn btn-dk btn-sm" onclick="addCRule()" style="height:40px;flex-shrink:0">+</button></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px"><div><div style="font-size:.68rem;color:var(--ink2);margin-bottom:3px">누적 기준(점)</div><input class="inp" id="nc_th" type="number" min="1" max="20" value="5" style="margin:0"></div><div><div style="font-size:.68rem;color:var(--ink2);margin-bottom:3px">패널티</div><input class="inp" id="nc_pd" placeholder="예: 매점" style="margin:0"></div></div>
+    <button class="btn-full" style="margin-top:11px" onclick="saveCtr()">저장</button>
   </div>
 </div>
 
 <!-- 계약서 수정 확인 -->
-<div class="modal-bg" id="ctrConM">
-  <div class="modal">
-    <div class="m-handle"></div>
-    <div class="m-title">계약서 수정 확인</div>
-    <button class="m-close" onclick="closeModal('ctrConM')">✕</button>
-    <div style="font-size:.84rem;color:var(--ink2);margin-bottom:14px;">기존 계약서를 수정하시겠습니까?</div>
-    <div style="display:flex;gap:8px;">
-      <button onclick="closeModal('ctrConM')" class="btn" style="flex:1;">취소</button>
-      <button onclick="confirmCtrUpd()" class="btn btn-ac" style="flex:1;">수정</button>
-    </div>
+<div class="modal-bg" id="ctrConM" onclick="if(event.target===this)closeModal('ctrConM')">
+  <div class="modal"><div class="m-handle"></div><div class="m-title">계약서 수정 확인</div>
+    <div style="font-size:.8rem;color:var(--ink2);margin-bottom:11px;line-height:1.6">기존 계약서를 수정하시겠습니까?</div>
+    <div style="display:flex;gap:7px"><button class="btn btn-ol" style="flex:1" onclick="closeModal('ctrConM')">취소</button><button class="btn-full" style="flex:2" onclick="confirmCtrUpd()">수정</button></div>
   </div>
 </div>
 
 <!-- 벌점 신고 -->
-<div class="modal-bg" id="penM">
-  <div class="modal">
-    <div class="m-handle"></div>
+<div class="modal-bg" id="penM" onclick="if(event.target===this)closeModal('penM')">
+  <div class="modal"><div class="m-handle"></div><button class="m-close" onclick="closeModal('penM')">✕</button>
     <div class="m-title">벌점 신고</div>
-    <button class="m-close" onclick="closeModal('penM')">✕</button>
-    <select class="inp" id="penSel"><option>항목 없음</option></select>
-    <div id="penPrev" style="display:none;background:var(--rbg);padding:10px;border-radius:9px;font-size:.82rem;margin-bottom:10px;"></div>
-    <button onclick="submitPen()" class="btn-full" style="background:var(--red);">신고</button>
+    <select class="inp" id="penSel"></select>
+    <div id="penPrev" style="padding:8px;background:var(--rbg);border-radius:7px;font-size:.78rem;color:var(--red);margin-bottom:9px;display:none"></div>
+    <button class="btn-full" style="background:var(--red)" onclick="submitPen()">신고 제출</button>
   </div>
 </div>
 
 <!-- 내기 -->
-<div class="modal-bg" id="betM">
-  <div class="modal">
-    <div class="m-handle"></div>
-    <div class="m-title">내기 추가</div>
-    <button class="m-close" onclick="closeModal('betM')">✕</button>
-    <select class="inp" id="betOpp"><option>친구 선택</option></select>
-    <input class="inp" id="betAmt" type="number" placeholder="판돈 (P)">
-    <select class="inp" id="betCrit">
-      <option value="score">시험 점수 합산</option>
-      <option value="grade">등급 합산</option>
-      <option value="study">순공시간</option>
-    </select>
-    <div style="display:flex;gap:8px;">
-      <input class="inp" id="betS" type="date" style="flex:1;">
-      <input class="inp" id="betE" type="date" style="flex:1;">
-    </div>
-    <button onclick="submitBet()" class="btn-full">내기 시작</button>
+<div class="modal-bg" id="betM" onclick="if(event.target===this)closeModal('betM')">
+  <div class="modal"><div class="m-handle"></div><button class="m-close" onclick="closeModal('betM')">✕</button>
+    <div class="m-title">내기 신청</div>
+    <select class="inp" id="betOpp"></select>
+    <input class="inp" id="betAmt" type="number" min="10" max="500" step="10" value="50" placeholder="금액 (P)">
+    <select class="inp" id="betCrit"><option value="score">시험 점수 합산</option><option value="grade">등급 합산</option><option value="study">순공시간</option></select>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px"><input type="date" class="inp" id="betS" style="margin:0"><input type="date" class="inp" id="betE" style="margin:0"></div>
+    <button class="btn-full" onclick="submitBet()">신청</button>
   </div>
 </div>
 
 <!-- 내기 정산 -->
-<div class="modal-bg" id="settlM">
-  <div class="modal">
-    <div class="m-handle"></div>
+<div class="modal-bg" id="settlM" onclick="if(event.target===this)closeModal('settlM')">
+  <div class="modal"><div class="m-handle"></div><button class="m-close" onclick="closeModal('settlM')">✕</button>
     <div class="m-title">내기 정산</div>
-    <button class="m-close" onclick="closeModal('settlM')">✕</button>
     <input type="hidden" id="settlIdx">
-    <div id="settlMeta" style="font-size:.82rem;color:var(--ink2);margin-bottom:12px;"></div>
-    <div style="display:flex;gap:8px;">
-      <input class="inp" id="settlMine" type="number" placeholder="내 점수/시간" style="flex:1;">
-      <input class="inp" id="settlOpp" type="number" placeholder="상대 점수/시간" style="flex:1;">
-    </div>
-    <button onclick="confirmSettl()" class="btn-full">정산 완료</button>
-  </div>
-</div>
-
-<!-- 친구 연동 확인 -->
-<div class="modal-bg" id="connectConfirmM">
-  <div class="modal">
-    <div class="m-handle"></div>
-    <div id="connectInfo" style="text-align:center;padding:12px 0 20px;"></div>
-    <div style="display:flex;gap:8px;">
-      <button onclick="closeModal('connectConfirmM')" class="btn" style="flex:1;">취소</button>
-      <button onclick="confirmConnect()" class="btn btn-ac" style="flex:1;">연동</button>
-    </div>
-  </div>
-</div>
-
-<!-- 성적 입력 -->
-<div class="modal-bg" id="addMockM">
-  <div class="modal">
-    <div class="m-handle"></div>
-    <div class="m-title">성적 입력</div>
-    <button class="m-close" onclick="closeModal('addMockM')">✕</button>
-    <div style="display:flex;gap:8px;margin-bottom:8px;">
-      <select class="inp" id="mock_year" style="flex:1;margin:0;"></select>
-      <select class="inp" id="mock_month" style="flex:1;margin:0;">
-        <option value="3">3월</option><option value="4">4월</option>
-        <option value="6">6월</option><option value="7">7월</option>
-        <option value="9">9월</option><option value="10">10월</option>
-        <option value="11">수능</option>
-      </select>
-      <select class="inp" id="mock_grade" style="width:70px;margin:0;">
-        <option value="1">고1</option>
-        <option value="2" selected>고2</option>
-        <option value="3">고3</option>
-      </select>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-      <div><label style="font-size:.72rem;color:var(--ink2);">국어</label><div style="display:flex;gap:5px;align-items:center;"><input class="inp" id="mock_korean" type="number" min="0" max="100" style="margin:0;flex:1;" oninput="previewGrade('korean',this.value)"><span id="grade_korean" style="font-size:.78rem;font-weight:700;min-width:36px;">-</span></div></div>
-      <div><label style="font-size:.72rem;color:var(--ink2);">수학</label><div style="display:flex;gap:5px;align-items:center;"><input class="inp" id="mock_math" type="number" min="0" max="100" style="margin:0;flex:1;" oninput="previewGrade('math',this.value)"><span id="grade_math" style="font-size:.78rem;font-weight:700;min-width:36px;">-</span></div></div>
-      <div><label style="font-size:.72rem;color:var(--ink2);">영어</label><div style="display:flex;gap:5px;align-items:center;"><input class="inp" id="mock_english" type="number" min="0" max="100" style="margin:0;flex:1;" oninput="previewGrade('english',this.value)"><span id="grade_english" style="font-size:.78rem;font-weight:700;min-width:36px;">-</span></div></div>
-      <div><label style="font-size:.72rem;color:var(--ink2);">한국사</label><div style="display:flex;gap:5px;align-items:center;"><input class="inp" id="mock_history" type="number" min="0" max="50" style="margin:0;flex:1;" oninput="previewGrade('history',this.value)"><span id="grade_history" style="font-size:.78rem;font-weight:700;min-width:36px;">-</span></div></div>
-      <div><label style="font-size:.72rem;color:var(--ink2);">통합사회</label><div style="display:flex;gap:5px;align-items:center;"><input class="inp" id="mock_society" type="number" min="0" max="50" style="margin:0;flex:1;" oninput="previewGrade('society',this.value)"><span id="grade_society" style="font-size:.78rem;font-weight:700;min-width:36px;">-</span></div></div>
-      <div><label style="font-size:.72rem;color:var(--ink2);">통합과학</label><div style="display:flex;gap:5px;align-items:center;"><input class="inp" id="mock_science" type="number" min="0" max="50" style="margin:0;flex:1;" oninput="previewGrade('science',this.value)"><span id="grade_science" style="font-size:.78rem;font-weight:700;min-width:36px;">-</span></div></div>
-    </div>
-    <div style="text-align:right;font-size:.78rem;color:var(--ink2);margin:6px 0 10px;">합산 <span id="mock_total_preview" style="font-weight:700;color:var(--ink);">-</span></div>
-    <button onclick="saveMockScore()" class="btn-full">저장</button>
-  </div>
-</div>
-
-<!-- 성적 수정 -->
-<div class="modal-bg" id="editMockM">
-  <div class="modal">
-    <div class="m-handle"></div>
-    <div class="m-title" id="editMockTitle"></div>
-    <button class="m-close" onclick="closeModal('editMockM')">✕</button>
-    <input type="hidden" id="editMockId">
-    <div class="lbl" style="margin-bottom:8px;">실제 등급 입력</div>
-    <div id="editMockRows"></div>
-    <div style="display:flex;gap:8px;margin-top:6px;">
-      <button onclick="deleteMockFromEdit()" class="btn" style="flex:1;color:var(--red);border-color:#fecaca;">삭제</button>
-      <button onclick="saveRealGrades()" class="btn btn-ac" style="flex:1;">저장</button>
-    </div>
-  </div>
-</div>
-
-<!-- 캘린더 연/월 선택 -->
-<div class="modal-bg" id="calPickM">
-  <div class="modal">
-    <div class="m-handle"></div>
-    <div class="m-title">연/월 선택</div>
-    <button class="m-close" onclick="closeModal('calPickM')">✕</button>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-      <button onclick="calPickYear(-1)" class="btn btn-sm">‹</button>
-      <div id="calPickYearLbl" style="font-weight:800;font-size:.95rem;"></div>
-      <button onclick="calPickYear(1)" class="btn btn-sm">›</button>
-    </div>
-    <div id="calPickMonths" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;"></div>
-  </div>
-</div>
-
-<!-- 날짜 상세 -->
-<div class="modal-bg" id="dayDetailM">
-  <div class="modal">
-    <div class="m-handle"></div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-      <button onclick="dayDetailNav(-1)" class="btn btn-sm">‹ 전날</button>
-      <div class="m-title" id="dayDetailTitle" style="margin:0;"></div>
-      <button onclick="dayDetailNav(1)" class="btn btn-sm">다음 ›</button>
-    </div>
-    <button class="m-close" onclick="closeModal('dayDetailM')">✕</button>
-    <div id="dayDetailSecs" style="font-family:monospace;font-size:1.4rem;font-weight:700;text-align:center;margin-bottom:14px;color:var(--green);"></div>
-    <div class="dd-subj-bars"></div>
-    <div class="dd-grid-wrap">
-      <div>
-        <div class="dd-grid-label">계획</div>
-        <div class="dd-grid-box" id="dayDetailPlan"></div>
-      </div>
-      <div>
-        <div class="dd-grid-label">실제 공부</div>
-        <div class="dd-grid-box" id="dayDetailTimeline"></div>
-      </div>
-    </div>
-    <div class="lbl">하루 평가</div>
-    <div class="dd-eval-box" id="dayDetailEval"></div>
-  </div>
-</div>
-
-<!-- 알림 시간 추가 -->
-<div class="modal-bg" id="alertTimeM">
-  <div class="modal">
-    <div class="m-handle"></div>
-    <div class="m-title">알림 시간 추가</div>
-    <button class="m-close" onclick="closeModal('alertTimeM')">✕</button>
-    <input class="inp" id="alertTimeInput" type="time">
-    <div id="alertTimePresets" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;"></div>
-    <button onclick="confirmAddAlertTime()" class="btn-full">추가</button>
-  </div>
-</div>
-
-<!-- 사진 보기 -->
-<div class="modal-bg" id="photoViewM">
-  <div class="modal">
-    <div class="m-handle"></div>
-    <button class="m-close" onclick="closeModal('photoViewM')">✕</button>
-    <img id="photoViewImg" style="width:100%;border-radius:10px;display:block;margin-bottom:10px;">
-    <button onclick="retakePhoto()" class="btn-full">재촬영</button>
+    <div style="font-size:.78rem;color:var(--ink2);margin-bottom:9px" id="settlMeta"></div>
+    <input class="inp" id="settlMine" placeholder="내 점수/시간">
+    <input class="inp" id="settlOpp" placeholder="상대방 점수/시간">
+    <button class="btn-full" onclick="confirmSettl()">정산 제출</button>
   </div>
 </div>
 
 <!-- 친구 추가 -->
-<div class="modal-bg" id="addFrM">
-  <div class="modal">
-    <div class="m-handle"></div>
+<div class="modal-bg" id="addFrM" onclick="if(event.target===this)closeModal('addFrM')">
+  <div class="modal"><div class="m-handle"></div><button class="m-close" onclick="closeModal('addFrM')">✕</button>
     <div class="m-title">친구 추가</div>
-    <button class="m-close" onclick="closeModal('addFrM')">✕</button>
     <input class="inp" id="fr_name" placeholder="이름">
     <input class="inp" id="fr_phone" placeholder="연락처">
-    <input class="inp" id="fr_code" placeholder="공유 코드 (선택)" style="text-transform:uppercase;letter-spacing:3px;">
-    <input type="color" id="fr_color" class="cpick" style="margin-bottom:10px;">
-    <button onclick="addFriend()" class="btn-full">추가</button>
+    <input class="inp" id="fr_code" placeholder="공유 코드 (선택)" maxlength="6" style="text-transform:uppercase;letter-spacing:2px;font-family:monospace;text-align:center" oninput="this.value=this.value.toUpperCase()">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><div style="font-size:.75rem;color:var(--ink2)">색상</div><input type="color" id="fr_color" class="cpick" value="#5b4fcf"></div>
+    <button class="btn-full" onclick="addFriend()">추가</button>
+  </div>
+</div>
+
+<!-- 친구 연동 확인 -->
+<div class="modal-bg" id="connectConfirmM" onclick="if(event.target===this)closeModal('connectConfirmM')">
+  <div class="modal"><div class="m-handle"></div><div class="m-title">연동 확인</div>
+    <div id="connectInfo" style="font-size:.85rem;color:var(--ink2);margin-bottom:14px;line-height:1.6;text-align:center"></div>
+    <div style="display:flex;gap:8px"><button class="btn btn-ol" style="flex:1" onclick="closeModal('connectConfirmM')">취소</button><button class="btn-full" style="flex:2" onclick="confirmConnect()">연동</button></div>
+  </div>
+</div>
+
+<!-- 성적 입력 -->
+<div class="modal-bg" id="addMockM" onclick="if(event.target===this)closeModal('addMockM')">
+  <div class="modal"><div class="m-handle"></div><button class="m-close" onclick="closeModal('addMockM')">✕</button>
+    <div class="m-title">모의고사 성적 입력</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:4px">
+      <div><div style="font-size:.7rem;color:var(--ink2);margin-bottom:4px;font-weight:600">학년</div><select class="inp" id="mock_grade" style="margin:0"><option value="3">고3</option><option value="2" selected>고2</option><option value="1">고1</option></select></div>
+      <div><div style="font-size:.7rem;color:var(--ink2);margin-bottom:4px;font-weight:600">연도</div><select class="inp" id="mock_year" style="margin:0"></select></div>
+      <div><div style="font-size:.7rem;color:var(--ink2);margin-bottom:4px;font-weight:600">월</div><select class="inp" id="mock_month" style="margin:0"><option value="3">3월</option><option value="6">6월</option><option value="9">9월</option><option value="10">10월</option><option value="11">수능</option></select></div>
+    </div>
+    <div style="font-size:.7rem;color:var(--ink2);margin:10px 0 6px;font-weight:600">과목별 점수</div>
+    <div style="display:grid;grid-template-columns:72px 1fr 60px;gap:6px;align-items:center;margin-bottom:8px"><div style="font-size:.82rem;font-weight:700;padding:0 4px">국어</div><input class="inp" id="mock_korean" type="number" min="0" max="100" placeholder="/100" style="margin:0" oninput="previewGrade('korean',this.value)"><div id="grade_korean" style="font-family:monospace;font-size:.9rem;font-weight:700;text-align:center;color:var(--acc)">-</div></div>
+    <div style="display:grid;grid-template-columns:72px 1fr 60px;gap:6px;align-items:center;margin-bottom:8px"><div style="font-size:.82rem;font-weight:700;padding:0 4px">수학</div><input class="inp" id="mock_math" type="number" min="0" max="100" placeholder="/100" style="margin:0" oninput="previewGrade('math',this.value)"><div id="grade_math" style="font-family:monospace;font-size:.9rem;font-weight:700;text-align:center;color:var(--acc)">-</div></div>
+    <div style="display:grid;grid-template-columns:72px 1fr 60px;gap:6px;align-items:center;margin-bottom:8px"><div style="font-size:.82rem;font-weight:700;padding:0 4px">영어</div><input class="inp" id="mock_english" type="number" min="0" max="100" placeholder="/100" style="margin:0" oninput="previewGrade('english',this.value)"><div id="grade_english" style="font-family:monospace;font-size:.9rem;font-weight:700;text-align:center;color:var(--acc)">-</div></div>
+    <div style="display:grid;grid-template-columns:72px 1fr 60px;gap:6px;align-items:center;margin-bottom:8px"><div style="font-size:.82rem;font-weight:700;padding:0 4px">한국사</div><input class="inp" id="mock_history" type="number" min="0" max="50" placeholder="/50" style="margin:0" oninput="previewGrade('history',this.value)"><div id="grade_history" style="font-family:monospace;font-size:.9rem;font-weight:700;text-align:center;color:var(--acc)">-</div></div>
+    <div style="display:grid;grid-template-columns:72px 1fr 60px;gap:6px;align-items:center;margin-bottom:8px"><div style="font-size:.82rem;font-weight:700;padding:0 4px">통합사회</div><input class="inp" id="mock_society" type="number" min="0" max="50" placeholder="/50" style="margin:0" oninput="previewGrade('society',this.value)"><div id="grade_society" style="font-family:monospace;font-size:.9rem;font-weight:700;text-align:center;color:var(--acc)">-</div></div>
+    <div style="display:grid;grid-template-columns:72px 1fr 60px;gap:6px;align-items:center;margin-bottom:8px"><div style="font-size:.82rem;font-weight:700;padding:0 4px">통합과학</div><input class="inp" id="mock_science" type="number" min="0" max="50" placeholder="/50" style="margin:0" oninput="previewGrade('science',this.value)"><div id="grade_science" style="font-family:monospace;font-size:.9rem;font-weight:700;text-align:center;color:var(--acc)">-</div></div>
+    <div style="background:var(--bg);border-radius:10px;padding:12px;margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:.82rem;font-weight:700">합산</span><span style="font-family:monospace;font-size:1.1rem;font-weight:700;color:var(--acc)" id="mock_total_preview">-</span></div></div>
+    <button class="btn-full" onclick="saveMockScore()">저장</button>
+  </div>
+</div>
+
+<!-- 성적 상세 -->
+<div class="modal-bg" id="editMockM" onclick="if(event.target===this)closeModal('editMockM')">
+  <div class="modal"><div class="m-handle"></div><button class="m-close" onclick="closeModal('editMockM')">✕</button>
+    <div class="m-title" id="editMockTitle">성적 상세</div>
+    <input type="hidden" id="editMockId">
+    <div id="editMockRows"></div>
+    <button class="btn-full" onclick="saveRealGrades()">실제 등급 저장</button>
+    <button class="btn btn-ol btn-sm" style="width:100%;margin-top:8px" onclick="deleteMockFromEdit()">삭제</button>
+  </div>
+</div>
+
+<!-- 캘린더 월 선택 -->
+<div class="modal-bg" id="calPickM" onclick="if(event.target===this)closeModal('calPickM')">
+  <div class="modal"><div class="m-handle"></div><button class="m-close" onclick="closeModal('calPickM')">✕</button>
+    <div class="m-title">년월 선택</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <button class="btn btn-ol btn-sm" onclick="calPickYear(-1)">‹</button>
+      <div style="font-weight:700;font-size:1rem" id="calPickYearLbl"></div>
+      <button class="btn btn-ol btn-sm" onclick="calPickYear(1)">›</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px" id="calPickMonths"></div>
+  </div>
+</div>
+
+<!-- 날짜 상세 -->
+<div class="modal-bg" id="dayDetailM" onclick="if(event.target===this)closeModal('dayDetailM')" style="align-items:flex-end">
+  <div style="width:100%;max-width:430px;background:var(--white);border-radius:22px 22px 0 0;max-height:85vh;overflow:hidden;display:flex;flex-direction:column">
+    <div style="padding:13px 17px 9px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)">
+      <button onclick="dayDetailNav(-1)" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--ink);padding:4px 8px">‹</button>
+      <div style="font-weight:700;font-size:.93rem" id="dayDetailTitle">날짜</div>
+      <button onclick="dayDetailNav(1)" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--ink);padding:4px 8px">›</button>
+    </div>
+    <div style="overflow-y:auto;padding:15px 17px;flex:1">
+      <div style="text-align:center;padding:12px 0;margin-bottom:13px;background:var(--bg);border-radius:12px">
+        <div style="font-size:.7rem;color:var(--ink3);margin-bottom:4px">순공시간</div>
+        <div style="font-family:monospace;font-size:2rem;font-weight:700;color:var(--acc)" id="dayDetailSecs">-</div>
+      </div>
+      <div style="font-weight:700;font-size:.85rem;margin-bottom:10px">플래너 / 공부 기록</div>
+      <div class="dd-grid-wrap">
+        <div><div style="font-size:.64rem;color:var(--ink3);margin-bottom:4px;text-align:center;font-weight:600">계획</div><div class="dd-grid-box" id="dayDetailPlan"></div></div>
+        <div><div style="font-size:.64rem;color:var(--ink3);margin-bottom:4px;text-align:center;font-weight:600">공부 기록</div><div class="dd-grid-box" id="dayDetailTimeline"></div></div>
+      </div>
+      <div style="font-weight:700;font-size:.85rem;margin-bottom:8px">이 날의 평가</div>
+      <div id="dayDetailEval" class="dd-eval-box">기록 없음</div>
+    </div>
+    <div style="padding:12px 17px;border-top:1px solid var(--line)"><button class="btn-full" onclick="closeModal('dayDetailM')">닫기</button></div>
+  </div>
+</div>
+
+<!-- 알림 시간 추가 -->
+<div class="modal-bg" id="alertTimeM" onclick="if(event.target===this)closeModal('alertTimeM')">
+  <div class="modal"><div class="m-handle"></div><button class="m-close" onclick="closeModal('alertTimeM')">✕</button>
+    <div class="m-title">알림 시간 추가</div>
+    <input type="time" class="inp" id="alertTimeInput" style="font-size:1.1rem;text-align:center;font-family:monospace;padding:14px">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px" id="alertTimePresets"></div>
+    <button class="btn-full" onclick="confirmAddAlertTime()">추가</button>
+  </div>
+</div>
+
+<!-- 사진 보기 -->
+<div class="modal-bg" id="photoViewM" onclick="closeModal('photoViewM')" style="align-items:center;background:rgba(0,0,0,.88)">
+  <div style="max-width:420px;width:94%;position:relative">
+    <button onclick="closeModal('photoViewM')" style="position:absolute;top:-36px;right:0;background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer">✕</button>
+    <img id="photoViewImg" style="width:100%;border-radius:12px;display:block" src="">
+    <button class="btn btn-dk" style="width:100%;margin-top:10px" onclick="retakePhoto()">다시 찍기</button>
   </div>
 </div>
 
 <!-- 학원방 만들기 -->
-<div class="modal-bg" id="createAcademyM">
-  <div class="modal">
-    <div class="m-handle"></div>
+<div class="modal-bg" id="createAcademyM" onclick="if(event.target===this)closeModal('createAcademyM')">
+  <div class="modal"><div class="m-handle"></div><button class="m-close" onclick="closeModal('createAcademyM')">✕</button>
     <div class="m-title">학원방 만들기</div>
-    <button class="m-close" onclick="closeModal('createAcademyM')">✕</button>
-    <input class="inp" id="newAcademyName2" placeholder="학원방 이름">
-    <button onclick="createAcademy()" class="btn-full">만들기</button>
+    <input class="inp" id="newAcademyName" placeholder="학원/반 이름 (예: OO수학 고2A반)">
+    <button class="btn-full" onclick="createAcademy()">만들기</button>
   </div>
 </div>
 
-<!-- ── 토스트 ── -->
+<!-- 토스트 -->
 <div class="toast" id="toastEl"></div>
-
-<!-- ── 알림 배너 ── -->
-<div class="alert-banner" id="alertBanner">
-  <button class="alert-close" onclick="dismissAlert()">✕</button>
-  <div class="alert-inner">
-    <div class="alert-top">
-      <div class="alert-icon">📚</div>
-      <div class="alert-title">STUDY ALERT</div>
-    </div>
-    <div class="alert-msg" id="alertMsg">지금 공부할 시간이야!</div>
-    <div class="alert-sub" id="alertSub">StudyGroup</div>
-  </div>
-</div>
 
 <script src="app.js"></script>
 </body>
