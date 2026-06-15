@@ -332,6 +332,20 @@ function renderDayDetail(){
   if(planEl)planEl.innerHTML=Object.keys(planData).length?miniGridHTML(false):'<div style="display:flex;align-items:center;justify-content:center;height:100%;color:rgba(255,255,255,.3);font-size:.7rem">계획 없음</div>';
   if(tlEl)tlEl.innerHTML=daySess.length?miniGridHTML(true):'<div style="display:flex;align-items:center;justify-content:center;height:100%;color:rgba(255,255,255,.35);font-size:.75rem;flex-direction:column;gap:6px"><div style="font-size:1.5rem">😴</div>공부 기록 없음</div>';
   var evalEl=document.getElementById('dayDetailEval');if(evalEl){evalEl.textContent=evalText||'기록 없음';evalEl.style.color=evalText?'var(--ink)':'var(--ink3)';}
+  var todoEl=document.getElementById('dayDetailTodos');
+  if(todoEl){
+    var todoHtml='';
+    subjs.forEach(function(sub){
+      var list=todos[sub.id]||[];
+      if(!list.length)return;
+      todoHtml+='<div class="dd-todo-subj"><div class="dd-todo-subj-hd" style="color:'+sub.color+'">'+escapeHtml(sub.name)+'</div><div class="dd-todo-list">';
+      list.forEach(function(t){
+        todoHtml+='<div class="dd-todo-row"><div class="dd-todo-text'+(t.done?' done':'')+'">'+escapeHtml(t.text)+'</div><div class="dd-todo-mark '+(t.done?'done':'undone')+'">'+(t.done?'O':'X')+'</div></div>';
+      });
+      todoHtml+='</div></div>';
+    });
+    todoEl.innerHTML=todoHtml||'<div style="font-size:.78rem;color:var(--ink3);text-align:center;padding:10px 0">등록된 TODO가 없습니다</div>';
+  }
   var subjContainer=document.querySelector('#dayDetailM .dd-subj-bars');if(subjContainer)subjContainer.innerHTML=subjBarsHTML;
 }
 
