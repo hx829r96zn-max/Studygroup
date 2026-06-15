@@ -306,47 +306,204 @@ function renderCal(){var grid=document.getElementById('calGrid'),title=document.
 function updateStats(){var t=getTSecs(),h=Math.floor(t/3600),m=Math.floor((t%3600)/60);var el=document.getElementById('stTotal');if(el)el.textContent=h+'h'+(m>0?' '+m+'m':'');var el3=document.getElementById('stAvg');if(el3)el3.textContent=(Math.floor(t/3600*10)/10)+'h';buildHm('hmHome');buildStreak();updateStreakBanner();renderAgeCompare();pushAgeData();loadDailyEval();}
 
 // ROOM
-var shareFeed=JSON.parse(localStorage.getItem('sg_sharefeed')||'[]');
-function svShareFeed(){localStorage.setItem('sg_sharefeed',JSON.stringify(shareFeed.slice(0,40)));}
-function pushShare(item){item.code=getMyCode();item.name=(prof&&prof.name)||'나';item.ts=Date.now();shareFeed.unshift(item);svShareFeed();try{window._fbSet('shareFeed/'+getMyCode()+'_'+item.ts,item);}catch(e){}renderShareFeed();}
-function retakePhoto(){closeModal('photoViewM');shareCapture();}
-function shareCapture(){var inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.capture='environment';inp.onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){var img=new Image();img.onload=function(){var cv=document.createElement('canvas');var mx=600,sc=Math.min(1,mx/Math.max(img.width,img.height));cv.width=img.width*sc;cv.height=img.height*sc;cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);pushShare({type:'photo',img:cv.toDataURL('image/jpeg',0.7)});toast('촬영 인증 업로드 완료');};img.src=ev.target.result;};r.readAsDataURL(f);};inp.click();}
-function shareStudyRecord(){
+// ROOM (그룹)
+var myRooms=JSON.parse(localStorage.getItem('sg_myrooms')||'[]'); // [{code,name,maxMembers,ownerCode,ownerName,memberCount,attendPct}]
+var currentRoom=null;
+var _roomFeedListener=null;
+function svMyRooms(){localStorage.setItem('sg_myrooms',JSON.stringify(myRooms));}
+function onRoomJoinInput(el){el.value=(el.value||'').toUpperCase();var btn=document.getElementById('roomJoinBtn');if(btn){if(el.value.length===6){btn.disabled=false;btn.style.opacity='1';}else{btn.disabled=true;btn.style.opacity='.4';}}}
+function openCreateRoomM(){var created=myRooms.filter(function(r){return r.ownerCode===getMyCode();}).length;if(created>=2){toast('방은 최대 2개까지 만들 수 있어요');return;}var n=document.getElementById('newRoomName');if(n)n.value='';var m=document.getElementById('newRoomMax');if(m)m.value='';var box=document.getElementById('newRoomCodeBox');if(box)box.style.display='none';var cb=document.getElementById('createRoomBtn');if(cb){cb.disabled=true;cb.style.opacity='.4';}window._newRoomCode=null;openModal('createRoomM');}
+function generateRoomCode(){
+  var name=((document.getElementById('newRoomName')||{}).value||'').trim();
+  var max=parseInt((document.getElementById('newRoomMax')||{}).value);
+  if(!name){toast('방 이름을 입력하세요');return;}
+  if(!max||max<2){toast('최대 인원을 2명 이상 입력하세요');return;}
+  function show(code){window._newRoomCode=code;var box=document.getElementById('newRoomCodeBox');if(box)box.style.display='block';var val=document.getElementById('newRoomCodeVal');if(val)val.textContent=code;var cb=document.getElementById('createRoomBtn');if(cb){cb.disabled=false;cb.style.opacity='1';}}
+  function tryCode(){var code=Math.random().toString(36).substring(2,8).toUpperCase();if(!window._fbReady){show(code);return;}window._fbGet('rooms/'+code).then(function(d){if(d)tryCode();else show(code);}).catch(function(){show(code);});}
+  tryCode();
+}
+function createRoom(){
+  var name=((document.getElementById('newRoomName')||{}).value||'').trim();
+  var max=parseInt((document.getElementById('newRoomMax')||{}).value);
+  var code=window._newRoomCode;
+  if(!name||!max||!code){toast('코드를 먼저 생성하세요');return;}
+  var myCode=getMyCode(),myName=prof.name||'나';
+  var roomData={name:name,maxMembers:max,ownerCode:myCode,ownerName:myName,createdAt:Date.now(),members:{}};
+  roomData.members[myCode]={name:myName,joinedAt:Date.now()};
+  if(window._fbReady)window._fbSet('rooms/'+code,roomData);
+  myRooms.push({code:code,name:name,maxMembers:max,ownerCode:myCode,ownerName:myName,memberCount:1,attendPct:0});
+  svMyRooms();closeModal('createRoomM');renderRoomList();toast('✅ 그룹이 생성되었습니다');
+}
+function joinRoom(){
+  var inp=document.getElementById('roomJoinCode');
+  var code=((inp||{}).value||'').toUpperCase();
+  if(code.length!==6)return;
+  if(myRooms.find(function(r){return r.code===code;})){toast('이미 참여 중인 그룹입니다');openRoom(code);return;}
+  if(!window._fbReady){toast('연결 후 다시 시도해주세요');return;}
+  window._fbGet('rooms/'+code).then(function(d){
+    if(!d){toast('존재하지 않는 코드입니다');return;}
+    var members=d.members||{};var codes=Object.keys(members);
+    if(codes.length>=(d.maxMembers||0)){toast('그룹 인원이 가득 찼습니다');return;}
+    var myCode=getMyCode(),myName=prof.name||'나';
+    window._fbSet('rooms/'+code+'/members/'+myCode,{name:myName,joinedAt:Date.now()});
+    myRooms.push({code:code,name:d.name,maxMembers:d.maxMembers,ownerCode:d.ownerCode,ownerName:d.ownerName,memberCount:codes.length+1,attendPct:0});
+    svMyRooms();if(inp)inp.value='';onRoomJoinInput(inp||{value:''});renderRoomList();toast('✅ 그룹에 입장했습니다');
+  }).catch(function(){toast('연결 오류');});
+}
+function renderRoomList(){
+  var el=document.getElementById('myRoomList');if(!el)return;
+  if(!myRooms.length){el.innerHTML='<div style="font-size:.78rem;color:var(--ink3);text-align:center;padding:18px 0">참여한 그룹이 없습니다</div>';return;}
+  el.innerHTML='';
+  myRooms.forEach(function(r){
+    var card=document.createElement('div');card.className='card';card.style.marginBottom='10px';card.style.cursor='pointer';
+    card.onclick=function(){openRoom(r.code);};
+    card.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div style="font-weight:800;font-size:.9rem">'+escapeHtml(r.name||'')+'</div><div style="font-size:.72rem;color:var(--ink2);margin-top:3px">'+escapeHtml(r.ownerName||'')+'</div><div style="font-size:.72rem;color:var(--ink3);margin-top:1px" id="roomcnt-'+r.code+'">'+(r.memberCount||1)+'/'+(r.maxMembers||0)+'명</div></div><div style="font-size:.72rem;font-weight:700;color:var(--green)" id="roomattend-'+r.code+'">출석률 '+(r.attendPct!=null?r.attendPct:0)+'%</div></div>';
+    el.appendChild(card);
+  });
+  myRooms.forEach(refreshRoomCard);
+}
+function refreshRoomCard(r){
+  if(!window._fbReady)return;
+  window._fbGet('rooms/'+r.code).then(function(d){
+    if(!d)return;
+    var members=d.members||{};var codes=Object.keys(members);
+    r.memberCount=codes.length||1;r.ownerName=d.ownerName||r.ownerName;r.name=d.name||r.name;r.maxMembers=d.maxMembers||r.maxMembers;
+    var cntEl=document.getElementById('roomcnt-'+r.code);if(cntEl)cntEl.textContent=r.memberCount+'/'+(r.maxMembers||0)+'명';
+    svMyRooms();
+    var proms=codes.map(function(c){return window._fbGet('users/'+c).then(function(u){return!!(u&&u.todayStudy&&u.todayStudy.secs>=7200);}).catch(function(){return false;});});
+    Promise.all(proms).then(function(results){
+      var present=results.filter(Boolean).length;
+      r.attendPct=codes.length?Math.round(present/codes.length*100):0;
+      var aEl=document.getElementById('roomattend-'+r.code);if(aEl)aEl.textContent='출석률 '+r.attendPct+'%';
+      svMyRooms();
+    });
+  }).catch(function(){});
+}
+function openRoom(code){
+  currentRoom=myRooms.find(function(r){return r.code===code;});
+  if(!currentRoom)return;
+  var t=document.getElementById('rvTitle');if(t)t.textContent=currentRoom.name;
+  var c=document.getElementById('rvCode');if(c){c.style.display=cfg.grpHideCode===true?'none':'block';c.textContent='코드: '+code;}
+  var pg=document.getElementById('pg-roomview');if(pg)pg.style.display='flex';
+  var nv=document.querySelector('nav');if(nv)nv.style.display='none';
+  var tb=document.querySelector('.tabbar');if(tb)tb.style.display='none';
+  currentRoom._feedData={};
+  renderRoomFeed();subscribeRoomFeed(code);renderRoomTodoPreview();
+}
+function closeRoomView(){
+  var pg=document.getElementById('pg-roomview');if(pg)pg.style.display='none';
+  var nv=document.querySelector('nav');if(nv)nv.style.display='flex';
+  var tb=document.querySelector('.tabbar');if(tb)tb.style.display='flex';
+  if(_roomFeedListener){try{_roomFeedListener();}catch(e){}_roomFeedListener=null;}
+  currentRoom=null;renderRoomList();
+}
+function subscribeRoomFeed(code){
+  if(_roomFeedListener){try{_roomFeedListener();}catch(e){}_roomFeedListener=null;}
+  if(!window._fbReady)return;
+  _roomFeedListener=window._fbListen('rooms/'+code+'/feed',function(data){if(currentRoom){currentRoom._feedData=data||{};renderRoomFeed();}});
+}
+function renderRoomFeed(){
+  var el=document.getElementById('rvFeed');if(!el||!currentRoom)return;
+  var data=currentRoom._feedData||{};
+  var items=Object.keys(data).map(function(k){return data[k];});
+  items.sort(function(a,b){return(a.ts||0)-(b.ts||0);});
+  if(!items.length){el.innerHTML='<div style="font-size:.78rem;color:var(--ink3);text-align:center;padding:30px 0">아직 공유된 기록이 없습니다</div>';return;}
+  el.innerHTML='';
+  items.forEach(function(it){
+    var card=document.createElement('div');card.className='card';card.style.marginBottom='10px';
+    var head='<div style="display:flex;align-items:center;gap:7px;margin-bottom:8px"><div style="width:26px;height:26px;border-radius:50%;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700">'+((it.name||'?')[0])+'</div><div style="font-size:.8rem;font-weight:700">'+(it.name||'')+'</div><div style="margin-left:auto;font-size:.66rem;color:var(--ink3)">'+timeAgo(it.ts)+'</div></div>';
+    card.innerHTML=head;
+    if(it.type==='photo'){
+      var im=document.createElement('img');im.src=it.img;im.style.cssText='width:100%;border-radius:10px;display:block;cursor:pointer';
+      im.onclick=function(){var pv=document.getElementById('photoViewImg');if(pv)pv.src=it.img;openModal('photoViewM');};
+      card.appendChild(im);
+    }else{
+      var box=document.createElement('div');box.style.cssText='background:#111;border-radius:10px;padding:12px;color:#fff';
+      var bars='';(it.segs||[]).forEach(function(g){var left=g.s/1440*100,w=Math.max(0.5,(g.e-g.s)/1440*100);bars+='<div style="position:absolute;top:0;bottom:0;left:'+left+'%;width:'+w+'%;background:'+(g.c||'#a78bfa')+';border-radius:2px"></div>';});
+      var boxHtml='<div style="font-size:.7rem;color:rgba(255,255,255,.5);margin-bottom:6px">오늘 순공 '+(it.total||'')+'</div><div style="position:relative;height:22px;background:#222;border-radius:4px;overflow:hidden">'+bars+'</div>';
+      if(it.todoSummary&&it.todoSummary.length){
+        boxHtml+='<div style="margin-top:10px">';
+        it.todoSummary.forEach(function(g){
+          boxHtml+='<div style="display:flex;gap:7px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.08)"><div style="width:8px;height:8px;border-radius:50%;background:'+g.color+';flex-shrink:0;margin-top:4px"></div><div style="flex:1;min-width:0"><div style="font-size:.72rem;font-weight:700;color:#fff;margin-bottom:3px">'+escapeHtml(g.name)+'</div>';
+          (g.items||[]).forEach(function(t){boxHtml+='<div style="display:flex;justify-content:space-between;gap:6px;font-size:.7rem;padding:1px 0"><span style="color:'+(t.done?'rgba(255,255,255,.35)':'rgba(255,255,255,.8)')+';text-decoration:'+(t.done?'line-through':'none')+'">'+escapeHtml(t.text)+'</span><span style="font-weight:800;flex-shrink:0;color:'+(t.done?'#22c55e':'#ef4444')+'">'+(t.done?'O':'X')+'</span></div>';});
+          boxHtml+='</div></div>';
+        });
+        boxHtml+='</div>';
+      }
+      box.innerHTML=boxHtml;card.appendChild(box);
+    }
+    el.appendChild(card);
+  });
+  el.scrollTop=el.scrollHeight;
+}
+function renderRoomTodoPreview(){
+  var el=document.getElementById('rvTodoPreview');if(!el)return;
+  var dateKey=today();
+  var totalSec=getTSecs();var h=Math.floor(totalSec/3600),m=Math.floor((totalSec%3600)/60);
+  var total=(h>0?h+'h ':'')+String(m).padStart(2,'0')+'m';
+  var html='<div style="font-size:.66rem;color:rgba(255,255,255,.5);margin-bottom:5px">오늘 순공 '+total+'</div>';
+  if(cfg.grpHideTodo===true){
+    html+='<div style="font-size:.64rem;color:rgba(255,255,255,.4)">TODO 비공개</div>';
+  }else{
+    var any=false;
+    subjs.forEach(function(sub){
+      var list=getTodoList(dateKey,sub.id);if(!list.length)return;any=true;
+      html+='<div style="font-size:.66rem;font-weight:700;color:'+sub.color+';margin-top:4px">'+escapeHtml(sub.name)+'</div>';
+      list.forEach(function(t){html+='<div style="display:flex;justify-content:space-between;gap:5px;font-size:.64rem;color:'+(t.done?'rgba(255,255,255,.35)':'rgba(255,255,255,.8)')+';text-decoration:'+(t.done?'line-through':'none')+'"><span>'+escapeHtml(t.text)+'</span><span style="font-weight:800;color:'+(t.done?'#22c55e':'#ef4444')+'">'+(t.done?'O':'X')+'</span></div>';});
+    });
+    if(!any)html+='<div style="font-size:.64rem;color:rgba(255,255,255,.3)">등록된 TODO 없음</div>';
+  }
+  el.innerHTML=html;
+}
+function shareToRoom(){
+  if(!currentRoom)return;
   var dateKey=today();
   var daySess=sess.filter(function(s){return studyDayOf(new Date(s.start))===dateKey;});
-  var segs=daySess.map(function(s){
-    var st=new Date(s.start),en=new Date(s.end||Date.now());
-    var sMin=st.getHours()*60+st.getMinutes(),eMin=en.getHours()*60+en.getMinutes()+(en.getSeconds()>0||en.getMinutes()===st.getMinutes()?1:0);
-    if(eMin<=sMin)eMin=sMin+1;
-    return{s:sMin,e:Math.min(1440,eMin),c:s.color||'#a78bfa'};
-  });
-  var totalSec=getTSecs();
-  var h=Math.floor(totalSec/3600),m=Math.floor((totalSec%3600)/60);
+  var segs=daySess.map(function(s){var st=new Date(s.start),en=new Date(s.end||Date.now());var sMin=st.getHours()*60+st.getMinutes(),eMin=en.getHours()*60+en.getMinutes()+(en.getSeconds()>0||en.getMinutes()===st.getMinutes()?1:0);if(eMin<=sMin)eMin=sMin+1;return{s:sMin,e:Math.min(1440,eMin),c:s.color||'#a78bfa'};});
+  var totalSec=getTSecs();var h=Math.floor(totalSec/3600),m=Math.floor((totalSec%3600)/60);
   var total=(h>0?h+'h ':'')+String(m).padStart(2,'0')+'m';
   var todoSummary=[];
-  subjs.forEach(function(sub){
-    var list=getTodoList(dateKey,sub.id);
-    if(list.length)todoSummary.push({name:sub.name,color:sub.color,items:list});
-  });
-  pushShare({type:'record',segs:segs,total:total,todoSummary:todoSummary});
-  toast('오늘 기록을 공유했습니다 📤');
+  if(cfg.grpHideTodo!==true){subjs.forEach(function(sub){var list=getTodoList(dateKey,sub.id);if(list.length)todoSummary.push({name:sub.name,color:sub.color,items:list});});}
+  var item={type:'record',name:prof.name||'나',code:getMyCode(),ts:Date.now(),segs:segs,total:total,todoSummary:todoSummary};
+  if(window._fbReady)window._fbSet('rooms/'+currentRoom.code+'/feed/'+Date.now(),item);
+  toast('📤 공유했습니다');
 }
-function updateShareLive(){var t=getTSecs(),h=Math.floor(t/3600),m=Math.floor((t%3600)/60),s=Math.floor(t%60);var te=document.getElementById('shareLiveTime');if(te)te.textContent=h+'h '+String(m).padStart(2,'0')+'m '+String(s).padStart(2,'0')+'s';var goalSecs=((prof&&prof.goal)||6.5)*3600;var bar=document.getElementById('shareLiveBar');if(bar)bar.style.width=Math.min(100,Math.round(t/goalSecs*100))+'%';var st=document.getElementById('shareLiveStatus');if(st){if(aId&&aStart){st.textContent='공부 중';st.style.background='rgba(34,197,94,.25)';st.style.color='#86efac';}else{st.textContent='대기 중';st.style.background='rgba(255,255,255,.1)';st.style.color='rgba(255,255,255,.6)';}}try{window._fbSet('shareLive/'+getMyCode(),{name:(prof&&prof.name)||'나',secs:t,online:(!!aId),ts:Date.now()});}catch(e){}}
-function renderShareFeed(){var el=document.getElementById('shareFeed');if(!el)return;if(!shareFeed.length){el.innerHTML='<div style="font-size:.78rem;color:var(--ink3);text-align:center;padding:18px 0">아직 공유된 기록이 없습니다</div>';return;}el.innerHTML='';shareFeed.forEach(function(it){var card=document.createElement('div');card.className='card';card.style.marginBottom='10px';var head='<div style="display:flex;align-items:center;gap:7px;margin-bottom:8px"><div style="width:26px;height:26px;border-radius:50%;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700">'+((it.name||'?')[0])+'</div><div style="font-size:.8rem;font-weight:700">'+(it.name||'')+'</div><div style="margin-left:auto;font-size:.66rem;color:var(--ink3)">'+timeAgo(it.ts)+'</div></div>';card.innerHTML=head;if(it.type==='photo'){var im=document.createElement('img');im.src=it.img;im.style.cssText='width:100%;border-radius:10px;display:block;cursor:pointer';im.onclick=function(){var pv=document.getElementById('photoViewImg');if(pv)pv.src=it.img;openModal('photoViewM');};card.appendChild(im);}else{var box=document.createElement('div');box.style.cssText='background:#111;border-radius:10px;padding:12px;color:#fff';var bars='';(it.segs||[]).forEach(function(g){var left=g.s/1440*100,w=Math.max(0.5,(g.e-g.s)/1440*100);bars+='<div style="position:absolute;top:0;bottom:0;left:'+left+'%;width:'+w+'%;background:'+(g.c||'#a78bfa')+';border-radius:2px"></div>';});var boxHtml='<div style="font-size:.7rem;color:rgba(255,255,255,.5);margin-bottom:6px">오늘 순공 '+(it.total||'')+'</div><div style="position:relative;height:22px;background:#222;border-radius:4px;overflow:hidden">'+bars+'</div>';if(it.todoSummary&&it.todoSummary.length){boxHtml+='<div style="margin-top:10px">';it.todoSummary.forEach(function(g){boxHtml+='<div style="display:flex;gap:7px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.08)"><div style="width:8px;height:8px;border-radius:50%;background:'+g.color+';flex-shrink:0;margin-top:4px"></div><div style="flex:1;min-width:0">'+'<div style="font-size:.72rem;font-weight:700;color:#fff;margin-bottom:3px">'+escapeHtml(g.name)+'</div>';(g.items||[]).forEach(function(t){boxHtml+='<div style="display:flex;justify-content:space-between;gap:6px;font-size:.7rem;padding:1px 0"><span style="color:'+(t.done?'rgba(255,255,255,.35)':'rgba(255,255,255,.8)')+';text-decoration:'+(t.done?'line-through':'none')+'">'+escapeHtml(t.text)+'</span><span style="font-weight:800;flex-shrink:0;color:'+(t.done?'#22c55e':'#ef4444')+'">'+(t.done?'O':'X')+'</span></div>';});boxHtml+='</div></div>';});boxHtml+='</div>';}box.innerHTML=boxHtml;card.appendChild(box);}el.appendChild(card);});}
+function rvCapturePhoto(){
+  if(!currentRoom)return;
+  var inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.capture='environment';
+  inp.onchange=function(e){
+    var f=e.target.files[0];if(!f)return;
+    var r=new FileReader();
+    r.onload=function(ev){
+      var img=new Image();
+      img.onload=function(){
+        var cv=document.createElement('canvas');var mx=600,sc=Math.min(1,mx/Math.max(img.width,img.height));
+        cv.width=img.width*sc;cv.height=img.height*sc;cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+        var item={type:'photo',name:prof.name||'나',code:getMyCode(),ts:Date.now(),img:cv.toDataURL('image/jpeg',0.7)};
+        if(window._fbReady)window._fbSet('rooms/'+currentRoom.code+'/feed/'+Date.now(),item);
+        toast('📷 사진을 공유했습니다');
+      };
+      img.src=ev.target.result;
+    };
+    r.readAsDataURL(f);
+  };
+  inp.click();
+}
+function retakePhoto(){closeModal('photoViewM');rvCapturePhoto();}
+function openRoomSettings(){var t1=document.getElementById('grpHideTodo');if(t1)t1.checked=cfg.grpHideTodo===true;var t2=document.getElementById('grpHideCode');if(t2)t2.checked=cfg.grpHideCode===true;openModal('roomSettingsM');}
+function saveGroupSettings(){var t1=document.getElementById('grpHideTodo'),t2=document.getElementById('grpHideCode');cfg.grpHideTodo=t1?t1.checked:false;cfg.grpHideCode=t2?t2.checked:false;svcfg();renderRoomTodoPreview();if(currentRoom){var c=document.getElementById('rvCode');if(c)c.style.display=cfg.grpHideCode===true?'none':'block';}toast('저장됨');}
+function leaveCurrentRoom(){
+  if(!currentRoom)return;
+  if(!confirm('"'+currentRoom.name+'" 그룹에서 나갈까요?'))return;
+  var code=currentRoom.code;
+  if(window._fbReady)window._fbSet('rooms/'+code+'/members/'+getMyCode(),null);
+  myRooms=myRooms.filter(function(r){return r.code!==code;});
+  svMyRooms();closeModal('roomSettingsM');closeRoomView();toast('그룹에서 나갔습니다');
+}
 function timeAgo(ts){var d=Math.floor((Date.now()-ts)/1000);if(d<60)return'방금';if(d<3600)return Math.floor(d/60)+'분 전';if(d<86400)return Math.floor(d/3600)+'시간 전';return Math.floor(d/86400)+'일 전';}
 
 // ACADEMY
-var academy=JSON.parse(localStorage.getItem('sg_academy')||'null'),_academyListener=null;
-function svAcademy(){localStorage.setItem('sg_academy',JSON.stringify(academy));}
-function renderAcademy(){var no=document.getElementById('academyNoRoom'),vw=document.getElementById('academyView');if(!academy){if(no)no.style.display='block';if(vw)vw.style.display='none';return;}if(no)no.style.display='none';if(vw)vw.style.display='block';var nm=document.getElementById('academyName');if(nm)nm.textContent=academy.name+(academy.isTeacher?' (선생님)':'');var cd=document.getElementById('academyCode');if(cd)cd.textContent=academy.code;var nb=document.getElementById('academyNoticeBox');if(nb)nb.textContent=academy.notice||'등록된 공지 없음';var ni=document.getElementById('academyNoticeInputWrap');if(ni)ni.style.display=academy.isTeacher?'block':'none';pushAcademyMe();renderAcademyStudents();subscribeAcademy();}
-function createAcademy(){var name=((document.getElementById('newAcademyName')||{}).value||'').trim();if(!name){toast('학원방 이름을 입력하세요');return;}var code=Math.random().toString(36).substring(2,8).toUpperCase();academy={code:code,name:name,isTeacher:true,notice:'',students:{}};svAcademy();try{window._fbSet('academy/'+code,{name:name,createdBy:getMyCode(),notice:''});}catch(e){}closeModal('createAcademyM');renderAcademy();toast('학원방 생성: '+code);}
-function joinAcademy(){var code=((document.getElementById('joinAcademyCode')||{}).value||'').trim().toUpperCase();if(code.length!==6){toast('6자리 코드를 입력하세요');return;}try{window._fbGet('academy/'+code).then(function(d){if(!d){toast('학원방을 찾을 수 없습니다');return;}academy={code:code,name:d.name||'학원방',isTeacher:false,notice:d.notice||'',students:{}};svAcademy();renderAcademy();toast('학원방 입장 완료');});}catch(e){toast('연결 오류');}}
-function leaveAcademy(){if(!confirm('학원방에서 나갈까요?'))return;try{if(academy)window._fbSet('academy/'+academy.code+'/students/'+getMyCode(),null);}catch(e){}academy=null;svAcademy();renderAcademy();}
-function postAcademyNotice(){var v=((document.getElementById('academyNoticeInput')||{}).value||'').trim();if(!v||!academy)return;academy.notice=v;svAcademy();try{window._fbSet('academy/'+academy.code+'/notice',v);}catch(e){}document.getElementById('academyNoticeInput').value='';renderAcademy();toast('공지 등록됨');}
-function pushAcademyMe(){if(!academy)return;var t=getTSecs();try{window._fbSet('academy/'+academy.code+'/students/'+getMyCode(),{name:(prof&&prof.name)||'학생',secs:t,online:(!!aId),ts:Date.now()});}catch(e){}}
-function subscribeAcademy(){if(!academy)return;if(_academyListener)try{_academyListener();}catch(e){}  _academyListener=null;try{_academyListener=window._fbListen('academy/'+academy.code,function(d){if(!d)return;academy.notice=d.notice||academy.notice;academy.students=d.students||{};var nb=document.getElementById('academyNoticeBox');if(nb)nb.textContent=academy.notice||'등록된 공지 없음';renderAcademyStudents();});}catch(e){}}
-function renderAcademyStudents(){var el=document.getElementById('academyStudents');if(!el)return;var st=academy&&academy.students?academy.students:{};var keys=Object.keys(st);if(keys.indexOf(getMyCode())<0){st[getMyCode()]={name:(prof&&prof.name)||'나(학생)',secs:getTSecs(),online:(!!aId)};keys=Object.keys(st);}if(!keys.length){el.innerHTML='<div style="font-size:.78rem;color:var(--ink3)">학생 없음</div>';return;}keys.sort(function(a,b){return(st[b].secs||0)-(st[a].secs||0);});el.innerHTML='';keys.forEach(function(k){var s=st[k];var t=s.secs||0,h=Math.floor(t/3600),m=Math.floor((t%3600)/60);var row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--line)';row.innerHTML='<div style="width:8px;height:8px;border-radius:50%;background:'+(s.online?'#22c55e':'#94a3b8')+';flex-shrink:0"></div><div style="font-size:.84rem;font-weight:600;flex:1">'+(s.name||'학생')+'</div><div style="font-family:monospace;font-size:.8rem;color:var(--ink2)">'+h+'h '+String(m).padStart(2,'0')+'m</div>';el.appendChild(row);});}
-function rTab(id){document.querySelectorAll('#pg-room .rtab').forEach(function(t,i){t.classList.toggle('on',['live','contract','bet','sh','academy'][i]===id);});document.querySelectorAll('#pg-room .rpanel').forEach(function(p){p.classList.remove('on');});var rp=document.getElementById('rp-'+id);if(rp)rp.classList.add('on');if(id==='sh'){updateShareLive();renderShareFeed();}if(id==='live'){renderMemberCards();frds.forEach(function(f){if(f.shareCode)fetchFriendLatest(f.shareCode);});renderLiveTimeline();}if(id==='contract')renderContractTab();if(id==='bet'){renderBetList();renderBetStats();}if(id==='academy')renderAcademy();}
+function rTab(id){document.querySelectorAll('#pg-room .rtab').forEach(function(t,i){t.classList.toggle('on',['live','contract','bet','group'][i]===id);});document.querySelectorAll('#pg-room .rpanel').forEach(function(p){p.classList.remove('on');});var rp=document.getElementById('rp-'+id);if(rp)rp.classList.add('on');if(id==='live'){renderMemberCards();frds.forEach(function(f){if(f.shareCode)fetchFriendLatest(f.shareCode);});renderLiveTimeline();}if(id==='contract')renderContractTab();if(id==='bet'){renderBetList();renderBetStats();}if(id==='group')renderRoomList();}
 function renderRoom(){var rm=document.getElementById('roomMeta');if(rm)rm.textContent='멤버 '+(1+frds.length)+'명';renderPenPanel();renderMemberCards();renderLiveTimeline();renderContractTab();renderBetStats();}
 function renderPenPanel(){var pp=document.getElementById('penPanel');if(!pp)return;pp.innerHTML=ctr.penaltyDesc?'<div style="font-size:.8rem;color:var(--ink2);font-weight:600">⚠ 벌점 '+(ctr.threshold||5)+'점 누적 시 → '+ctr.penaltyDesc+'</div>':'<div style="font-size:.78rem;color:var(--ink3)">계약서를 먼저 작성해주세요</div>';}
 function renderMemberCards(){var wrap=document.getElementById('memberCards');if(!wrap)return;var myT=getTSecs(),myH=Math.floor(myT/3600),myM2=Math.floor((myT%3600)/60),myS2=Math.floor(myT%60);var allMembers=[{name:prof.name||'나',school:prof.school||'',grade:prof.grade||'',color:'#4f46e5',isMe:true,studyStr:myH+'h '+String(myM2).padStart(2,'0')+'m '+String(myS2).padStart(2,'0')+'s'}];frds.forEach(function(f){var fSecs=getFriendLiveSecs(f);var isLive=f.fbLiveTimer&&f.fbLiveTimer.active;allMembers.push({name:f.name,school:f.school||'',grade:f.grade||'',color:f.color||'#888',isMe:false,studyStr:fSecs>0?(isLive?'🔴 ':'')+fmtLiveSecs(fSecs):'-'});});wrap.innerHTML='';allMembers.forEach(function(m){var card=document.createElement('div');card.className='card';card.style.marginBottom='10px';var top=document.createElement('div');top.style.cssText='display:flex;align-items:center;gap:10px;margin-bottom:10px';var av=document.createElement('div');av.className='mcav';av.style.cssText='background:'+m.color+';color:#fff;width:38px;height:38px;font-size:.95rem';av.textContent=(m.name||'?')[0];var info=document.createElement('div');info.style.flex='1';var nameRow=document.createElement('div');nameRow.style.cssText='font-weight:800;font-size:.9rem';nameRow.textContent=m.name;if(m.isMe){var meTag=document.createElement('span');meTag.style.cssText='font-size:.65rem;background:#ede9fe;color:#4f46e5;padding:2px 6px;border-radius:10px;margin-left:5px';meTag.textContent='나';nameRow.appendChild(meTag);}var subRow=document.createElement('div');subRow.style.cssText='font-size:.72rem;color:var(--ink2);margin-top:1px';subRow.textContent=[m.school,m.grade].filter(Boolean).join(' · ');info.appendChild(nameRow);info.appendChild(subRow);var timeDiv=document.createElement('div');timeDiv.style.textAlign='right';var timeBig=document.createElement('div');timeBig.style.cssText='font-family:monospace;font-size:.95rem;font-weight:600;color:var(--green)';timeBig.textContent=m.studyStr;timeDiv.appendChild(timeBig);top.appendChild(av);top.appendChild(info);top.appendChild(timeDiv);card.appendChild(top);if(m.isMe){var penBtn=document.createElement('button');penBtn.className='btn btn-ol btn-sm';penBtn.style.width='100%';penBtn.style.fontSize='.72rem';penBtn.textContent='⚠ 벌점 신고';penBtn.onclick=function(){openPenM();};card.appendChild(penBtn);}wrap.appendChild(card);});}
