@@ -431,8 +431,65 @@ function loadDailyEval(){var inp=document.getElementById('dailyEvalInput');var l
 
 // 날짜 상세 (최신)
 var _detailYear=0,_detailMonth=0,_detailDay=0;
-function openDayDetail(y,m,d){_detailYear=y;_detailMonth=m;_detailDay=d;renderDayDetail();openModal('dayDetailM');}
-function dayDetailNav(dir){var dt=new Date(_detailYear,_detailMonth,_detailDay+dir);_detailYear=dt.getFullYear();_detailMonth=dt.getMonth();_detailDay=dt.getDate();renderDayDetail();}
+function openDayDetail(y,m,d){_detailYear=y;_detailMonth=m;_detailDay=d;renderDayDetail();openModal('dayDetailM');_bindDayDetailSwipe();}
+function dayDetailNav(dir){
+  var dt=new Date(_detailYear,_detailMonth,_detailDay+dir);
+  _detailYear=dt.getFullYear();_detailMonth=dt.getMonth();_detailDay=dt.getDate();
+  var body=document.getElementById('dayDetailBody');
+  if(body){
+    body.style.transition='none';
+    body.style.transform='translateX('+(dir>0?-22:22)+'px)';
+    body.style.opacity='0.35';
+    renderDayDetail();
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        body.style.transition='transform .18s ease,opacity .18s ease';
+        body.style.transform='translateX(0)';
+        body.style.opacity='1';
+      });
+    });
+  }else{renderDayDetail();}
+}
+// 날짜 상세 모달 - 좌우 스와이프로 이전/다음 날짜 이동
+function _bindDayDetailSwipe(){
+  var body=document.getElementById('dayDetailBody');
+  if(!body||body._swipeBound)return;
+  body._swipeBound=true;
+  var startX=0,startY=0,dragging=false,deciding=true,isHorizontal=false;
+  function pt(e){return e.touches&&e.touches[0]?e.touches[0]:e;}
+  function onMove(e){
+    if(!dragging)return;
+    var p=pt(e),ddx=p.clientX-startX,ddy=p.clientY-startY;
+    if(deciding){
+      if(Math.abs(ddx)<6&&Math.abs(ddy)<6)return;
+      isHorizontal=Math.abs(ddx)>Math.abs(ddy)*1.3;
+      deciding=false;
+      if(!isHorizontal){dragging=false;return;}
+    }
+    if(isHorizontal&&e.cancelable)e.preventDefault();
+  }
+  function onEnd(e){
+    if(!dragging)return;
+    dragging=false;
+    document.removeEventListener('touchmove',onMove);
+    document.removeEventListener('touchend',onEnd);
+    document.removeEventListener('mousemove',onMove);
+    document.removeEventListener('mouseup',onEnd);
+    if(!isHorizontal)return;
+    var p=pt(e),ddx=p.clientX-startX;
+    if(ddx<=-50)dayDetailNav(1);
+    else if(ddx>=50)dayDetailNav(-1);
+  }
+  function onStart(e){
+    var p=pt(e);startX=p.clientX;startY=p.clientY;dragging=true;deciding=true;isHorizontal=false;
+    document.addEventListener('touchmove',onMove,{passive:false});
+    document.addEventListener('touchend',onEnd);
+    document.addEventListener('mousemove',onMove);
+    document.addEventListener('mouseup',onEnd);
+  }
+  body.addEventListener('touchstart',onStart,{passive:true});
+  body.addEventListener('mousedown',onStart);
+}
 function renderDayDetail(){
   var y=_detailYear,m=_detailMonth,d=_detailDay;
   var dt=new Date(y,m,d);var days=['일','월','화','수','목','금','토'];

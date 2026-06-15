@@ -455,6 +455,7 @@
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px" id="alertMsgPresets"></div>
     <input class="inp" id="alertMsgCustom" placeholder="직접 입력..." style="margin-bottom:6px">
     <button class="btn btn-dk btn-sm" style="width:100%" onclick="saveAlertSet()">저장</button>
+    <div id="pushStatus" style="margin-top:10px"></div>
   </div>
 
   <!-- 내기 -->
@@ -648,7 +649,7 @@
       <div style="font-weight:700;font-size:.93rem" id="dayDetailTitle">날짜</div>
       <button onclick="dayDetailNav(1)" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--ink);padding:4px 8px">›</button>
     </div>
-    <div style="overflow-y:auto;padding:15px 17px;flex:1">
+    <div id="dayDetailBody" style="overflow-y:auto;padding:15px 17px;flex:1">
       <div style="text-align:center;padding:12px 0;margin-bottom:13px;background:var(--bg);border-radius:12px">
         <div style="font-size:.7rem;color:var(--ink3);margin-bottom:4px">순공시간</div>
         <div style="font-family:monospace;font-size:2rem;font-weight:700;color:var(--acc)" id="dayDetailSecs">-</div>
