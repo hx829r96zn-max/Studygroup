@@ -163,16 +163,16 @@ textarea.inp{resize:vertical;min-height:70px;}
 .tc-go:disabled{background:#2a2a2a;color:rgba(255,255,255,.3);}
 .tc-stop{width:40px;height:40px;border-radius:9px;border:none;background:#3a1a1a;color:#ff6b6b;cursor:pointer;display:none;font-size:.88rem;align-items:center;justify-content:center;}
 .tc-stop.vis{display:flex;}
-.pscroll{flex:1;display:flex;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;}
-.pscroll::-webkit-scrollbar{height:0;}
-.pgwrap{flex:0 0 100%;overflow-y:auto;overflow-x:hidden;position:relative;}
+.pscroll{flex:1;display:flex;overflow:hidden;}
+.pgwrap{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;}
 .pgwrap::-webkit-scrollbar{width:0;}
 .pgrid{position:relative;width:100%;background:#111;}
 #pg-timer.plan-mode .pgrid{cursor:crosshair;}
 
 /* ── TODO 패널 (플래너 - 과목별) ── */
-.todo-panel{flex:0 0 85%;width:85%;max-width:320px;background:rgba(15,15,15,.97);border-left:1px solid #2a2a2a;display:none;flex-direction:column;padding:10px;overflow-y:auto;box-shadow:-4px 0 16px rgba(0,0,0,.4);}
-.todo-panel.show{display:flex;}
+.todo-panel{position:absolute;top:0;right:0;bottom:calc(50px + env(safe-area-inset-bottom,0));width:85%;max-width:320px;background:rgba(15,15,15,.97);border-left:1px solid #2a2a2a;z-index:30;display:flex;flex-direction:column;padding:10px;overflow-y:auto;box-shadow:-4px 0 16px rgba(0,0,0,.4);transform:translateX(105%);visibility:hidden;pointer-events:none;transition:transform .28s cubic-bezier(.32,.72,0,1),visibility 0s .28s;}
+.todo-panel.show{transform:translateX(0);visibility:visible;pointer-events:auto;transition:transform .28s cubic-bezier(.32,.72,0,1);}
+.todo-panel.dragging{transition:none;}
 .todo-hd{font-size:.78rem;font-weight:800;margin-bottom:8px;}
 .todo-add{display:flex;gap:5px;margin-bottom:8px;}
 .todo-input{flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:8px;color:#fff;font-size:.76rem;padding:7px 9px;font-family:'Noto Sans KR',sans-serif;outline:none;}

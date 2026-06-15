@@ -4,7 +4,7 @@
 var _FB_CFG={apiKey:"AIzaSyAn8xDsf1WM0jXQyBqTsCJizA8rzFBO2pc",authDomain:"studygroup-app-81786.firebaseapp.com",databaseURL:"https://studygroup-app-81786-default-rtdb.firebaseio.com",projectId:"studygroup-app-81786",storageBucket:"studygroup-app-81786.firebasestorage.app",messagingSenderId:"800017756511",appId:"1:800017756511:web:d1c81b7ce8853db66386ea"};
 window._fbReady=false;window._fbDB=null;window._fbAuth=null;window._fbUser=null;
 window._fbSet=function(){return Promise.resolve();};window._fbGet=function(){return Promise.resolve(null);};window._fbUpdate=function(){return Promise.resolve();};window._fbListen=function(){return function(){};};
-function _loadFirebase(){function loadScript(url,cb){var s=document.createElement('script');s.src=url;s.onload=cb;s.onerror=function(){cb&&cb();};document.head.appendChild(s);}loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js',function(){loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js',function(){loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js',function(){_initFirebase();});});});}
+function _loadFirebase(){function loadScript(url,cb){var s=document.createElement('script');s.src=url;s.onload=cb;s.onerror=function(){cb&&cb();};document.head.appendChild(s);}loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js',function(){loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js',function(){loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js',function(){loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js',function(){_initFirebase();});});});});}
 function _initFirebase(){try{if(typeof firebase==='undefined'){setTimeout(_initFirebase,300);return;}var app=firebase.apps&&firebase.apps.length>0?firebase.apps[0]:firebase.initializeApp(_FB_CFG);var db=firebase.database(app);var auth=firebase.auth(app);window._fbDB=db;window._fbAuth=auth;window._fbReady=true;window._fbSet=function(p,d){return db.ref(p).set(d);};window._fbGet=function(p){return db.ref(p).get();};window._fbUpdate=function(p,d){return db.ref(p).update(d);};window._fbListen=function(p,cb){var r=db.ref(p);r.on('value',function(s){cb(s.val());});return function(){r.off('value');};};var el=document.getElementById('fbStatus');if(el){el.textContent='🟢 Firebase 연결됨';el.style.color='#16734a';}var _resolved=false;auth.onAuthStateChanged(function(user){if(_resolved)return;_resolved=true;if(user){window._fbUser=user;_doLogin(user);}else{_showLogin();}});}catch(e){console.warn('[Firebase] 실패:',e.message);_showLogin();}}
 function _showLogin(){var ls=document.getElementById('loginScreen');if(ls)ls.style.display='flex';var nav=document.querySelector('nav');if(nav)nav.style.display='none';document.querySelectorAll('.page').forEach(function(p){p.classList.remove('on');});}
 function _restoreLastTab(){var validTabs=['home','timer','room','stats','mock','settings'];var last=localStorage.getItem('sg_lasttab')||'home';if(validTabs.indexOf(last)<0)last='home';setTimeout(function(){go(last);document.documentElement.removeAttribute('data-boot-tab');},80);}
@@ -162,15 +162,13 @@ function scrollNow(){var sc=document.getElementById('pScroll');if(!sc)return;var
 function escapeHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function renderTodoPanel(){
   var panel=document.getElementById('todoPanel');if(!panel)return;
-  var scroller=document.getElementById('pScroll');
   if(!todoOpenSubjId){
-    panel.classList.remove('show');panel.innerHTML='';
-    if(scroller)scroller.scrollTo({left:0,behavior:'smooth'});
+    panel.classList.remove('show');
+    setTimeout(function(){if(!todoOpenSubjId)panel.innerHTML='';},300);
     return;
   }
   var sub=subjs.find(function(s){return s.id===todoOpenSubjId;});
-  if(!sub){todoOpenSubjId=null;panel.classList.remove('show');panel.innerHTML='';if(scroller)scroller.scrollTo({left:0,behavior:'smooth'});return;}
-  panel.classList.add('show');
+  if(!sub){todoOpenSubjId=null;panel.classList.remove('show');setTimeout(function(){if(!todoOpenSubjId)panel.innerHTML='';},300);return;}
   var list=todos[todoOpenSubjId]||[];
   var html='<div class="todo-hd" style="color:'+sub.color+'">'+sub.name+' TODO</div>';
   html+='<div class="todo-add"><input class="todo-input" id="todoNewInput" placeholder="할 일 추가" onkeydown="if(event.key===\'Enter\')addTodo()"><button class="todo-add-btn" onclick="addTodo()">+</button></div>';
@@ -179,27 +177,51 @@ function renderTodoPanel(){
   list.forEach(function(t,i){html+='<div class="todo-item'+(t.done?' done':'')+'"><div class="todo-circle'+(t.done?' done':'')+'" onclick="toggleTodo('+i+')">'+(t.done?'✓':'')+'</div><div class="todo-text">'+escapeHtml(t.text)+'</div><button class="todo-del" onclick="delTodo('+i+')">✕</button></div>';});
   html+='</div>';
   panel.innerHTML=html;
-  if(scroller){
-    scroller._todoOpening=true;
-    setTimeout(function(){scroller.scrollTo({left:scroller.scrollWidth,behavior:'smooth'});},30);
-    setTimeout(function(){scroller._todoOpening=false;},450);
-    _bindTodoScrollClose(scroller);
-  }
+  panel.classList.add('show');
+  _bindTodoSwipeClose(panel);
 }
-function _bindTodoScrollClose(scroller){
-  if(scroller._todoScrollBound)return;
-  scroller._todoScrollBound=true;
-  scroller.addEventListener('scroll',function(){
-    if(!todoOpenSubjId||scroller._todoOpening)return;
-    var panel=document.getElementById('todoPanel');
-    if(!panel||!panel.classList.contains('show'))return;
-    var panelW=panel.offsetWidth||1;
-    if(scroller.scrollLeft<panelW*0.4){
-      todoOpenSubjId=null;
-      panel.classList.remove('show');panel.innerHTML='';
-      scroller.scrollTo({left:0,behavior:'smooth'});
+// 오른쪽으로 밀면(스와이프) todo 패널 닫기
+function _bindTodoSwipeClose(panel){
+  if(panel._swipeBound)return;
+  panel._swipeBound=true;
+  var startX=0,startY=0,dx=0,dragging=false,deciding=true,isHorizontal=false;
+  function pt(e){return e.touches&&e.touches[0]?e.touches[0]:e;}
+  function onStart(e){var p=pt(e);startX=p.clientX;startY=p.clientY;dx=0;dragging=true;deciding=true;isHorizontal=false;}
+  function onMove(e){
+    if(!dragging)return;
+    var p=pt(e),ddx=p.clientX-startX,ddy=p.clientY-startY;
+    if(deciding){
+      if(Math.abs(ddx)<6&&Math.abs(ddy)<6)return;
+      isHorizontal=ddx>0&&Math.abs(ddx)>Math.abs(ddy)*1.2;
+      deciding=false;
+      if(!isHorizontal){dragging=false;return;}
+      panel.classList.add('dragging');
     }
-  },{passive:true});
+    if(!isHorizontal)return;
+    if(e.cancelable)e.preventDefault();
+    dx=Math.max(0,ddx);
+    panel.style.transform='translateX('+dx+'px)';
+  }
+  function onEnd(){
+    if(!dragging)return;
+    dragging=false;
+    panel.classList.remove('dragging');
+    var w=panel.offsetWidth||1;
+    if(isHorizontal&&dx>w*0.28){
+      todoOpenSubjId=null;
+      panel.style.transform='';
+      renderTodoPanel();
+    }else{
+      panel.style.transform='';
+    }
+  }
+  panel.addEventListener('touchstart',onStart,{passive:true});
+  panel.addEventListener('touchmove',onMove,{passive:false});
+  panel.addEventListener('touchend',onEnd);
+  panel.addEventListener('touchcancel',onEnd);
+  panel.addEventListener('mousedown',onStart);
+  panel.addEventListener('mousemove',function(e){if(dragging)onMove(e);});
+  panel.addEventListener('mouseup',onEnd);
 }
 function addTodo(){var inp=document.getElementById('todoNewInput');var v=(inp&&inp.value||'').trim();if(!v||!todoOpenSubjId)return;if(!todos[todoOpenSubjId])todos[todoOpenSubjId]=[];todos[todoOpenSubjId].push({text:v,done:false});svTodos();renderTodoPanel();saveUserDataToFirebase();}
 function toggleTodo(idx){if(!todoOpenSubjId||!todos[todoOpenSubjId]||!todos[todoOpenSubjId][idx])return;todos[todoOpenSubjId][idx].done=!todos[todoOpenSubjId][idx].done;svTodos();renderTodoPanel();saveUserDataToFirebase();}
@@ -302,7 +324,7 @@ function renderConnectedMembers(){var el=document.getElementById('connectedMembe
 function disconnectFriend(code){if(!confirm('연동을 해제할까요?'))return;var connected=JSON.parse(localStorage.getItem('sg_connected')||'[]').filter(function(c){return c.code!==code;});localStorage.setItem('sg_connected',JSON.stringify(connected));frds=frds.filter(function(f){return f.shareCode!==code;});svf();if(_fbListeners[code]){_fbListeners[code]();delete _fbListeners[code];}renderConnectedMembers();renderFriendList();toast('연동 해제됨');}
 function checkJoinParam(){var params=new URLSearchParams(window.location.search);var joinCode=params.get('join');if(joinCode&&joinCode.length===6){joinCode=joinCode.toUpperCase();if(joinCode!==getMyCode()){setTimeout(function(){go('settings');var inp=document.getElementById('friendCodeInp');if(inp){inp.value=joinCode;connectByCode();}},1000);}}}
 function fbPushMyData(){if(!window._fbReady)return;var code=getMyCode(),myT=getTSecs(),now=Date.now();window._fbSet('users/'+code,{name:prof.name||'이름없음',school:prof.school||'',grade:prof.grade||'',code:code,todayStudy:{h:Math.floor(myT/3600),m:Math.floor((myT%3600)/60),s:Math.floor(myT%60),secs:myT,date:new Date().toISOString().split('T')[0]},lastSeen:now,live:aId&&aStart?{active:true,baseSecs:myT,baseAt:now}:{active:false,baseSecs:myT,baseAt:now}});}
-function startFbSync(){if(!window._fbReady){setTimeout(startFbSync,1000);return;}fbPushMyData();if(_fbSyncInt)clearInterval(_fbSyncInt);_fbSyncInt=setInterval(function(){fbPushMyData();},aId?3000:15000);}
+function startFbSync(){if(!window._fbReady){setTimeout(startFbSync,1000);return;}fbPushMyData();pushFcmTokenIfReady();window._fbSet('users/'+getMyCode()+'/alertCfg',alertCfg);if(_fbSyncInt)clearInterval(_fbSyncInt);_fbSyncInt=setInterval(function(){fbPushMyData();},aId?3000:15000);}
 function restartFbSync(){if(_fbSyncInt)clearInterval(_fbSyncInt);_fbSyncInt=null;startFbSync();}
 function fetchFriendLatest(code){if(!code||!window._fbReady)return;try{window._fbGet('users/'+code).then(function(data){if(!data)return;var f=frds.find(function(x){return x.shareCode===code;});if(!f)return;if(data.todayStudy)f.fbStudy=data.todayStudy;if(data.live)f.fbLiveTimer=data.live;renderLiveTimeline();}).catch(function(){});}catch(e){}}
 function subscribeToFriend(code){if(!code)return;if(!window._fbReady){setTimeout(function(){subscribeToFriend(code);},1000);return;}if(_fbListeners[code])return;_fbListeners[code]=window._fbListen('users/'+code,function(data){if(!data)return;var f=frds.find(function(x){return x.shareCode===code;});if(!f)return;f.name=data.name||f.name;f.fbStudy=data.todayStudy||null;f.fbLiveTimer=data.live||null;svf();try{renderConnectedMembers();}catch(e){}var pg=document.querySelector('.page.on');if(pg&&pg.id==='pg-room'){try{renderMemberCards();}catch(e){}renderLiveTimeline();}});}
@@ -310,15 +332,56 @@ function resumeFbSubscriptions(){if(!window._fbReady){setTimeout(resumeFbSubscri
 function getFriendLiveSecs(f){var lt=f.fbLiveTimer;if(!lt)return f.fbStudy?(f.fbStudy.secs||0):0;if(!lt.active)return lt.baseSecs||(f.fbStudy?f.fbStudy.secs:0);return Math.max(0,(lt.baseSecs||0)+Math.floor((Date.now()-(lt.baseAt||Date.now()))/1000));}
 
 // 알림
-function saveAlertSet(){var onEl=document.getElementById('alertOn');var msgEl=document.getElementById('alertMsgCustom');alertCfg.on=onEl?onEl.checked:false;if(msgEl&&msgEl.value.trim())alertCfg.msg=msgEl.value.trim();localStorage.setItem('sg_alert',JSON.stringify(alertCfg));startAlertSchedule();renderAlertSettings();toast('알림 설정 저장됨!');}
+function svAlertCfg(){localStorage.setItem('sg_alert',JSON.stringify(alertCfg));if(window._fbReady)window._fbSet('users/'+getMyCode()+'/alertCfg',alertCfg);}
+function saveAlertSet(){var onEl=document.getElementById('alertOn');var msgEl=document.getElementById('alertMsgCustom');alertCfg.on=onEl?onEl.checked:false;if(msgEl&&msgEl.value.trim())alertCfg.msg=msgEl.value.trim();svAlertCfg();startAlertSchedule();renderAlertSettings();toast('알림 설정 저장됨!');}
 function addAlertTime(){var now=new Date();var inp=document.getElementById('alertTimeInput');if(inp)inp.value=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');var presets=document.getElementById('alertTimePresets');if(presets){presets.innerHTML='';['07:00','08:00','09:00','14:00','16:00','20:00','21:00','22:00','23:00'].forEach(function(t){var btn=document.createElement('button');btn.className='btn btn-ol btn-sm';btn.textContent=t;btn.onclick=function(){var i2=document.getElementById('alertTimeInput');if(i2)i2.value=t;};presets.appendChild(btn);});}openModal('alertTimeM');}
-function confirmAddAlertTime(){var inp=document.getElementById('alertTimeInput');var t=inp?inp.value.trim():'';if(!t){toast('시간을 선택해주세요');return;}if(!alertCfg.times)alertCfg.times=[];if(alertCfg.times.indexOf(t)>=0){toast('이미 추가된 시간이에요');closeModal('alertTimeM');return;}alertCfg.times.push(t);alertCfg.times.sort();localStorage.setItem('sg_alert',JSON.stringify(alertCfg));renderAlertSettings();closeModal('alertTimeM');toast(t+' 알림 추가됨 ⏰');}
-function removeAlertTime(i){alertCfg.times.splice(i,1);localStorage.setItem('sg_alert',JSON.stringify(alertCfg));renderAlertSettings();}
-function setAlertMsg(msg){alertCfg.msg=msg;localStorage.setItem('sg_alert',JSON.stringify(alertCfg));var inp=document.getElementById('alertMsgCustom');if(inp)inp.value=msg;renderAlertSettings();}
-function renderAlertSettings(){var onEl=document.getElementById('alertOn');if(onEl)onEl.checked=alertCfg.on||false;var tList=document.getElementById('alertTimeList');if(tList){tList.innerHTML='';(alertCfg.times||[]).forEach(function(t,i){var row=document.createElement('div');row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:var(--bg);border-radius:8px;margin-bottom:5px';var tl=document.createElement('div');tl.style.cssText='font-family:monospace;font-size:.9rem;font-weight:700';tl.textContent=t;var db=document.createElement('button');db.style.cssText='background:none;border:none;color:var(--ink3);cursor:pointer;font-size:.9rem';db.textContent='✕';(function(idx){db.onclick=function(){removeAlertTime(idx);};})(i);row.appendChild(tl);row.appendChild(db);tList.appendChild(row);});if(!(alertCfg.times||[]).length)tList.innerHTML='<div style="font-size:.75rem;color:var(--ink3);padding:4px 0">알림 시간 없음</div>';}var pGrid=document.getElementById('alertMsgPresets');if(pGrid){pGrid.innerHTML='';ALERT_PRESETS.forEach(function(p){var btn=document.createElement('button');btn.style.cssText='padding:7px 6px;border-radius:8px;border:1.5px solid var(--line);background:'+(alertCfg.msg===p?'var(--acc)':'var(--bg)')+';color:'+(alertCfg.msg===p?'#fff':'var(--ink)')+';font-size:.7rem;cursor:pointer;font-family:sans-serif;text-align:left;line-height:1.3';btn.textContent=p;(function(msg){btn.onclick=function(){setAlertMsg(msg);};})(p);pGrid.appendChild(btn);});}var inp=document.getElementById('alertMsgCustom');if(inp&&ALERT_PRESETS.indexOf(alertCfg.msg)<0)inp.value=alertCfg.msg||'';}
+function confirmAddAlertTime(){var inp=document.getElementById('alertTimeInput');var t=inp?inp.value.trim():'';if(!t){toast('시간을 선택해주세요');return;}if(!alertCfg.times)alertCfg.times=[];if(alertCfg.times.indexOf(t)>=0){toast('이미 추가된 시간이에요');closeModal('alertTimeM');return;}alertCfg.times.push(t);alertCfg.times.sort();svAlertCfg();renderAlertSettings();closeModal('alertTimeM');toast(t+' 알림 추가됨 ⏰');}
+function removeAlertTime(i){alertCfg.times.splice(i,1);svAlertCfg();renderAlertSettings();}
+function setAlertMsg(msg){alertCfg.msg=msg;svAlertCfg();var inp=document.getElementById('alertMsgCustom');if(inp)inp.value=msg;renderAlertSettings();}
+function renderAlertSettings(){var onEl=document.getElementById('alertOn');if(onEl)onEl.checked=alertCfg.on||false;var tList=document.getElementById('alertTimeList');if(tList){tList.innerHTML='';(alertCfg.times||[]).forEach(function(t,i){var row=document.createElement('div');row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:var(--bg);border-radius:8px;margin-bottom:5px';var tl=document.createElement('div');tl.style.cssText='font-family:monospace;font-size:.9rem;font-weight:700';tl.textContent=t;var db=document.createElement('button');db.style.cssText='background:none;border:none;color:var(--ink3);cursor:pointer;font-size:.9rem';db.textContent='✕';(function(idx){db.onclick=function(){removeAlertTime(idx);};})(i);row.appendChild(tl);row.appendChild(db);tList.appendChild(row);});if(!(alertCfg.times||[]).length)tList.innerHTML='<div style="font-size:.75rem;color:var(--ink3);padding:4px 0">알림 시간 없음</div>';}var pGrid=document.getElementById('alertMsgPresets');if(pGrid){pGrid.innerHTML='';ALERT_PRESETS.forEach(function(p){var btn=document.createElement('button');btn.style.cssText='padding:7px 6px;border-radius:8px;border:1.5px solid var(--line);background:'+(alertCfg.msg===p?'var(--acc)':'var(--bg)')+';color:'+(alertCfg.msg===p?'#fff':'var(--ink)')+';font-size:.7rem;cursor:pointer;font-family:sans-serif;text-align:left;line-height:1.3';btn.textContent=p;(function(msg){btn.onclick=function(){setAlertMsg(msg);};})(p);pGrid.appendChild(btn);});}var inp=document.getElementById('alertMsgCustom');if(inp&&ALERT_PRESETS.indexOf(alertCfg.msg)<0)inp.value=alertCfg.msg||'';
+  var pushEl=document.getElementById('pushStatus');
+  if(pushEl){
+    var st=pushPermStatus();
+    var hasToken=!!localStorage.getItem('sg_fcmtoken');
+    if(st==='granted'&&hasToken){pushEl.innerHTML='<div style="font-size:.74rem;color:var(--green);font-weight:700;padding:8px 10px;background:var(--gbg);border-radius:8px">🔔 폰 푸시 알림 켜짐 — 앱이 꺼져있어도 설정한 시간에 알림이 와요</div>';}
+    else if(st==='denied'){pushEl.innerHTML='<div style="font-size:.74rem;color:var(--red);padding:8px 10px;background:var(--rbg);border-radius:8px;margin-bottom:6px">알림 권한이 거부되어 있습니다. 브라우저 설정에서 알림 권한을 허용해주세요.</div>';}
+    else{pushEl.innerHTML='<button class="btn btn-dk btn-sm" style="width:100%" onclick="requestPushPermission()">📱 폰 푸시 알림 켜기</button>';}
+  }
+}
 function startAlertSchedule(){_alertInts.forEach(function(id){clearInterval(id);});_alertInts=[];if(!alertCfg.on)return;var id=setInterval(function(){var now=new Date();var hhmm=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');if((alertCfg.times||[]).indexOf(hhmm)>=0)showAlertBanner(alertCfg.msg||'지금 공부할 시간이야!');},60000);_alertInts.push(id);}
 function showAlertBanner(msg){var banner=document.getElementById('alertBanner');var msgEl=document.getElementById('alertMsg');var subEl=document.getElementById('alertSub');if(!banner)return;if(msgEl)msgEl.textContent=msg;if(subEl){var now=new Date();subEl.textContent='StudyGroup · '+now.getHours()+':'+String(now.getMinutes()).padStart(2,'0');}banner.classList.add('show');if(navigator.vibrate)navigator.vibrate([300,100,300]);setTimeout(function(){banner.classList.remove('show');},8000);}
 function dismissAlert(){var banner=document.getElementById('alertBanner');if(banner)banner.classList.remove('show');}
+
+// ── 폰 푸시 알림 (FCM) ──
+// Firebase 콘솔 > 프로젝트 설정 > Cloud Messaging > 웹 푸시 인증서에서 발급받은 키를 아래에 입력하세요.
+var FCM_VAPID_KEY='여기에_VAPID_키_입력';
+function pushPermStatus(){
+  if(!('Notification' in window))return'unsupported';
+  return Notification.permission; // 'default' | 'granted' | 'denied'
+}
+function requestPushPermission(){
+  if(!('Notification' in window)||!navigator.serviceWorker){toast('이 브라우저는 푸시 알림을 지원하지 않습니다');return;}
+  if(FCM_VAPID_KEY==='여기에_VAPID_키_입력'){toast('VAPID 키가 설정되지 않았습니다 (app.js 상단 참고)');return;}
+  Notification.requestPermission().then(function(perm){
+    renderAlertSettings();
+    if(perm!=='granted'){toast('알림 권한이 거부되었습니다');return;}
+    navigator.serviceWorker.register('/firebase-messaging-sw.js').then(function(reg){
+      if(typeof firebase==='undefined'||!firebase.messaging){toast('Firebase Messaging 로드 실패');return;}
+      var messaging=firebase.messaging();
+      messaging.getToken({vapidKey:FCM_VAPID_KEY,serviceWorkerRegistration:reg}).then(function(token){
+        if(!token){toast('토큰을 발급받지 못했습니다');return;}
+        localStorage.setItem('sg_fcmtoken',token);
+        if(window._fbReady)window._fbSet('users/'+getMyCode()+'/fcmToken',token);
+        toast('🔔 폰 푸시 알림이 켜졌습니다');
+        renderAlertSettings();
+      }).catch(function(e){toast('토큰 발급 실패: '+e.message);});
+    }).catch(function(e){toast('서비스워커 등록 실패: '+e.message);});
+  });
+}
+function pushFcmTokenIfReady(){
+  var token=localStorage.getItem('sg_fcmtoken');
+  if(token&&window._fbReady)window._fbSet('users/'+getMyCode()+'/fcmToken',token);
+}
 
 // 뽀모도로 과목 연동
 var pomoSubjId=localStorage.getItem('sg_pomosubj')||null;
