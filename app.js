@@ -314,10 +314,6 @@ function svMyRooms(){localStorage.setItem('sg_myrooms',JSON.stringify(myRooms));
 function onRoomJoinInput(el){el.value=(el.value||'').toUpperCase();var btn=document.getElementById('roomJoinBtn');if(btn){if(el.value.length===6){btn.disabled=false;btn.style.opacity='1';}else{btn.disabled=true;btn.style.opacity='.4';}}}
 function openCreateRoomM(){var created=myRooms.filter(function(r){return r.ownerCode===getMyCode();}).length;if(created>=2){toast('방은 최대 2개까지 만들 수 있어요');return;}var n=document.getElementById('newRoomName');if(n)n.value='';var m=document.getElementById('newRoomMax');if(m)m.value='';var box=document.getElementById('newRoomCodeBox');if(box)box.style.display='none';var cb=document.getElementById('createRoomBtn');if(cb){cb.disabled=true;cb.style.opacity='.4';}window._newRoomCode=null;openModal('createRoomM');}
 function generateRoomCode(){
-  var name=((document.getElementById('newRoomName')||{}).value||'').trim();
-  var max=parseInt((document.getElementById('newRoomMax')||{}).value);
-  if(!name){toast('방 이름을 입력하세요');return;}
-  if(!max||max<2){toast('최대 인원을 2명 이상 입력하세요');return;}
   function show(code){window._newRoomCode=code;var box=document.getElementById('newRoomCodeBox');if(box)box.style.display='block';var val=document.getElementById('newRoomCodeVal');if(val)val.textContent=code;var cb=document.getElementById('createRoomBtn');if(cb){cb.disabled=false;cb.style.opacity='1';}}
   function tryCode(){var code=Math.random().toString(36).substring(2,8).toUpperCase();if(!window._fbReady){show(code);return;}window._fbGet('rooms/'+code).then(function(d){if(d)tryCode();else show(code);}).catch(function(){show(code);});}
   tryCode();
@@ -326,7 +322,9 @@ function createRoom(){
   var name=((document.getElementById('newRoomName')||{}).value||'').trim();
   var max=parseInt((document.getElementById('newRoomMax')||{}).value);
   var code=window._newRoomCode;
-  if(!name||!max||!code){toast('코드를 먼저 생성하세요');return;}
+  if(!name){toast('방 이름을 입력하세요');return;}
+  if(!max||max<2||max>8){toast('최대 인원은 2~8명으로 입력하세요');return;}
+  if(!code){toast('코드를 먼저 생성하세요');return;}
   var myCode=getMyCode(),myName=prof.name||'나';
   var roomData={name:name,maxMembers:max,ownerCode:myCode,ownerName:myName,createdAt:Date.now(),members:{}};
   roomData.members[myCode]={name:myName,joinedAt:Date.now()};
