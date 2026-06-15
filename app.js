@@ -432,9 +432,9 @@ function loadDailyEval(){var inp=document.getElementById('dailyEvalInput');var l
 // 날짜 상세 (최신)
 var _detailYear=0,_detailMonth=0,_detailDay=0;
 function openDayDetail(y,m,d){_detailYear=y;_detailMonth=m;_detailDay=d;renderDayDetail();openModal('dayDetailM');_bindDayDetailSwipe();}
+function _advanceDayDetail(dir){var dt=new Date(_detailYear,_detailMonth,_detailDay+dir);_detailYear=dt.getFullYear();_detailMonth=dt.getMonth();_detailDay=dt.getDate();}
 function dayDetailNav(dir){
-  var dt=new Date(_detailYear,_detailMonth,_detailDay+dir);
-  _detailYear=dt.getFullYear();_detailMonth=dt.getMonth();_detailDay=dt.getDate();
+  _advanceDayDetail(dir);
   var body=document.getElementById('dayDetailBody');
   if(body){
     body.style.transition='none';
@@ -443,45 +443,88 @@ function dayDetailNav(dir){
     renderDayDetail();
     requestAnimationFrame(function(){
       requestAnimationFrame(function(){
-        body.style.transition='transform .18s ease,opacity .18s ease';
+        body.style.transition='transform .2s cubic-bezier(.32,.72,0,1),opacity .2s';
         body.style.transform='translateX(0)';
         body.style.opacity='1';
       });
     });
   }else{renderDayDetail();}
 }
-// 날짜 상세 모달 - 좌우 스와이프로 이전/다음 날짜 이동
+// 날짜 상세 모달 - 좌우 스와이프로 이전/다음 날짜 이동 (손가락 따라 부드럽게 이동 + 속도 감지)
 function _bindDayDetailSwipe(){
   var body=document.getElementById('dayDetailBody');
   if(!body||body._swipeBound)return;
   body._swipeBound=true;
-  var startX=0,startY=0,dragging=false,deciding=true,isHorizontal=false;
+  var startX=0,startY=0,lastX=0,lastT=0,dx=0,vx=0,dragging=false,deciding=true,isHorizontal=false,rafId=null;
   function pt(e){return e.touches&&e.touches[0]?e.touches[0]:e;}
-  function onMove(e){
-    if(!dragging)return;
-    var p=pt(e),ddx=p.clientX-startX,ddy=p.clientY-startY;
-    if(deciding){
-      if(Math.abs(ddx)<6&&Math.abs(ddy)<6)return;
-      isHorizontal=Math.abs(ddx)>Math.abs(ddy)*1.3;
-      deciding=false;
-      if(!isHorizontal){dragging=false;return;}
-    }
-    if(isHorizontal&&e.cancelable)e.preventDefault();
-  }
-  function onEnd(e){
-    if(!dragging)return;
-    dragging=false;
+  function cleanup(){
     document.removeEventListener('touchmove',onMove);
     document.removeEventListener('touchend',onEnd);
     document.removeEventListener('mousemove',onMove);
     document.removeEventListener('mouseup',onEnd);
-    if(!isHorizontal)return;
-    var p=pt(e),ddx=p.clientX-startX;
-    if(ddx<=-50)dayDetailNav(1);
-    else if(ddx>=50)dayDetailNav(-1);
+    if(rafId){cancelAnimationFrame(rafId);rafId=null;}
+  }
+  function setLive(x){
+    if(rafId)return;
+    rafId=requestAnimationFrame(function(){
+      var w=body.offsetWidth||300;
+      body.style.transform='translateX('+x+'px)';
+      body.style.opacity=String(Math.max(.45,1-Math.abs(x)/w*0.6));
+      rafId=null;
+    });
+  }
+  function onMove(e){
+    if(!dragging)return;
+    var p=pt(e),now=performance.now();
+    var ddx=p.clientX-startX,ddy=p.clientY-startY;
+    if(deciding){
+      if(Math.abs(ddx)<6&&Math.abs(ddy)<6)return;
+      isHorizontal=Math.abs(ddx)>Math.abs(ddy)*1.3;
+      deciding=false;
+      if(!isHorizontal){dragging=false;cleanup();return;}
+      body.style.transition='none';
+    }
+    if(e.cancelable)e.preventDefault();
+    dx=ddx;
+    var dt=now-lastT;
+    if(dt>0)vx=(p.clientX-lastX)/dt;
+    lastX=p.clientX;lastT=now;
+    setLive(dx);
+  }
+  function onEnd(){
+    if(!dragging)return;
+    dragging=false;
+    cleanup();
+    if(!isHorizontal){body.style.transition='';body.style.transform='';body.style.opacity='';return;}
+    var w=body.offsetWidth||300;
+    var shouldNav=Math.abs(dx)>w*0.22||Math.abs(vx)>0.55;
+    if(shouldNav){
+      var dir=dx<0?1:-1; // 왼쪽으로 스와이프 -> 다음 날
+      body.style.transition='transform .18s cubic-bezier(.32,.72,0,1),opacity .18s';
+      body.style.transform='translateX('+(dir>0?-w:w)+'px)';
+      body.style.opacity='0';
+      setTimeout(function(){
+        _advanceDayDetail(dir);
+        body.style.transition='none';
+        body.style.transform='translateX('+(dir>0?w*0.4:-w*0.4)+'px)';
+        renderDayDetail();
+        requestAnimationFrame(function(){
+          requestAnimationFrame(function(){
+            body.style.transition='transform .2s cubic-bezier(.32,.72,0,1),opacity .2s';
+            body.style.transform='translateX(0)';
+            body.style.opacity='1';
+          });
+        });
+      },180);
+    }else{
+      body.style.transition='transform .2s cubic-bezier(.32,.72,0,1),opacity .2s';
+      body.style.transform='translateX(0)';
+      body.style.opacity='1';
+    }
   }
   function onStart(e){
-    var p=pt(e);startX=p.clientX;startY=p.clientY;dragging=true;deciding=true;isHorizontal=false;
+    var p=pt(e);startX=lastX=p.clientX;startY=p.clientY;lastT=performance.now();
+    dx=0;vx=0;dragging=true;deciding=true;isHorizontal=false;
     document.addEventListener('touchmove',onMove,{passive:false});
     document.addEventListener('touchend',onEnd);
     document.addEventListener('mousemove',onMove);
