@@ -455,15 +455,7 @@ function _bindDayDetailSwipe(){
   var body=document.getElementById('dayDetailBody');
   if(!body||body._swipeBound)return;
   body._swipeBound=true;
-  var startX=0,startY=0,lastX=0,lastT=0,dx=0,vx=0,dragging=false,deciding=true,isHorizontal=false,rafId=null;
-  function pt(e){return e.touches&&e.touches[0]?e.touches[0]:e;}
-  function cleanup(){
-    document.removeEventListener('touchmove',onMove);
-    document.removeEventListener('touchend',onEnd);
-    document.removeEventListener('mousemove',onMove);
-    document.removeEventListener('mouseup',onEnd);
-    if(rafId){cancelAnimationFrame(rafId);rafId=null;}
-  }
+  var startX=0,startY=0,lastX=0,lastT=0,dx=0,vx=0,dragging=false,deciding=true,isHorizontal=false,rafId=null,pid=null;
   function setLive(x){
     if(rafId)return;
     rafId=requestAnimationFrame(function(){
@@ -473,33 +465,39 @@ function _bindDayDetailSwipe(){
       rafId=null;
     });
   }
+  function reset(){
+    dragging=false;deciding=true;isHorizontal=false;
+    if(rafId){cancelAnimationFrame(rafId);rafId=null;}
+    if(pid!==null){try{body.releasePointerCapture(pid);}catch(e){}pid=null;}
+  }
   function onMove(e){
-    if(!dragging)return;
-    var p=pt(e),now=performance.now();
-    var ddx=p.clientX-startX,ddy=p.clientY-startY;
+    if(!dragging||(pid!==null&&e.pointerId!==pid))return;
+    var now=performance.now();
+    var ddx=e.clientX-startX,ddy=e.clientY-startY;
     if(deciding){
-      if(Math.abs(ddx)<6&&Math.abs(ddy)<6)return;
-      isHorizontal=Math.abs(ddx)>Math.abs(ddy)*1.3;
+      if(Math.abs(ddx)<8&&Math.abs(ddy)<8)return;
+      isHorizontal=Math.abs(ddx)>=Math.abs(ddy);
       deciding=false;
-      if(!isHorizontal){dragging=false;cleanup();return;}
+      if(!isHorizontal){reset();return;}
       body.style.transition='none';
+      try{body.setPointerCapture(pid);}catch(err){}
     }
-    if(e.cancelable)e.preventDefault();
+    if(!isHorizontal)return;
     dx=ddx;
     var dt=now-lastT;
-    if(dt>0)vx=(p.clientX-lastX)/dt;
-    lastX=p.clientX;lastT=now;
+    if(dt>0)vx=(e.clientX-lastX)/dt;
+    lastX=e.clientX;lastT=now;
     setLive(dx);
   }
-  function onEnd(){
-    if(!dragging)return;
-    dragging=false;
-    cleanup();
-    if(!isHorizontal){body.style.transition='';body.style.transform='';body.style.opacity='';return;}
+  function onEnd(e){
+    if(!dragging||(pid!==null&&e.pointerId!==pid))return;
+    var wasHorizontal=isHorizontal,curDx=dx,curVx=vx;
+    reset();
+    if(!wasHorizontal){body.style.transition='';body.style.transform='';body.style.opacity='';return;}
     var w=body.offsetWidth||300;
-    var shouldNav=Math.abs(dx)>w*0.22||Math.abs(vx)>0.55;
+    var shouldNav=Math.abs(curDx)>w*0.18||Math.abs(curVx)>0.4;
     if(shouldNav){
-      var dir=dx<0?1:-1; // 왼쪽으로 스와이프 -> 다음 날
+      var dir=curDx<0?1:-1; // 왼쪽으로 스와이프 -> 다음 날
       body.style.transition='transform .18s cubic-bezier(.32,.72,0,1),opacity .18s';
       body.style.transform='translateX('+(dir>0?-w:w)+'px)';
       body.style.opacity='0';
@@ -522,16 +520,14 @@ function _bindDayDetailSwipe(){
       body.style.opacity='1';
     }
   }
-  function onStart(e){
-    var p=pt(e);startX=lastX=p.clientX;startY=p.clientY;lastT=performance.now();
+  body.addEventListener('pointerdown',function(e){
+    if(e.pointerType==='mouse'&&e.button!==0)return;
+    pid=e.pointerId;startX=lastX=e.clientX;startY=e.clientY;lastT=performance.now();
     dx=0;vx=0;dragging=true;deciding=true;isHorizontal=false;
-    document.addEventListener('touchmove',onMove,{passive:false});
-    document.addEventListener('touchend',onEnd);
-    document.addEventListener('mousemove',onMove);
-    document.addEventListener('mouseup',onEnd);
-  }
-  body.addEventListener('touchstart',onStart,{passive:true});
-  body.addEventListener('mousedown',onStart);
+  });
+  body.addEventListener('pointermove',onMove);
+  body.addEventListener('pointerup',onEnd);
+  body.addEventListener('pointercancel',onEnd);
 }
 function renderDayDetail(){
   var y=_detailYear,m=_detailMonth,d=_detailDay;
@@ -541,11 +537,10 @@ function renderDayDetail(){
   var secEl=document.getElementById('dayDetailSecs');if(secEl)secEl.textContent=sc>0?(sh+'h '+String(sm2).padStart(2,'0')+'m '+String(ss2).padStart(2,'0')+'s'):'기록 없음';
   var daySess=sess.filter(function(s){var sd=new Date(s.start);return sd.getFullYear()===y&&sd.getMonth()===m&&sd.getDate()===d;});
   var subjSecs={};daySess.forEach(function(s){var dur=Math.floor(((s.end||Date.now())-s.start)/1000);subjSecs[s.subjectId]=(subjSecs[s.subjectId]||0)+dur;});
-  var maxS=Math.max(1,Math.max.apply(null,Object.values(subjSecs).concat([1])));
   var evalKey=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
   var evalText=dailyEvals[evalKey]||'';
   var subjBarsHTML='';
-  subjs.forEach(function(sub){var sec=subjSecs[sub.id]||0;if(!sec)return;var sh2=Math.floor(sec/3600),sm3=Math.floor((sec%3600)/60);var ts=sh2>0?sh2+'h '+String(sm3).padStart(2,'0')+'m':sm3+'m';subjBarsHTML+='<div class="dd-subj-row"><div class="dd-subj-dot" style="background:'+sub.color+'"></div><div class="dd-subj-name">'+sub.name+'</div><div class="dd-subj-bar-bg"><div class="dd-subj-bar-fill" style="width:'+Math.round(sec/maxS*100)+'%;background:'+sub.color+'"></div></div><div class="dd-subj-time">'+ts+'</div></div>';});
+  subjs.forEach(function(sub){var sec=subjSecs[sub.id]||0;if(!sec)return;var sh2=Math.floor(sec/3600),sm3=Math.floor((sec%3600)/60);var ts=sh2>0?sh2+'h '+String(sm3).padStart(2,'0')+'m':sm3+'m';subjBarsHTML+='<div class="dd-subj-row"><div class="dd-subj-dot" style="background:'+sub.color+'"></div><div class="dd-subj-name">'+escapeHtml(sub.name)+'</div><div class="dd-subj-time">'+ts+'</div></div>';});
   function miniGridHTML(){var W=140,H=260,AXIS=18,GW=W-AXIS,RH=H/24;var html='<svg width="'+W+'" height="'+H+'" style="display:block;overflow:visible">';for(var hh=0;hh<24;hh++){html+='<text x="'+AXIS/2+'" y="'+(hh*RH+RH/2+3)+'" text-anchor="middle" font-size="6" fill="rgba(255,255,255,.3)">'+hh+'</text>';html+='<line x1="'+AXIS+'" x2="'+W+'" y1="'+(hh*RH)+'" y2="'+(hh*RH)+'" stroke="rgba(255,255,255,.06)" stroke-width="0.5"/>';}daySess.forEach(function(s){var st2=new Date(s.start),en2=new Date(s.end||Date.now());var stMin=st2.getHours()*60+st2.getMinutes()+st2.getSeconds()/60,enMin=en2.getHours()*60+en2.getMinutes()+en2.getSeconds()/60;for(var h2=Math.floor(stMin/60);h2<=Math.min(23,Math.floor(enMin/60));h2++){var segS=Math.max(stMin,h2*60),segE=Math.min(enMin,(h2+1)*60);if(segE<=segS)continue;var x1=Math.round((segS-h2*60)*(GW/60)),x2=Math.round((segE-h2*60)*(GW/60));html+='<rect x="'+(AXIS+x1)+'" y="'+(h2*RH+0.5)+'" width="'+Math.max(1,x2-x1)+'" height="'+(RH-1)+'" fill="'+(s.color||'#a78bfa')+'"/>';}});return html+'</svg>';}
   var tlEl=document.getElementById('dayDetailTimeline');
   if(tlEl)tlEl.innerHTML=daySess.length?miniGridHTML():'<div style="display:flex;align-items:center;justify-content:center;height:100%;color:rgba(255,255,255,.35);font-size:.75rem;flex-direction:column;gap:6px"><div style="font-size:1.5rem">😴</div>공부 기록 없음</div>';
@@ -565,7 +560,7 @@ function renderDayDetail(){
     });
     todoEl.innerHTML=todoHtml||'<div style="font-size:.78rem;color:var(--ink3);text-align:center;padding:10px 0">등록된 TODO가 없습니다</div>';
   }
-  var subjContainer=document.querySelector('#dayDetailM .dd-subj-bars');if(subjContainer)subjContainer.innerHTML=subjBarsHTML;
+  var subjContainer=document.querySelector('#dayDetailM .dd-subj-bars');if(subjContainer)subjContainer.innerHTML='<div class="dd-subj-hd">과목별 공부시간</div>'+(subjBarsHTML||'<div style="font-size:.76rem;color:var(--ink3);text-align:center;padding:6px 0">기록 없음</div>');
 }
 
 // 실시간 타임라인

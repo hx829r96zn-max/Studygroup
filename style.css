@@ -340,6 +340,16 @@ textarea.inp{resize:vertical;min-height:70px;}
 .dd-todo-mark.done{color:var(--green);}
 .dd-todo-mark.undone{color:var(--red);}
 
+/* ── 날짜 상세 - 과목별 공부시간 ── */
+#dayDetailBody{touch-action:pan-y;}
+.dd-subj-bars{margin-bottom:14px;}
+.dd-subj-hd{font-weight:700;font-size:.85rem;margin-bottom:8px;}
+.dd-subj-row{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--line);}
+.dd-subj-row:last-child{border-bottom:none;}
+.dd-subj-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.dd-subj-name{font-size:.82rem;font-weight:700;color:var(--ink);flex:1;}
+.dd-subj-time{font-family:monospace;font-size:.82rem;font-weight:600;color:var(--ink2);flex-shrink:0;}
+
 /* ══════════════════════════════════════════════
    D-DAY카드 (다크)
    ══════════════════════════════════════════════ */
