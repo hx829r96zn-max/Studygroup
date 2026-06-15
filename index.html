@@ -18,12 +18,15 @@
     if(t&&valid.indexOf(t)>=0&&t!=='home'){
       document.documentElement.setAttribute('data-boot-tab',t);
     }
+    if(!localStorage.getItem('sg_authchoice')){
+      document.documentElement.setAttribute('data-new-user','1');
+    }
   }catch(e){}
 })();
 </script>
 
 <!-- ── 로그인 화면 ── -->
-<div id="loginScreen" style="display:flex;position:fixed;inset:0;z-index:9999;background:radial-gradient(circle at 50% 20%,#241b3d 0%,#0d0b14 70%);color:#fff;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center">
+<div id="loginScreen" style="display:none;position:fixed;inset:0;z-index:9999;background:radial-gradient(circle at 50% 20%,#241b3d 0%,#0d0b14 70%);color:#fff;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center">
   <div style="width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg,#8b7cf6,#5b4fcf);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:1.7rem;font-weight:700;color:#fff;margin-bottom:16px;box-shadow:0 10px 28px rgba(91,79,207,.4)">S</div>
   <div style="font-family:'DM Mono',monospace;font-size:1.6rem;font-weight:700;color:#fff;margin-bottom:6px;letter-spacing:-.5px">StudyGroup</div>
   <div style="font-size:.82rem;color:rgba(255,255,255,.45);margin-bottom:36px">친구와 함께 만드는 공부 습관</div>
@@ -147,7 +150,7 @@
       <div class="sli" id="subjList"></div>
       <div class="tc-ctrl">
         <button class="tc-go" id="tcBtn" onclick="toggleSubj()" disabled>선택</button>
-        <button class="tc-stop" id="tcStop" onclick="stopSubj()">■</button>
+        <button class="tc-stop" id="tcStop" onclick="stopSubjBtn()">■</button>
       </div>
     </div>
     <div class="tright">
@@ -415,6 +418,10 @@
     </div>
     <div style="margin-top:8px"><div style="font-size:.68rem;color:var(--ink2);margin-bottom:4px">초기화 시각 (시, 예:5 → 새벽5시)</div><input class="inp" id="s_reset" type="number" min="0" max="11" value="5" style="margin:0"></div>
     <button class="btn btn-dk btn-sm" style="margin-top:9px" onclick="savePomoSet()">저장</button>
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line)">
+      <div class="trow"><span class="tlbl">정지하면 둘 다 정지</span><label class="toggle"><input type="checkbox" id="s_linkstop" onchange="saveLinkSettings()"><span class="tsl"></span></label></div>
+      <div class="trow" style="margin-bottom:0"><span class="tlbl">시작하면 둘 다 시작</span><label class="toggle"><input type="checkbox" id="s_linkstart" onchange="saveLinkSettings()"><span class="tsl"></span></label></div>
+    </div>
   </div>
 
   <!-- 과목 & 색상 -->

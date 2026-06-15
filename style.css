@@ -39,6 +39,7 @@ nav{
 
 /* ── 새로고침시 마지막 화면으로 즉시 전환 (홈 화면 깜빡임 방지) ── */
 html[data-boot-tab] #pg-home.on{display:none;}
+html[data-new-user] #loginScreen{display:flex!important;}
 html[data-boot-tab="timer"] #pg-timer{display:flex;}
 html[data-boot-tab="room"] #pg-room{display:block;}
 html[data-boot-tab="stats"] #pg-stats{display:block;}
