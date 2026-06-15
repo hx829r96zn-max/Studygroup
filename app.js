@@ -31,9 +31,16 @@ var prof=JSON.parse(localStorage.getItem('sg_p')||'{}');
 var cfg=JSON.parse(localStorage.getItem('sg_cfg')||'{}');
 var pdata=JSON.parse(localStorage.getItem('sg_pd')||'{}');
 var alertCfg=JSON.parse(localStorage.getItem('sg_alert')||'{"on":false,"times":[],"msg":"지금 공부할 시간이야!"}');
-var todos=JSON.parse(localStorage.getItem('sg_todos')||'{}');
+var todos=JSON.parse(localStorage.getItem('sg_todos')||'{}'); // { dateKey: { subjId: [{text,done}] } } - dateKey는 today()의 study-day 기준
 var todoOpenSubjId=null;
 function svTodos(){localStorage.setItem('sg_todos',JSON.stringify(todos));}
+function todoDateKeyFor(y,mo,d){return new Date(y,mo,d).toDateString();}
+function getTodoList(dateKey,subjId){return(todos[dateKey]&&todos[dateKey][subjId])||[];}
+(function _migrateTodos(){ // 과목별(예전) 구조 → 날짜별 구조로 1회 이전
+  var keys=Object.keys(todos);
+  var isOld=keys.some(function(k){return Array.isArray(todos[k]);});
+  if(isOld){var migrated={};migrated[today()]=todos;todos=migrated;svTodos();}
+})();
 var aId=null,aStart=null,aInt=null,selId=null;
 var _pomoSaved=JSON.parse(localStorage.getItem('sg_pomo_state')||'null');
 var pRun=false,pFocus=_pomoSaved?_pomoSaved.pFocus:true;
@@ -181,7 +188,7 @@ function renderTodoPanel(){
   }
   var sub=subjs.find(function(s){return s.id===todoOpenSubjId;});
   if(!sub){todoOpenSubjId=null;panel.classList.remove('show');setTimeout(function(){if(!todoOpenSubjId)panel.innerHTML='';},300);return;}
-  var list=todos[todoOpenSubjId]||[];
+  var list=getTodoList(today(),todoOpenSubjId);
   var html='<div class="todo-hd" style="color:'+sub.color+'">'+sub.name+' TODO</div>';
   html+='<div class="todo-add"><input class="todo-input" id="todoNewInput" placeholder="할 일 추가" onkeydown="if(event.key===\'Enter\')addTodo()"><button class="todo-add-btn" onclick="addTodo()">+</button></div>';
   html+='<div class="todo-list">';
@@ -248,9 +255,9 @@ function _bindTodoSwipeClose(panel){
   panel.addEventListener('touchstart',onStart,{passive:true});
   panel.addEventListener('mousedown',onStart);
 }
-function addTodo(){var inp=document.getElementById('todoNewInput');var v=(inp&&inp.value||'').trim();if(!v||!todoOpenSubjId)return;if(!todos[todoOpenSubjId])todos[todoOpenSubjId]=[];todos[todoOpenSubjId].push({text:v,done:false});svTodos();renderTodoPanel();saveUserDataToFirebase();}
-function toggleTodo(idx){if(!todoOpenSubjId||!todos[todoOpenSubjId]||!todos[todoOpenSubjId][idx])return;todos[todoOpenSubjId][idx].done=!todos[todoOpenSubjId][idx].done;svTodos();renderTodoPanel();saveUserDataToFirebase();}
-function delTodo(idx){if(!todoOpenSubjId||!todos[todoOpenSubjId])return;todos[todoOpenSubjId].splice(idx,1);svTodos();renderTodoPanel();saveUserDataToFirebase();}
+function addTodo(){var inp=document.getElementById('todoNewInput');var v=(inp&&inp.value||'').trim();if(!v||!todoOpenSubjId)return;var dk=today();if(!todos[dk])todos[dk]={};if(!todos[dk][todoOpenSubjId])todos[dk][todoOpenSubjId]=[];todos[dk][todoOpenSubjId].push({text:v,done:false});svTodos();renderTodoPanel();saveUserDataToFirebase();}
+function toggleTodo(idx){var dk=today();if(!todoOpenSubjId||!todos[dk]||!todos[dk][todoOpenSubjId]||!todos[dk][todoOpenSubjId][idx])return;todos[dk][todoOpenSubjId][idx].done=!todos[dk][todoOpenSubjId][idx].done;svTodos();renderTodoPanel();saveUserDataToFirebase();}
+function delTodo(idx){var dk=today();if(!todoOpenSubjId||!todos[dk]||!todos[dk][todoOpenSubjId])return;todos[dk][todoOpenSubjId].splice(idx,1);svTodos();renderTodoPanel();saveUserDataToFirebase();}
 
 // 과목 드래그 순서변경
 var _scDrag={active:false,idx:-1,el:null};
@@ -329,7 +336,7 @@ function rmFr(i){if(confirm('삭제?')){frds.splice(i,1);svf();renderSet();}}
 // SETTINGS
 function saveProfile(){var ni=document.getElementById('s_name');if(ni&&ni.value.trim())prof.name=ni.value.trim();var si=document.getElementById('s_school');if(si&&si.value.trim())prof.school=si.value.trim();var gi=document.getElementById('s_grade');if(gi&&gi.value.trim())prof.grade=gi.value.trim();var ai=document.getElementById('s_age');if(ai&&ai.value)prof.age=parseInt(ai.value)||prof.age||0;var go2=document.getElementById('s_goal');if(go2&&go2.value)prof.goal=parseFloat(go2.value)||prof.goal||6.5;var pi=document.getElementById('s_phone');if(pi&&pi.value.trim())prof.phone=pi.value.trim();svp();renderProfUI();document.getElementById('profEdit').style.display='none';document.getElementById('profView').style.display='block';document.getElementById('profEditBtn').textContent='수정';toast('프로필 저장됨! ✅');fbPushMyData();}
 function toggleProfileEdit(){var view=document.getElementById('profView'),edit=document.getElementById('profEdit'),btn=document.getElementById('profEditBtn');if(!view||!edit)return;if(edit.style.display!=='none'){edit.style.display='none';view.style.display='block';if(btn)btn.textContent='수정';}else{['s_name','s_school','s_grade'].forEach(function(id){var el=document.getElementById(id);if(el)el.value=prof[id.replace('s_','')]||'';});var ai=document.getElementById('s_age');if(ai)ai.value=prof.age||'';var go2=document.getElementById('s_goal');if(go2)go2.value=prof.goal||6.5;var pi=document.getElementById('s_phone');if(pi)pi.value=prof.phone||'';edit.style.display='block';view.style.display='none';if(btn)btn.textContent='닫기';}}
-function savePomoSet(){var pf=parseInt((document.getElementById('s_pf')||{}).value)||70,pb=parseInt((document.getElementById('s_pb')||{}).value)||10;var rh=parseInt((document.getElementById('s_reset')||{}).value);if(isNaN(rh)||rh<0||rh>11)rh=5;cfg.pf=pf;cfg.pb=pb;cfg.resetHour=rh;svcfg();pSec=pf*60;pBrk=pb*60;resetPomo();reloadPlanForToday();updateHome();toast('저장됨 · 초기화 새벽 '+rh+'시');}
+function savePomoSet(){var pf=parseInt((document.getElementById('s_pf')||{}).value)||70,pb=parseInt((document.getElementById('s_pb')||{}).value)||10;var rh=parseInt((document.getElementById('s_reset')||{}).value);if(isNaN(rh)||rh<0||rh>11)rh=5;cfg.pf=pf;cfg.pb=pb;cfg.resetHour=rh;svcfg();pSec=pf*60;pBrk=pb*60;resetPomo();reloadPlanForToday();updateHome();_lastStudyDay=today();if(todoOpenSubjId)renderTodoPanel();toast('저장됨 · 초기화 새벽 '+rh+'시');}
 function renderProfUI(){var n=prof.name||'나';['profAv','myAv'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent=n[0]||'나';});var pn=document.getElementById('profName');if(pn)pn.textContent=n;var sv2=document.getElementById('profSchoolView');if(sv2)sv2.textContent=prof.school||'학교 미입력';var gv=document.getElementById('profGradeView');if(gv)gv.textContent=prof.grade||'학년 미입력';var phv=document.getElementById('profPhoneView');if(phv)phv.textContent=prof.phone||'연락처 미입력';}
 function applyTheme(k,v){document.documentElement.style.setProperty(k,v);if(!cfg.themeC)cfg.themeC={};cfg.themeC[k]=v;svcfg();}
 function switchColorTab(n){var p1=document.getElementById('colorPane1'),p2=document.getElementById('colorPane2');if(p1)p1.style.display=n===1?'block':'none';if(p2)p2.style.display=n===2?'block':'none';var b1=document.getElementById('colorTab1'),b2=document.getElementById('colorTab2');if(b1){b1.style.background=n===1?'var(--acc)':'transparent';b1.style.color=n===1?'#fff':'var(--ink)';}if(b2){b2.style.background=n===2?'var(--acc)':'transparent';b2.style.color=n===2?'#fff':'var(--ink)';}}
@@ -446,8 +453,9 @@ function renderDayDetail(){
   var todoEl=document.getElementById('dayDetailTodos');
   if(todoEl){
     var todoHtml='';
+    var ddKey=todoDateKeyFor(y,m,d);
     subjs.forEach(function(sub){
-      var list=todos[sub.id]||[];
+      var list=getTodoList(ddKey,sub.id);
       if(!list.length)return;
       todoHtml+='<div class="dd-todo-subj"><div class="dd-todo-subj-hd" style="color:'+sub.color+'">'+escapeHtml(sub.name)+'</div><div class="dd-todo-list">';
       list.forEach(function(t){
@@ -515,7 +523,7 @@ startAlertSchedule();subscribeMockScores();
 
 var _lastStudyDay=today();
 var _lastCalDay=new Date().toDateString();
-setInterval(function(){var td=today();if(td!==_lastStudyDay){_lastStudyDay=td;if(aId)stopSubj();reloadPlanForToday();updateHome();renderTL();buildHm('hmHome');buildStreak();toast('새로운 하루가 시작되었습니다');}var cd=new Date().toDateString();if(cd!==_lastCalDay){_lastCalDay=cd;renderDdayCard();}buildHm('hmHome');buildStreak();var sp=document.getElementById('pg-stats');if(sp&&sp.classList.contains('on'))renderCal();},30000);
+setInterval(function(){var td=today();if(td!==_lastStudyDay){_lastStudyDay=td;if(aId)stopSubj();reloadPlanForToday();updateHome();renderTL();buildHm('hmHome');buildStreak();if(todoOpenSubjId)renderTodoPanel();toast('새로운 하루가 시작되었습니다');}var cd=new Date().toDateString();if(cd!==_lastCalDay){_lastCalDay=cd;renderDdayCard();}buildHm('hmHome');buildStreak();var sp=document.getElementById('pg-stats');if(sp&&sp.classList.contains('on'))renderCal();},30000);
 
 setInterval(function(){if(aId&&aStart){var hp=document.getElementById('pg-home');if(hp&&hp.classList.contains('on'))updateHome();var tp=document.getElementById('pg-timer');if(tp&&tp.classList.contains('on'))updatePlanStat();}var rp=document.getElementById('pg-room');if(rp&&rp.classList.contains('on')){var lp=document.getElementById('rp-live');if(lp&&lp.classList.contains('on')){try{renderMemberCards();}catch(e){}}}renderLiveTimeline();updatePomoSubjBadge();},1000);
 
