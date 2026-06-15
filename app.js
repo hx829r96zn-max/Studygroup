@@ -386,14 +386,12 @@ function openRoom(code){
   var c=document.getElementById('rvCode');if(c){c.style.display=cfg.grpHideCode===true?'none':'block';c.textContent='코드: '+code;}
   var pg=document.getElementById('pg-roomview');if(pg)pg.style.display='flex';
   var nv=document.querySelector('nav');if(nv)nv.style.display='none';
-  var tb=document.querySelector('.tabbar');if(tb)tb.style.display='none';
   currentRoom._feedData={};
   renderRoomFeed();subscribeRoomFeed(code);renderRoomTodoPreview();
 }
 function closeRoomView(){
   var pg=document.getElementById('pg-roomview');if(pg)pg.style.display='none';
   var nv=document.querySelector('nav');if(nv)nv.style.display='flex';
-  var tb=document.querySelector('.tabbar');if(tb)tb.style.display='flex';
   if(_roomFeedListener){try{_roomFeedListener();}catch(e){}_roomFeedListener=null;}
   currentRoom=null;renderRoomList();
 }
