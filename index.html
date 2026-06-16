@@ -155,7 +155,7 @@
     </div>
     <div class="tright">
       <div class="pscroll">
-        <div class="pgwrap" id="pScroll"><div class="pgrid" id="pGrid"></div></div>
+        <div class="pgwrap" id="pScroll" onclick="if(todoOpenSubjId&&!event.target.closest('#todoPanel')){todoOpenSubjId=null;renderTodoPanel();}"><div class="pgrid" id="pGrid"></div></div>
       </div>
       <div class="todo-panel" id="todoPanel"></div>
     </div>
