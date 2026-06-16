@@ -312,7 +312,16 @@ var currentRoom=null;
 var _roomFeedListener=null;
 function svMyRooms(){localStorage.setItem('sg_myrooms',JSON.stringify(myRooms));}
 function onRoomJoinInput(el){el.value=(el.value||'').toUpperCase();var btn=document.getElementById('roomJoinBtn');if(btn){if(el.value.length===6){btn.disabled=false;btn.style.opacity='1';}else{btn.disabled=true;btn.style.opacity='.4';}}}
-function openCreateRoomM(){var created=myRooms.filter(function(r){return r.ownerCode===getMyCode();}).length;if(created>=2){toast('방은 최대 2개까지 만들 수 있어요');return;}var n=document.getElementById('newRoomName');if(n)n.value='';var m=document.getElementById('newRoomMax');if(m)m.value='';var box=document.getElementById('newRoomCodeBox');if(box)box.style.display='none';var cb=document.getElementById('createRoomBtn');if(cb){cb.disabled=true;cb.style.opacity='.4';}window._newRoomCode=null;openModal('createRoomM');}
+function openCreateRoomM(){
+  var created=(myRooms||[]).filter(function(r){return r.ownerCode===getMyCode();}).length;
+  if(created>=2){toast('방은 최대 2개까지 만들 수 있어요');return;}
+  var n=document.getElementById('newRoomName');if(n)n.value='';
+  var m=document.getElementById('newRoomMax');if(m)m.value='';
+  var box=document.getElementById('newRoomCodeBox');if(box)box.style.display='none';
+  var cb=document.getElementById('createRoomBtn');if(cb){cb.disabled=true;cb.style.opacity='.4';}
+  window._newRoomCode=null;
+  openModal('createRoomM');
+}
 function generateRoomCode(){
   var code=Math.random().toString(36).substring(2,8).toUpperCase();
   window._newRoomCode=code;
@@ -791,7 +800,38 @@ function renderDayDetail(){
 }
 
 // 실시간 타임라인
-function renderLiveTimeline(){var myT=getTSecs(),myH=Math.floor(myT/3600),myM=Math.floor((myT%3600)/60),myS=Math.floor(myT%60);var myDot=document.getElementById('liveMyDot'),mySubjEl=document.getElementById('liveMySubj'),myTimeEl=document.getElementById('liveMyTime'),myBar=document.getElementById('liveMyBar'),myNameEl=document.getElementById('liveMyName');if(myNameEl)myNameEl.textContent=prof.name||'나';if(aId&&aStart){var sub=subjs.find(function(s){return s.id===aId;});if(myDot)myDot.style.background=sub?sub.color:'var(--acc)';if(mySubjEl)mySubjEl.innerHTML='<span style="background:'+(sub?sub.color:'var(--acc)')+';color:#fff;padding:2px 7px;border-radius:10px;font-size:.65rem;font-weight:700">'+(sub?sub.name:'공부 중')+'</span> 공부 중';}else{if(myDot)myDot.style.background='#ddd';if(mySubjEl)mySubjEl.textContent='공부 중 아님';}if(myTimeEl)myTimeEl.textContent=myH+'h '+String(myM).padStart(2,'0')+'m '+String(myS).padStart(2,'0')+'s';var goalSecs=(prof.goal||6.5)*3600;if(myBar)myBar.style.width=Math.min(100,Math.round(myT/goalSecs*100))+'%';var fw=document.getElementById('liveFriendTimelines');if(!fw)return;fw.innerHTML='';frds.forEach(function(f){var fSecs=getFriendLiveSecs(f),fH=Math.floor(fSecs/3600),fM=Math.floor((fSecs%3600)/60);var isLive=f.fbLiveTimer&&f.fbLiveTimer.active,fColor=f.color||'#888';var wrap=document.createElement('div');wrap.style.cssText='margin-bottom:12px';var topRow=document.createElement('div');topRow.style.cssText='display:flex;align-items:center;gap:7px;margin-bottom:5px';var dot=document.createElement('div');dot.style.cssText='width:8px;height:8px;border-radius:50%;background:'+(isLive?fColor:'#ddd')+';flex-shrink:0';var nm=document.createElement('div');nm.style.cssText='font-size:.8rem;font-weight:700';nm.textContent=f.name||'친구';var timeEl=document.createElement('div');timeEl.style.cssText='margin-left:auto;font-family:monospace;font-size:.78rem;font-weight:600;color:var(--green)';timeEl.textContent=fH+'h '+String(fM).padStart(2,'0')+'m';topRow.appendChild(dot);topRow.appendChild(nm);topRow.appendChild(timeEl);var barBg=document.createElement('div');barBg.style.cssText='height:10px;background:var(--bg);border-radius:5px;overflow:hidden';var barFill=document.createElement('div');barFill.style.cssText='height:100%;border-radius:5px;background:'+fColor+';width:'+Math.min(100,Math.round(fSecs/goalSecs*100))+'%;transition:width .5s';barBg.appendChild(barFill);wrap.appendChild(topRow);wrap.appendChild(barBg);fw.appendChild(wrap);});if(!frds.length)fw.innerHTML='<div style="font-size:.78rem;color:var(--ink3);padding:8px 0;text-align:center">연동된 친구 없음</div>';}
+function renderLiveTimeline(){
+  var myT=getTSecs(),myH=Math.floor(myT/3600),myM=Math.floor((myT%3600)/60),myS=Math.floor(myT%60);
+  var myDot=document.getElementById('liveMyDot'),mySubjEl=document.getElementById('liveMySubj'),myTimeEl=document.getElementById('liveMyTime'),myBar=document.getElementById('liveMyBar'),myNameEl=document.getElementById('liveMyName');
+  if(myNameEl)myNameEl.textContent=prof.name||'나';
+  if(aId&&aStart){var sub=subjs.find(function(s){return s.id===aId;});if(myDot)myDot.style.background=sub?sub.color:'var(--acc)';if(mySubjEl)mySubjEl.innerHTML='<span style="background:'+(sub?sub.color:'var(--acc)')+';color:#fff;padding:2px 7px;border-radius:10px;font-size:.65rem;font-weight:700">'+(sub?sub.name:'공부 중')+'</span> 공부 중';}else{if(myDot)myDot.style.background='#ddd';if(mySubjEl)mySubjEl.textContent='공부 중 아님';}
+  if(myTimeEl)myTimeEl.textContent=myH+'h '+String(myM).padStart(2,'0')+'m '+String(myS).padStart(2,'0')+'s';
+  var goalSecs=(prof.goal||6.5)*3600;
+  if(myBar)myBar.style.width=Math.min(100,Math.round(myT/goalSecs*100))+'%';
+  var fw=document.getElementById('liveFriendTimelines');if(!fw)return;
+  var connected=JSON.parse(localStorage.getItem('sg_connected')||'[]');
+  frds.forEach(function(f){if(f.shareCode&&!connected.find(function(c){return c.code===f.shareCode;}))connected.push({code:f.shareCode,name:f.name,color:f.color||'#5b4fcf'});});
+  fw.innerHTML='';
+  if(!connected.length){fw.innerHTML='<div style="font-size:.78rem;color:var(--ink3);padding:8px 0;text-align:center">연동된 친구 없음</div>';return;}
+  connected.forEach(function(c){
+    var f=frds.find(function(x){return x.shareCode===c.code;});
+    if(!f||(!f.fbStudy&&!f.fbLiveTimer))fetchFriendLatest(c.code);
+    var fSecs=f?getFriendLiveSecs(f):0;
+    var fH=Math.floor(fSecs/3600),fM2=Math.floor((fSecs%3600)/60);
+    var isLive=f&&f.fbLiveTimer&&f.fbLiveTimer.active;
+    var fColor=(f&&f.color)||c.color||'#5b4fcf';
+    var wrap=document.createElement('div');wrap.style.cssText='margin-bottom:12px';
+    var topRow=document.createElement('div');topRow.style.cssText='display:flex;align-items:center;gap:7px;margin-bottom:5px';
+    var dot=document.createElement('div');dot.style.cssText='width:8px;height:8px;border-radius:50%;background:'+(isLive?fColor:'#ddd')+';flex-shrink:0';
+    var nm=document.createElement('div');nm.style.cssText='font-size:.8rem;font-weight:700';nm.textContent=(f&&f.name)||c.name||'친구';
+    var timeEl=document.createElement('div');timeEl.style.cssText='margin-left:auto;font-family:monospace;font-size:.78rem;font-weight:600;color:var(--green)';
+    timeEl.textContent=fH+'h '+String(fM2).padStart(2,'0')+'m';
+    topRow.appendChild(dot);topRow.appendChild(nm);topRow.appendChild(timeEl);
+    var barBg=document.createElement('div');barBg.style.cssText='height:10px;background:var(--bg);border-radius:5px;overflow:hidden';
+    var barFill=document.createElement('div');barFill.style.cssText='height:100%;border-radius:5px;background:'+fColor+';width:'+Math.min(100,Math.round(fSecs/goalSecs*100))+'%;transition:width .5s';
+    barBg.appendChild(barFill);wrap.appendChild(topRow);wrap.appendChild(barBg);fw.appendChild(wrap);
+  });
+}
 
 // 또래 비교 / 스트릭
 function pushAgeData(){if(!window._fbReady||!prof.age)return;window._fbSet('ageStats/'+prof.age+'/'+getMyCode(),{secs:getTSecs(),date:new Date().toISOString().split('T')[0],code:getMyCode()});}
