@@ -215,7 +215,7 @@ function toggleSubj(){if(!selId)return;if(aId===selId){var sid=selId;stopSubj();
 function stopSubjBtn(){var sid=aId;stopSubj();if(cfg.linkPomoStop!==false&&pRun&&pomoSubjId===sid)pomoPause();}
 function updatePomoSubjBadge(){var el=document.getElementById('pomoSubjBadge');if(!el)return;if(aId){var sub=subjs.find(function(s){return s.id===aId;});if(sub){el.textContent=sub.name;el.style.background=sub.color;el.style.display='block';return;}}el.style.display='none';}
 function startSubj(id){if(aId)_stopSil(aId);aId=id;aStart=Date.now();var sub=subjs.find(function(s){return s.id===id;});var bar=document.getElementById('activeBar');if(bar)bar.classList.add('on');var ad=document.getElementById('adot');if(ad)ad.style.background=sub.color;var an=document.getElementById('aname');if(an)an.textContent=sub.name;restartFbSync();clearInterval(aInt);aInt=setInterval(function(){var at=document.getElementById('atime');if(at)at.textContent=f3(Math.floor((Date.now()-aStart)/1000));syncAllScreens();},500);var ts=document.getElementById('tcStop');if(ts)ts.style.display='flex';selSubj(id);renderTL();updatePomoSubjBadge();}
-function stopSubj(){if(!aId)return;sess.push({subjectId:aId,color:subjs.find(function(s){return s.id===aId;}).color,start:aStart,end:Date.now()});sv();var sid=aId;aId=null;aStart=null;clearInterval(aInt);var bar=document.getElementById('activeBar');if(bar)bar.classList.remove('on');var ts=document.getElementById('tcStop');if(ts)ts.style.display='none';var at=document.getElementById('atime');if(at)at.textContent='00:00:00';selSubj(sid);renderTL();renderTH();updateHome();fbPushMyData();saveUserDataToFirebase();restartFbSync();updatePomoSubjBadge();toast('⏱ '+fmtHM(getSecs(sid)));}
+function stopSubj(){if(!aId)return;var endT=Date.now();var sub=subjs.find(function(s){return s.id===aId;});sess.push({subjectId:aId,color:(sub&&sub.color)||'#888',start:aStart,end:endT});svSess();var sid=aId;aId=null;aStart=null;clearInterval(aInt);var bar=document.getElementById('activeBar');if(bar)bar.classList.remove('on');var ts=document.getElementById('tcStop');if(ts)ts.style.display='none';var at=document.getElementById('atime');if(at)at.textContent='00:00:00';selSubj(sid);renderTL();renderTH();updateHome();fbPushMyData();saveUserDataToFirebase();restartFbSync();updatePomoSubjBadge();toast('⏱ '+fmtHM(getSecs(sid)));}
 function _stopSil(id){sess.push({subjectId:id,color:(subjs.find(function(s){return s.id===id;})||{}).color||'#888',start:aStart,end:Date.now()});sv();}
 
 // PLANNER
@@ -883,29 +883,46 @@ function renderDayDetail(){
   var titleEl=document.getElementById('dayDetailTitle');if(titleEl)titleEl.textContent=(m+1)+'월 '+d+'일 ('+days[dt.getDay()]+')';
   var sc=getSecsDate(y,m,d),sh=Math.floor(sc/3600),sm2=Math.floor((sc%3600)/60),ss2=Math.floor(sc%60);
   var secEl=document.getElementById('dayDetailSecs');if(secEl)secEl.textContent=sc>0?(sh+'h '+String(sm2).padStart(2,'0')+'m '+String(ss2).padStart(2,'0')+'s'):'기록 없음';
-  var daySess=sess.filter(function(s){var sd=new Date(s.start);return sd.getFullYear()===y&&sd.getMonth()===m&&sd.getDate()===d;});
+  // resetHour 기준 스터디데이로 세션 필터
+  var dayKey=new Date(y,m,d).toDateString();
+  var daySess=sess.filter(function(s){return studyDayOf(new Date(s.start))===dayKey;});
   var subjSecs={};daySess.forEach(function(s){var dur=Math.floor(((s.end||Date.now())-s.start)/1000);subjSecs[s.subjectId]=(subjSecs[s.subjectId]||0)+dur;});
   var evalKey=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
   var evalText=dailyEvals[evalKey]||'';
   var subjBarsHTML='';
   subjs.forEach(function(sub){var sec=subjSecs[sub.id]||0;if(!sec)return;var sh2=Math.floor(sec/3600),sm3=Math.floor((sec%3600)/60);var ts=sh2>0?sh2+'h '+String(sm3).padStart(2,'0')+'m':sm3+'m';subjBarsHTML+='<div class="dd-subj-row"><div class="dd-subj-dot" style="background:'+sub.color+'"></div><div class="dd-subj-name">'+escapeHtml(sub.name)+'</div><div class="dd-subj-time">'+ts+'</div></div>';});
-  function miniGridHTML(){var W=140,H=260,AXIS=18,GW=W-AXIS,RH=H/24;var html='<svg width="'+W+'" height="'+H+'" style="display:block;overflow:visible">';for(var hh=0;hh<24;hh++){html+='<text x="'+AXIS/2+'" y="'+(hh*RH+RH/2+3)+'" text-anchor="middle" font-size="6" fill="rgba(255,255,255,.3)">'+hh+'</text>';html+='<line x1="'+AXIS+'" x2="'+W+'" y1="'+(hh*RH)+'" y2="'+(hh*RH)+'" stroke="rgba(255,255,255,.06)" stroke-width="0.5"/>';}daySess.forEach(function(s){var st2=new Date(s.start),en2=new Date(s.end||Date.now());var stMin=st2.getHours()*60+st2.getMinutes()+st2.getSeconds()/60,enMin=en2.getHours()*60+en2.getMinutes()+en2.getSeconds()/60;for(var h2=Math.floor(stMin/60);h2<=Math.min(23,Math.floor(enMin/60));h2++){var segS=Math.max(stMin,h2*60),segE=Math.min(enMin,(h2+1)*60);if(segE<=segS)continue;var x1=Math.round((segS-h2*60)*(GW/60)),x2=Math.round((segE-h2*60)*(GW/60));html+='<rect x="'+(AXIS+x1)+'" y="'+(h2*RH+0.5)+'" width="'+Math.max(1,x2-x1)+'" height="'+(RH-1)+'" fill="'+(s.color||'#a78bfa')+'"/>';}});return html+'</svg>';}
+  // 미니 격자: 플래너와 동일하게 GRID_START_HOUR(rowToHour) 기준
+  function miniGridHTML(){
+    var W=140,H=260,AX=18,GW=W-AX,RH=H/24;
+    var html='<svg width="'+W+'" height="'+H+'" style="display:block;overflow:visible">';
+    for(var i=0;i<24;i++){
+      var hr=rowToHour(i);
+      html+='<text x="'+(AX/2)+'" y="'+(i*RH+RH/2+3)+'" text-anchor="middle" font-size="6" fill="rgba(255,255,255,.3)">'+hr+'</text>';
+      html+='<line x1="'+AX+'" x2="'+W+'" y1="'+(i*RH)+'" y2="'+(i*RH)+'" stroke="rgba(255,255,255,.06)" stroke-width="0.5"/>';
+    }
+    for(var c=0;c<=6;c++){html+='<line x1="'+(AX+c*(GW/6))+'" x2="'+(AX+c*(GW/6))+'" y1="0" y2="'+H+'" stroke="rgba(255,255,255,.05)" stroke-width="0.5"/>';}
+    daySess.forEach(function(s){
+      var st2=new Date(s.start),en2=new Date(s.end||Date.now());
+      var stMin=st2.getHours()*60+st2.getMinutes()+st2.getSeconds()/60;
+      var enMin=en2.getHours()*60+en2.getMinutes()+en2.getSeconds()/60;
+      for(var row=0;row<24;row++){
+        var hr2=rowToHour(row);
+        var rowStart=hr2*60,rowEnd=rowStart+60;
+        var segS=Math.max(stMin,rowStart),segE=Math.min(enMin,rowEnd);
+        if(segE<=segS)continue;
+        var x1=Math.round((segS-rowStart)*(GW/60)),x2=Math.round((segE-rowStart)*(GW/60));
+        html+='<rect x="'+(AX+x1)+'" y="'+(row*RH+0.5)+'" width="'+Math.max(1,x2-x1)+'" height="'+(RH-1)+'" fill="'+(s.color||'#a78bfa')+'"/>';
+      }
+    });
+    return html+'</svg>';
+  }
   var tlEl=document.getElementById('dayDetailTimeline');
   if(tlEl)tlEl.innerHTML=daySess.length?miniGridHTML():'<div style="display:flex;align-items:center;justify-content:center;height:100%;color:rgba(255,255,255,.35);font-size:.75rem;flex-direction:column;gap:6px"><div style="font-size:1.5rem">😴</div>공부 기록 없음</div>';
   var evalEl=document.getElementById('dayDetailEval');if(evalEl){evalEl.textContent=evalText||'기록 없음';evalEl.style.color=evalText?'var(--ink)':'var(--ink3)';}
   var todoEl=document.getElementById('dayDetailTodos');
   if(todoEl){
-    var todoHtml='';
-    var ddKey=todoDateKeyFor(y,m,d);
-    subjs.forEach(function(sub){
-      var list=getTodoList(ddKey,sub.id);
-      if(!list.length)return;
-      todoHtml+='<div class="dd-todo-subj"><div class="dd-todo-subj-hd" style="color:'+sub.color+'">'+escapeHtml(sub.name)+'</div><div class="dd-todo-list">';
-      list.forEach(function(t){
-        todoHtml+='<div class="dd-todo-row"><div class="dd-todo-text'+(t.done?' done':'')+'">'+escapeHtml(t.text)+'</div><div class="dd-todo-mark '+(t.done?'done':'undone')+'">'+(t.done?'O':'X')+'</div></div>';
-      });
-      todoHtml+='</div></div>';
-    });
+    var todoHtml='';var ddKey=todoDateKeyFor(y,m,d);
+    subjs.forEach(function(sub){var list=getTodoList(ddKey,sub.id);if(!list.length)return;todoHtml+='<div class="dd-todo-subj"><div class="dd-todo-subj-hd" style="color:'+sub.color+'">'+escapeHtml(sub.name)+'</div><div class="dd-todo-list">';list.forEach(function(t){todoHtml+='<div class="dd-todo-row"><div class="dd-todo-text'+(t.done?' done':'')+'">'+escapeHtml(t.text)+'</div><div class="dd-todo-mark '+(t.done?'done':'undone')+'">'+(t.done?'O':'X')+'</div></div>';});todoHtml+='</div></div>';});
     todoEl.innerHTML=todoHtml||'<div style="font-size:.78rem;color:var(--ink3);text-align:center;padding:10px 0">등록된 TODO가 없습니다</div>';
   }
   var subjContainer=document.querySelector('#dayDetailM .dd-subj-bars');if(subjContainer)subjContainer.innerHTML='<div class="dd-subj-hd">과목별 공부시간</div>'+(subjBarsHTML||'<div style="font-size:.76rem;color:var(--ink3);text-align:center;padding:6px 0">기록 없음</div>');
