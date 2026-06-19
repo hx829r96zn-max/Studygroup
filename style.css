@@ -165,7 +165,7 @@ textarea.inp{resize:vertical;min-height:70px;}
 .tc-stop{width:40px;height:40px;border-radius:9px;border:none;background:#3a1a1a;color:#ff6b6b;cursor:pointer;display:none;font-size:.88rem;align-items:center;justify-content:center;}
 .tc-stop.vis{display:flex;}
 .pscroll{flex:1;display:flex;overflow:hidden;}
-.pgwrap{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;-webkit-overflow-scrolling:touch;touch-action:pan-y;}
+.pgwrap{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding-bottom:calc(60px + env(safe-area-inset-bottom,0));}
 .pgwrap::-webkit-scrollbar{width:0;}
 .pgrid{position:relative;width:100%;background:#111;touch-action:pan-y;will-change:transform;}
 #pg-timer.plan-mode .pgrid{cursor:crosshair;}
