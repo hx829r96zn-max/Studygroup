@@ -166,21 +166,21 @@
 </div>
 
 <!-- ══════════ TIMETABLE ══════════ -->
-<div class="page" id="pg-timetable" style="display:none;flex-direction:column;height:calc(100vh - 44px);background:#111;color:#fff">
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #2a2a2a;flex-shrink:0">
-    <button onclick="goPlanner()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff;border-radius:8px;padding:6px 12px;font-size:.72rem;cursor:pointer;font-family:inherit">플래너</button>
-    <div style="font-size:.8rem;font-weight:700;color:rgba(255,255,255,.7)" id="ttDateLabel"></div>
-    <div style="display:flex;gap:6px">
-      <button onclick="ttUndo()" id="ttUndoBtn" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:8px;padding:6px 10px;font-size:.8rem;cursor:pointer">↩</button>
-      <button onclick="ttRedo()" id="ttRedoBtn" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:8px;padding:6px 10px;font-size:.8rem;cursor:pointer">↪</button>
+<div class="page" id="pg-timetable" style="display:none;flex-direction:column;height:calc(100vh - 44px);background:#f7f8fa;color:#111">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e8eaed;background:#fff;flex-shrink:0">
+    <button onclick="goPlanner()" style="background:#f1f3f5;border:none;color:#555;border-radius:8px;padding:6px 12px;font-size:.72rem;cursor:pointer;font-family:inherit;font-weight:600">← 플래너</button>
+    <div style="font-size:.82rem;font-weight:700;color:#333" id="ttDateLabel"></div>
+    <div style="display:flex;gap:5px">
+      <button onclick="ttUndo()" style="background:#f1f3f5;border:none;color:#555;border-radius:8px;padding:6px 10px;font-size:.78rem;cursor:pointer">↩</button>
+      <button onclick="ttRedo()" style="background:#f1f3f5;border:none;color:#555;border-radius:8px;padding:6px 10px;font-size:.78rem;cursor:pointer">↪</button>
     </div>
   </div>
-  <div style="display:flex;flex:0 0 30px;border-bottom:1px solid #2a2a2a;font-size:.65rem;color:rgba(255,255,255,.3)">
-    <div style="width:90px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-right:1px solid #2a2a2a">과목</div>
-    <div style="flex:1;display:flex;align-items:center;padding-left:10px;border-right:1px solid #2a2a2a">할 일</div>
-    <div style="width:36px;flex-shrink:0"></div>
+  <div style="display:flex;flex:0 0 28px;border-bottom:1.5px solid #e0e3e8;background:#fff;font-size:.65rem;font-weight:700;color:#aaa;letter-spacing:.03em">
+    <div style="width:88px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-right:1px solid #e8eaed">과목</div>
+    <div style="flex:1;display:flex;align-items:center;padding-left:12px;border-right:1px solid #e8eaed">할 일</div>
+    <div style="width:46px;flex-shrink:0;display:flex;align-items:center;justify-content:center">상태</div>
   </div>
-  <div id="ttBody" style="flex:1;overflow-y:auto;padding-bottom:calc(70px + env(safe-area-inset-bottom,0))"></div>
+  <div id="ttBody" style="flex:1;overflow-y:auto;padding-bottom:calc(70px + env(safe-area-inset-bottom,0));background:#f7f8fa"></div>
 </div>
 
 <!-- ══════════ ROOM ══════════ -->

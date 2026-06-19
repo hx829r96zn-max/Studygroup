@@ -184,47 +184,126 @@ var ddayList=JSON.parse(localStorage.getItem('sg_dday')||'[]');
 function svDday(){localStorage.setItem('sg_dday',JSON.stringify(ddayList));}
 function getDdayDiff(dateStr){var now=new Date();now.setHours(0,0,0,0);var t=new Date(dateStr);t.setHours(0,0,0,0);return Math.ceil((t-now)/(1000*60*60*24));}
 // ── 시간표 ──
+// ── 시간표 ──
 var _ttData=JSON.parse(localStorage.getItem('sg_tt')||'[]');
-var _ttHistory=[],_ttFuture=[],_ttPickRow=null;
+var _ttHistory=[],_ttFuture=[],_ttPickRow=null,_ttFocusRow=null,_ttFocusTi=null;
+(function(){if(!_ttData.length){for(var i=0;i<20;i++)_ttData.push({subjId:null,todos:[],status:[]});localStorage.setItem('sg_tt',JSON.stringify(_ttData));}})();
 function svTT(){localStorage.setItem('sg_tt',JSON.stringify(_ttData));}
 function _ttSnap(){_ttHistory.push(JSON.stringify(_ttData));if(_ttHistory.length>40)_ttHistory.shift();_ttFuture=[];}
 function ttUndo(){if(!_ttHistory.length)return;_ttFuture.push(JSON.stringify(_ttData));_ttData=JSON.parse(_ttHistory.pop());svTT();renderTT();}
 function ttRedo(){if(!_ttFuture.length)return;_ttHistory.push(JSON.stringify(_ttData));_ttData=JSON.parse(_ttFuture.pop());svTT();renderTT();}
-function goTimetable(){var pg=document.getElementById('pg-timetable');if(pg)pg.style.display='flex';var pt=document.getElementById('pg-timer');if(pt){pt.style.display='none';pt.classList.remove('on');}var ttDate=document.getElementById('ttDateLabel');if(ttDate){var now=new Date();ttDate.textContent=(now.getMonth()+1)+'월 '+now.getDate()+'일';}renderTT();var ttBtn=document.getElementById('ttBtn');if(ttBtn)ttBtn.textContent='플래너';}
-function goPlanner(){var pg=document.getElementById('pg-timetable');if(pg)pg.style.display='none';var pt=document.getElementById('pg-timer');if(pt){pt.style.display='flex';pt.classList.add('on');}var ttBtn=document.getElementById('ttBtn');if(ttBtn)ttBtn.textContent='시간표';}
+function goTimetable(){
+  var pg=document.getElementById('pg-timetable');if(pg)pg.style.display='flex';
+  var pt=document.getElementById('pg-timer');if(pt){pt.style.display='none';pt.classList.remove('on');}
+  var ttDate=document.getElementById('ttDateLabel');if(ttDate){var now=new Date();ttDate.textContent=(now.getMonth()+1)+'월 '+now.getDate()+'일';}
+  renderTT();var ttBtn=document.getElementById('ttBtn');if(ttBtn)ttBtn.textContent='플래너';
+}
+function goPlanner(){
+  var pg=document.getElementById('pg-timetable');if(pg)pg.style.display='none';
+  var pt=document.getElementById('pg-timer');if(pt){pt.style.display='flex';pt.classList.add('on');}
+  var ttBtn=document.getElementById('ttBtn');if(ttBtn)ttBtn.textContent='시간표';
+}
+function _ttStatusColor(st){return st==='O'?'#22c55e':st==='△'?'#f59e0b':'#f43f5e';}
+function _ttStatusSymbol(st){return st==='O'?'O':st==='△'?'△':'X';}
+function _ttCycleStatus(ri,ti,long){
+  _ttSnap();
+  var row=_ttData[ri];if(!row.status)row.status=[];
+  var cur=row.status[ti]||'X';
+  row.status[ti]=long?(cur==='△'?'X':'△'):(cur==='X'?'O':cur==='O'?'X':'X');
+  svTT();renderTT();
+}
 function renderTT(){
   var el=document.getElementById('ttBody');if(!el)return;
   el.innerHTML='';
+  var focusR=_ttFocusRow,focusTi=_ttFocusTi;
   _ttData.forEach(function(row,ri){
     var sub=subjs.find(function(s){return s.id===row.subjId;});
-    var section=document.createElement('div');section.style.cssText='display:flex;border-bottom:1px solid #222;min-height:44px;';
-    var subjCell=document.createElement('div');subjCell.style.cssText='width:90px;flex-shrink:0;border-right:1px solid #2a2a2a;display:flex;align-items:flex-start;padding:10px 8px;cursor:pointer;';
-    if(sub){subjCell.innerHTML='<div style="display:flex;align-items:center;gap:5px"><div style="width:8px;height:8px;border-radius:50%;background:'+sub.color+';flex-shrink:0"></div><div style="font-size:.72rem;font-weight:700;color:'+sub.color+';word-break:break-all;line-height:1.3">'+escapeHtml(sub.name)+'</div></div>';}
-    else{subjCell.innerHTML='<div style="font-size:.7rem;color:rgba(255,255,255,.25)">+과목</div>';}
-    subjCell.onclick=function(){_ttPickRow=ri;openTTSubjPicker();};
-    var todoCell=document.createElement('div');todoCell.style.cssText='flex:1;border-right:1px solid #2a2a2a;padding:6px 8px;display:flex;flex-direction:column;gap:4px;';
-    (row.todos||[]).forEach(function(t,ti){
-      var item=document.createElement('div');item.style.cssText='display:flex;align-items:center;gap:6px;';
-      var txt=document.createElement('div');txt.textContent=t.text;
-      txt.style.cssText='flex:1;font-size:.75rem;color:'+(t.done?'rgba(255,255,255,.35)':'rgba(255,255,255,.85)')+';text-decoration:'+(t.done?'line-through':'none')+';cursor:pointer;user-select:none;';
-      txt.onclick=function(){_ttSnap();t.done=!t.done;svTT();renderTT();};
-      txt.ondblclick=function(e){e.stopPropagation();var inp=document.createElement('input');inp.value=t.text;inp.style.cssText='flex:1;font-size:.75rem;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:5px;padding:2px 5px;width:100%;';inp.onblur=function(){_ttSnap();t.text=inp.value.trim()||t.text;svTT();renderTT();};inp.onkeydown=function(e2){if(e2.key==='Enter'||e2.key==='Escape')inp.blur();e2.stopPropagation();};item.replaceChild(inp,txt);inp.focus();inp.select();};
-      var del=document.createElement('button');del.textContent='✕';del.style.cssText='background:none;border:none;color:rgba(255,255,255,.3);font-size:.65rem;cursor:pointer;padding:2px 4px;flex-shrink:0;';
-      del.onclick=function(){_ttSnap();row.todos.splice(ti,1);svTT();renderTT();};
-      item.appendChild(txt);item.appendChild(del);todoCell.appendChild(item);
+    var todos=row.todos||[];
+    var hasFocus=(focusR===ri);
+    // section wrapper
+    var section=document.createElement('div');
+    section.style.cssText='display:flex;border-bottom:1px solid #e8eaed;min-height:46px;background:#fff;';
+    section.onclick=function(e){if(e.target===section||e.target.closest('.tt-todo-cell')===null){// click outside todo area
+      if(_ttFocusRow===ri){_ttFocusRow=null;_ttFocusTi=null;renderTT();}}};
+
+    // col1: 과목
+    var subjCell=document.createElement('div');
+    subjCell.style.cssText='width:88px;flex-shrink:0;border-right:1px solid #e8eaed;display:flex;align-items:center;justify-content:center;padding:8px 6px;cursor:pointer;';
+    if(sub){
+      subjCell.innerHTML='<div style="text-align:center"><div style="width:28px;height:28px;border-radius:50%;background:'+sub.color+';display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:800;color:#fff;margin:0 auto 3px">'+escapeHtml(sub.name.slice(0,2))+'</div><div style="font-size:.6rem;font-weight:700;color:'+sub.color+';line-height:1.2">'+escapeHtml(sub.name)+'</div></div>';
+    }else{
+      subjCell.innerHTML='<div style="font-size:.7rem;color:#bbb;font-weight:500">+과목</div>';
+    }
+    subjCell.onclick=function(e){e.stopPropagation();_ttPickRow=ri;openTTSubjPicker();};
+
+    // col2: todo
+    var todoCell=document.createElement('div');todoCell.className='tt-todo-cell';
+    todoCell.style.cssText='flex:1;border-right:1px solid #e8eaed;padding:6px 10px;display:flex;flex-direction:column;gap:2px;';
+    todos.forEach(function(t,ti){
+      var item=document.createElement('div');item.style.cssText='display:flex;align-items:center;gap:6px;padding:1px 0;';
+      // dot
+      var dot=document.createElement('div');dot.style.cssText='width:5px;height:5px;border-radius:50%;background:'+(sub?sub.color:'#ddd')+';flex-shrink:0;margin-top:1px;';
+      var txt=document.createElement('div');
+      txt.style.cssText='flex:1;font-size:.78rem;color:'+(t.done?'#bbb':'#222')+';text-decoration:'+(t.done?'line-through':'none')+';line-height:1.5;cursor:pointer;';
+      txt.textContent=t.text;
+      txt.ondblclick=function(e){e.stopPropagation();
+        var inp=document.createElement('input');inp.value=t.text;
+        inp.style.cssText='flex:1;font-size:.78rem;background:transparent;border:none;border-bottom:1.5px solid '+(sub?sub.color:'#aaa')+';color:#222;padding:1px 0;outline:none;width:100%;';
+        inp.onblur=function(){_ttSnap();t.text=inp.value.trim()||t.text;svTT();renderTT();};
+        inp.onkeydown=function(e2){if(e2.key==='Enter'||e2.key==='Escape')inp.blur();e2.stopPropagation();};
+        txt.parentNode.replaceChild(inp,txt);inp.focus();inp.select();
+      };
+      item.appendChild(dot);item.appendChild(txt);todoCell.appendChild(item);
     });
-    var addRow=document.createElement('div');addRow.style.cssText='display:flex;align-items:center;margin-top:3px;';
-    var inp2=document.createElement('input');inp2.placeholder='+ 할 일';inp2.style.cssText='flex:1;font-size:.72rem;background:transparent;border:none;border-bottom:1px dashed rgba(255,255,255,.12);color:rgba(255,255,255,.7);padding:3px 0;outline:none;';
-    inp2.onkeydown=function(e){if(e.key==='Enter'&&inp2.value.trim()){_ttSnap();if(!row.todos)row.todos=[];row.todos.push({text:inp2.value.trim(),done:false});svTT();renderTT();}e.stopPropagation();};
-    addRow.appendChild(inp2);todoCell.appendChild(addRow);
-    var delCell=document.createElement('div');delCell.style.cssText='width:36px;flex-shrink:0;display:flex;align-items:flex-start;justify-content:center;padding-top:10px;';
-    var rowDel=document.createElement('button');rowDel.textContent='✕';rowDel.style.cssText='background:none;border:none;color:rgba(255,255,255,.2);font-size:.75rem;cursor:pointer;';
-    rowDel.onclick=function(){_ttSnap();_ttData.splice(ri,1);svTT();renderTT();};
-    delCell.appendChild(rowDel);section.appendChild(subjCell);section.appendChild(todoCell);section.appendChild(delCell);el.appendChild(section);
+    // 입력칸: 포커스된 행이면 항상 보임, 아닌 행은 숨김
+    if(hasFocus){
+      var addInp=document.createElement('input');
+      addInp.placeholder='할 일 입력 후 Enter...';
+      addInp.style.cssText='font-size:.78rem;background:transparent;border:none;border-bottom:1.5px dashed #ddd;color:#444;padding:3px 0;outline:none;width:100%;margin-top:3px;';
+      addInp.onkeydown=function(e){
+        e.stopPropagation();
+        if(e.key==='Enter'){
+          var v=addInp.value.trim();
+          if(v){_ttSnap();if(!row.todos)row.todos=[];row.todos.push({text:v,done:false});svTT();}
+          addInp.value='';
+          // re-render keeping focus
+          _ttFocusRow=ri;_ttFocusTi=null;renderTT();
+          // re-focus the input
+          setTimeout(function(){var el2=document.getElementById('ttBody');if(el2){var inps=el2.querySelectorAll('.tt-add-inp');inps.forEach(function(inp2){if(inp2.dataset.ri==ri)inp2.focus();});}},10);
+        }else if(e.key==='Escape'){_ttFocusRow=null;_ttFocusTi=null;renderTT();}
+      };
+      addInp.onblur=function(){setTimeout(function(){if(document.activeElement&&document.activeElement.dataset&&document.activeElement.dataset.ri==ri)return;_ttFocusRow=null;_ttFocusTi=null;renderTT();},150);};
+      addInp.className='tt-add-inp';addInp.dataset.ri=ri;
+      todoCell.appendChild(addInp);
+      if(focusR===ri)setTimeout(function(){var inps=el.querySelectorAll('.tt-add-inp');inps.forEach(function(inp2){if(inp2.dataset.ri==ri)inp2.focus();});},20);
+    }
+    todoCell.onclick=function(e){
+      if(e.target===todoCell||e.target.style&&e.target.tagName!=='INPUT'){
+        _ttFocusRow=ri;_ttFocusTi=null;renderTT();
+        setTimeout(function(){var inps=el.querySelectorAll('.tt-add-inp');inps.forEach(function(inp2){if(inp2.dataset.ri==ri)inp2.focus();});},20);
+      }
+    };
+
+    // col3: O/X/△ status
+    var stCell=document.createElement('div');stCell.style.cssText='width:46px;flex-shrink:0;display:flex;align-items:center;justify-content:center;';
+    // one status badge per row
+    var st=((row.status&&row.status[0])||'X');
+    var badge=document.createElement('div');
+    badge.style.cssText='width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;cursor:pointer;user-select:none;background:'+(st==='O'?'#dcfce7':st==='△'?'#fef9c3':'#fff1f2')+';color:'+_ttStatusColor(st)+';border:1.5px solid '+_ttStatusColor(st)+';transition:background .2s;';
+    badge.textContent=_ttStatusSymbol(st);
+    var _holdT=null;
+    badge.addEventListener('pointerdown',function(){_holdT=setTimeout(function(){_holdT=null;_ttCycleStatus(ri,0,true);},800);});
+    badge.addEventListener('pointerup',function(){if(_holdT){clearTimeout(_holdT);_holdT=null;_ttCycleStatus(ri,0,false);}});
+    badge.addEventListener('pointerleave',function(){if(_holdT){clearTimeout(_holdT);_holdT=null;}});
+    stCell.appendChild(badge);
+
+    section.appendChild(subjCell);section.appendChild(todoCell);section.appendChild(stCell);
+    el.appendChild(section);
   });
-  var addSection=document.createElement('div');addSection.style.cssText='display:flex;align-items:center;padding:14px;cursor:pointer;color:rgba(255,255,255,.25);font-size:.8rem;gap:6px;';
-  addSection.innerHTML='<span style="font-size:1.1rem">＋</span> 과목';
-  addSection.onclick=function(){_ttSnap();_ttData.push({subjId:null,todos:[]});svTT();_ttPickRow=_ttData.length-1;openTTSubjPicker();};
+  // +과목 추가
+  var addSection=document.createElement('div');addSection.style.cssText='display:flex;align-items:center;padding:13px 16px;cursor:pointer;color:#bbb;font-size:.78rem;gap:7px;background:#fafafa;border-top:1px dashed #e8eaed;';
+  addSection.innerHTML='<span style="font-size:1rem;font-weight:700">＋</span> 과목 추가';
+  addSection.onclick=function(){_ttSnap();_ttData.push({subjId:null,todos:[],status:[]});svTT();_ttPickRow=_ttData.length-1;openTTSubjPicker();};
   el.appendChild(addSection);
 }
 function openTTSubjPicker(){
@@ -232,13 +311,14 @@ function openTTSubjPicker(){
   list.innerHTML='';
   subjs.forEach(function(s){
     var btn=document.createElement('button');
-    btn.style.cssText='display:flex;align-items:center;gap:10px;width:100%;padding:11px 12px;background:rgba(0,0,0,.04);border:1.5px solid '+s.color+';border-radius:10px;cursor:pointer;font-family:inherit;margin-bottom:4px;';
-    btn.innerHTML='<div style="width:10px;height:10px;border-radius:50%;background:'+s.color+'"></div><div style="font-size:.85rem;font-weight:700;color:var(--ink)">'+escapeHtml(s.name)+'</div>';
-    btn.onclick=function(){if(_ttPickRow!=null&&_ttData[_ttPickRow])_ttData[_ttPickRow].subjId=s.id;svTT();closeModal('ttSubjPickerM');renderTT();};
+    btn.style.cssText='display:flex;align-items:center;gap:10px;width:100%;padding:11px 14px;background:#fff;border:1.5px solid '+s.color+';border-radius:12px;cursor:pointer;font-family:inherit;margin-bottom:7px;';
+    btn.innerHTML='<div style="width:12px;height:12px;border-radius:50%;background:'+s.color+'"></div><div style="font-size:.88rem;font-weight:700;color:#111">'+escapeHtml(s.name)+'</div>';
+    btn.onclick=function(){if(_ttPickRow!=null&&_ttData[_ttPickRow])_ttData[_ttPickRow].subjId=s.id;svTT();closeModal('ttSubjPickerM');_ttFocusRow=_ttPickRow;renderTT();};
     list.appendChild(btn);
   });
   openModal('ttSubjPickerM');
 }
+
 function renderDdayCard(){var el=document.getElementById('ddayCard');if(!el)return;if(!ddayList.length){el.style.display='none';return;}el.style.display='block';el.innerHTML='';ddayList.slice().sort(function(a,b){return getDdayDiff(a.date)-getDdayDiff(b.date);}).forEach(function(d,i){var diff=getDdayDiff(d.date),label=diff>0?'D-'+diff:diff===0?'D-DAY':'D+'+Math.abs(diff),urgent=diff>=0&&diff<=7;var row=document.createElement('div');row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:'+(ddayList.length===1?'4px 0':'6px 0')+';'+(i<ddayList.length-1?'border-bottom:1px solid rgba(255,255,255,.08);':'');row.innerHTML='<div style="display:flex;align-items:center;gap:8px"><div style="font-size:.82rem;font-weight:700;color:#fff">'+d.name+'</div>'+(d.date?'<div style="font-size:.68rem;color:rgba(255,255,255,.4)">'+d.date.slice(5).replace('-','/')+'</div>':'')+'</div><div style="display:flex;align-items:center;gap:6px"><div style="font-family:monospace;font-size:'+(ddayList.length===1?'1.6rem':'1.2rem')+';font-weight:800;color:'+(diff<0?'rgba(255,255,255,.35)':urgent?'#f97316':'#fff')+'">'+label+'</div><button onclick="removeDday('+i+')" style="background:none;border:none;color:rgba(255,255,255,.25);cursor:pointer;font-size:.75rem;padding:2px 4px">✕</button></div>';el.appendChild(row);});}
 function removeDday(i){ddayList.splice(i,1);svDday();renderDdayCard();}
 function openDdayModal(){var m=document.getElementById('ddayModalBg');if(m){m.classList.add('open');var n=document.getElementById('dday_name'),dt=document.getElementById('dday_date');if(n)n.value='';if(dt)dt.value='';}}
