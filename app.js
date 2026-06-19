@@ -184,104 +184,133 @@ var ddayList=JSON.parse(localStorage.getItem('sg_dday')||'[]');
 function svDday(){localStorage.setItem('sg_dday',JSON.stringify(ddayList));}
 function getDdayDiff(dateStr){var now=new Date();now.setHours(0,0,0,0);var t=new Date(dateStr);t.setHours(0,0,0,0);return Math.ceil((t-now)/(1000*60*60*24));}
 // ── 시간표 ──
-var _ttData=JSON.parse(localStorage.getItem('sg_tt')||'[]');
+var _ttStorage=JSON.parse(localStorage.getItem('sg_tts')||'{}');
 var _ttHistory=[],_ttFuture=[],_ttPickRow=null,_ttFocusRow=null;
-(function(){
-  if(!_ttData.length){for(var i=0;i<20;i++)_ttData.push({subjId:null,todos:[]});}
-  _ttData.forEach(function(row){(row.todos||[]).forEach(function(t){if(!t.status)t.status='X';});});
-  localStorage.setItem('sg_tt',JSON.stringify(_ttData));
-})();
-function svTT(){localStorage.setItem('sg_tt',JSON.stringify(_ttData));}
-function _ttSnap(){_ttHistory.push(JSON.stringify(_ttData));if(_ttHistory.length>40)_ttHistory.shift();_ttFuture=[];}
-function ttUndo(){if(!_ttHistory.length)return;_ttFuture.push(JSON.stringify(_ttData));_ttData=JSON.parse(_ttHistory.pop());svTT();renderTT();}
-function ttRedo(){if(!_ttFuture.length)return;_ttHistory.push(JSON.stringify(_ttData));_ttData=JSON.parse(_ttFuture.pop());svTT();renderTT();}
-function goTimetable(){var pg=document.getElementById('pg-timetable');if(pg)pg.style.display='flex';var pt=document.getElementById('pg-timer');if(pt){pt.style.display='none';pt.classList.remove('on');}var ttDate=document.getElementById('ttDateLabel');if(ttDate){var now=new Date();ttDate.textContent=(now.getMonth()+1)+'월 '+now.getDate()+'일';}renderTT();var ttBtn=document.getElementById('ttBtn');if(ttBtn)ttBtn.textContent='플래너';}
-function goPlanner(){var pg=document.getElementById('pg-timetable');if(pg)pg.style.display='none';var pt=document.getElementById('pg-timer');if(pt){pt.style.display='flex';pt.classList.add('on');}var ttBtn=document.getElementById('ttBtn');if(ttBtn)ttBtn.textContent='시간표';}
+var _ttDate=today(); // 현재 보는 날짜 (studyDayOf 기준)
+function _ttKey(){return _ttDate;}
+function _ttRows(){if(!_ttStorage[_ttKey()]){_ttStorage[_ttKey()]=[];for(var i=0;i<20;i++)_ttStorage[_ttKey()].push({subjId:null,todos:[]});}return _ttStorage[_ttKey()];}
+function svTT(){localStorage.setItem('sg_tts',JSON.stringify(_ttStorage));}
+function _ttSnap(){_ttHistory.push(JSON.stringify({k:_ttKey(),d:_ttStorage[_ttKey()]}));if(_ttHistory.length>40)_ttHistory.shift();_ttFuture=[];}
+function ttUndo(){if(!_ttHistory.length)return;var s=JSON.parse(_ttHistory.pop());_ttFuture.push(JSON.stringify({k:_ttKey(),d:_ttStorage[_ttKey()]}));_ttStorage[s.k]=s.d;svTT();renderTT();}
+function ttRedo(){if(!_ttFuture.length)return;var s=JSON.parse(_ttFuture.pop());_ttHistory.push(JSON.stringify({k:_ttKey(),d:_ttStorage[_ttKey()]}));_ttStorage[s.k]=s.d;svTT();renderTT();}
+function _ttDateLabel(){
+  var dt=new Date(_ttDate);
+  var days=['일','월','화','수','목','금','토'];
+  return (dt.getMonth()+1)+'월 '+dt.getDate()+'일 ('+days[dt.getDay()]+')';
+}
+function goTimetable(){
+  _ttDate=today();
+  var pg=document.getElementById('pg-timetable');if(pg)pg.style.display='flex';
+  var pt=document.getElementById('pg-timer');if(pt){pt.style.display='none';pt.classList.remove('on');}
+  renderTT();var ttBtn=document.getElementById('ttBtn');if(ttBtn)ttBtn.textContent='플래너';
+  _bindTTSwipe();
+}
+function goPlanner(){
+  var pg=document.getElementById('pg-timetable');if(pg)pg.style.display='none';
+  var pt=document.getElementById('pg-timer');if(pt){pt.style.display='flex';pt.classList.add('on');}
+  var ttBtn=document.getElementById('ttBtn');if(ttBtn)ttBtn.textContent='시간표';
+}
+function ttGoDate(offset){
+  var dt=new Date(_ttDate);dt.setDate(dt.getDate()+offset);
+  _ttDate=studyDayOf(dt);_ttFocusRow=null;renderTT();
+}
+function ttGoToday(){_ttDate=today();_ttFocusRow=null;renderTT();}
+function ttPickDate(){
+  var inp=document.createElement('input');inp.type='date';
+  var dt=new Date(_ttDate);inp.value=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+  inp.style.cssText='position:fixed;opacity:0;top:40px;left:50%;';document.body.appendChild(inp);
+  inp.onchange=function(){if(inp.value){var parts=inp.value.split('-');_ttDate=new Date(+parts[0],+parts[1]-1,+parts[2]).toDateString();_ttFocusRow=null;renderTT();}document.body.removeChild(inp);};
+  inp.focus();inp.click();
+}
+var _ttSwipeBound=false;
+function _bindTTSwipe(){
+  if(_ttSwipeBound)return;_ttSwipeBound=true;
+  var body=document.getElementById('ttBody');if(!body)return;
+  var sx=0,sy=0,moved=false;
+  body.addEventListener('pointerdown',function(e){sx=e.clientX;sy=e.clientY;moved=false;},{passive:true});
+  body.addEventListener('pointermove',function(e){if(Math.abs(e.clientX-sx)>10)moved=true;},{passive:true});
+  body.addEventListener('pointerup',function(e){
+    if(!moved)return;
+    var dx=e.clientX-sx,dy=e.clientY-sy;
+    if(Math.abs(dx)>Math.abs(dy)*1.5&&Math.abs(dx)>50){ttGoDate(dx<0?1:-1);}
+  },{passive:true});
+}
 function renderTT(){
+  var rows=_ttRows();
+  // header
+  var lbl=document.getElementById('ttDateLabel');if(lbl)lbl.textContent=_ttDateLabel();
+  var isToday=(_ttDate===today());
+  var todayBtn=document.getElementById('ttTodayBtn');if(todayBtn)todayBtn.style.display=isToday?'none':'inline-block';
   var el=document.getElementById('ttBody');if(!el)return;
   el.innerHTML='';
-  _ttData.forEach(function(row,ri){
+  rows.forEach(function(row,ri){
     var sub=subjs.find(function(s){return s.id===row.subjId;});
     var todos=row.todos||[];
     var hasFocus=(_ttFocusRow===ri);
 
-    // ── 과목 헤더 (가로선 + 제일 위에 과목명)
+    // 과목 헤더
     var hdr=document.createElement('div');
-    hdr.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 12px 4px;cursor:pointer;border-top:1px solid #2a2a2a;';
-    if(ri===0)hdr.style.borderTop='none';
+    hdr.style.cssText='display:flex;align-items:center;gap:8px;padding:9px 12px 4px;cursor:pointer;'+(ri>0?'border-top:1px solid #2a2a2a;':'');
     if(sub){
       hdr.innerHTML='<div style="width:8px;height:8px;border-radius:50%;background:'+sub.color+';flex-shrink:0"></div>'
-        +'<span style="font-size:.75rem;font-weight:800;color:'+sub.color+'">'+escapeHtml(sub.name)+'</span>'
+        +'<span style="font-size:.8rem;font-weight:800;color:'+sub.color+'">'+escapeHtml(sub.name)+'</span>'
         +'<div style="flex:1;height:1px;background:#2a2a2a;margin-left:4px"></div>';
     }else{
-      hdr.innerHTML='<span style="font-size:.72rem;color:#444">+과목</span><div style="flex:1;height:1px;background:#2a2a2a;margin-left:4px"></div>';
+      hdr.innerHTML='<span style="font-size:.75rem;color:#555;font-weight:600">+ 과목 선택</span>'
+        +'<div style="flex:1;height:1px;background:#222;margin-left:6px"></div>';
     }
     hdr.onclick=function(e){e.stopPropagation();_ttPickRow=ri;openTTSubjPicker();};
     el.appendChild(hdr);
 
-    // ── 할일 줄 (각 todo마다)
+    // 할일 줄
     todos.forEach(function(t,ti){
       var line=document.createElement('div');
-      line.style.cssText='display:flex;align-items:center;padding:5px 12px 5px 28px;border-bottom:1px solid #1a1a1a;min-height:34px;';
-
+      line.style.cssText='display:flex;align-items:center;padding:5px 10px 5px 26px;border-bottom:1px solid #1a1a1a;min-height:36px;';
       var txt=document.createElement('div');
-      txt.style.cssText='flex:1;font-size:.8rem;color:'+(t.status==='X'?'#ddd':'rgba(255,255,255,.45)')+';line-height:1.5;cursor:pointer;user-select:none;text-decoration:'+(t.status==='O'?'line-through':'none')+';';
+      txt.style.cssText='flex:1;font-size:.82rem;color:'+(t.status==='O'?'rgba(255,255,255,.4)':'#fff')+';line-height:1.5;cursor:pointer;user-select:none;text-decoration:'+(t.status==='O'?'line-through':'none')+';';
       txt.textContent=t.text;
       txt.ondblclick=function(e){e.stopPropagation();
         var inp=document.createElement('input');inp.value=t.text;
-        inp.style.cssText='flex:1;width:100%;font-size:.8rem;background:transparent;border:none;border-bottom:1px solid '+(sub?sub.color:'#555')+';color:#fff;padding:1px 0;outline:none;';
+        inp.style.cssText='flex:1;width:100%;font-size:.82rem;background:transparent;border:none;border-bottom:1px solid '+(sub?sub.color:'#555')+';color:#fff;padding:1px 0;outline:none;';
         inp.onblur=function(){_ttSnap();t.text=inp.value.trim()||t.text;svTT();renderTT();};
         inp.onkeydown=function(e2){if(e2.key==='Enter'||e2.key==='Escape')inp.blur();e2.stopPropagation();};
         txt.parentNode.replaceChild(inp,txt);inp.focus();inp.select();
       };
-
-      // 상태: 텍스트만, 동그라미 없음
+      // 상태: 텍스트만 색으로 (동그라미 없음)
       var st=t.status||'X';
-      var stBtn=document.createElement('div');
       var stColor=st==='O'?'#22c55e':st==='△'?'#eab308':'#ef4444';
-      stBtn.style.cssText='font-size:.85rem;font-weight:900;color:'+stColor+';cursor:pointer;padding:4px 8px;user-select:none;flex-shrink:0;';
+      var stBtn=document.createElement('div');
+      stBtn.style.cssText='font-size:.9rem;font-weight:900;color:'+stColor+';cursor:pointer;padding:4px 8px;user-select:none;flex-shrink:0;min-width:28px;text-align:center;';
       stBtn.textContent=st;
       var _hold=null;
       (function(todo){
-        stBtn.addEventListener('pointerdown',function(){
-          _hold=setTimeout(function(){
-            _hold=null;_ttSnap();
-            todo.status=(todo.status==='△'?'X':'△');
-            svTT();renderTT();
-          },800);
-        });
-        stBtn.addEventListener('pointerup',function(){
-          if(_hold){clearTimeout(_hold);_hold=null;_ttSnap();
-            todo.status=(todo.status==='X'?'O':todo.status==='O'?'X':'X');
-            svTT();renderTT();}
-        });
+        stBtn.addEventListener('pointerdown',function(){_hold=setTimeout(function(){_hold=null;_ttSnap();todo.status=(todo.status==='△'?'X':'△');svTT();renderTT();},800);});
+        stBtn.addEventListener('pointerup',function(){if(_hold){clearTimeout(_hold);_hold=null;_ttSnap();todo.status=(todo.status==='X'?'O':todo.status==='O'?'X':'X');svTT();renderTT();}});
         stBtn.addEventListener('pointerleave',function(){if(_hold){clearTimeout(_hold);_hold=null;}});
       })(t);
-
       var delBtn=document.createElement('div');
-      delBtn.style.cssText='font-size:.65rem;color:#333;cursor:pointer;padding:4px 4px 4px 0;flex-shrink:0;';
+      delBtn.style.cssText='font-size:.6rem;color:#333;cursor:pointer;padding:4px;flex-shrink:0;';
       delBtn.textContent='✕';
       delBtn.onclick=function(){_ttSnap();todos.splice(ti,1);svTT();renderTT();};
-
       line.appendChild(txt);line.appendChild(stBtn);line.appendChild(delBtn);
       el.appendChild(line);
     });
 
-    // ── 입력칸 (포커스 행에만)
+    // 입력칸
     if(hasFocus){
       var addLine=document.createElement('div');
-      addLine.style.cssText='display:flex;align-items:center;padding:5px 12px 5px 28px;border-bottom:1px solid #1a1a1a;';
+      addLine.style.cssText='display:flex;align-items:center;padding:5px 10px 5px 26px;border-bottom:1px solid #1a1a1a;';
       var addInp=document.createElement('input');
-      addInp.placeholder='할 일 입력 후 Enter...';
+      addInp.placeholder='할 일 입력...';
       addInp.className='tt-add-inp';addInp.dataset.ri=ri;
-      addInp.style.cssText='flex:1;font-size:.78rem;background:transparent;border:none;border-bottom:1px dashed #333;color:#aaa;padding:2px 0;outline:none;';
+      addInp.style.cssText='flex:1;font-size:.8rem;background:transparent;border:none;border-bottom:1px dashed #444;color:#fff;padding:2px 0;outline:none;';
       addInp.onkeydown=function(e){
         e.stopPropagation();
         if(e.key==='Enter'){
           var v=addInp.value.trim();
           if(v){_ttSnap();if(!row.todos)row.todos=[];row.todos.push({text:v,status:'X'});}
           svTT();_ttFocusRow=ri;renderTT();
-          setTimeout(function(){var inps=el.querySelectorAll('.tt-add-inp');inps.forEach(function(i2){if(i2.dataset.ri==ri)i2.focus();});},20);
+          setTimeout(function(){el.querySelectorAll('.tt-add-inp').forEach(function(i2){if(i2.dataset.ri==ri)i2.focus();});},20);
         }else if(e.key==='Escape'){_ttFocusRow=null;renderTT();}
       };
       addInp.onblur=function(){setTimeout(function(){
@@ -289,28 +318,24 @@ function renderTT(){
         _ttFocusRow=null;renderTT();
       },160);};
       addLine.appendChild(addInp);el.appendChild(addLine);
-      setTimeout(function(){var inps=el.querySelectorAll('.tt-add-inp');inps.forEach(function(i2){if(i2.dataset.ri==ri)i2.focus();});},20);
+      setTimeout(function(){el.querySelectorAll('.tt-add-inp').forEach(function(i2){if(i2.dataset.ri==ri)i2.focus();});},20);
+    }else{
+      // 탭해서 열기
+      (function(rowIdx){
+        var btn=document.createElement('div');
+        btn.style.cssText='padding:4px 10px 6px 26px;color:#444;font-size:.7rem;cursor:text;';
+        btn.textContent='+ 추가';
+        btn.onclick=function(){_ttFocusRow=rowIdx;renderTT();setTimeout(function(){el.querySelectorAll('.tt-add-inp').forEach(function(i2){if(i2.dataset.ri==rowIdx)i2.focus();});},20);};
+        el.appendChild(btn);
+      })(ri);
     }
-
-    // 클릭하면 입력 열기
-    (function(rowIdx){
-      hdr.addEventListener('click',function(e){
-        if(e.target===hdr||e.target.tagName==='DIV'){return;} // prevent if picking subject
-      });
-      // 빈영역 클릭시 포커스
-      var clickZone=document.createElement('div');
-      clickZone.style.cssText='padding:4px 12px 4px 28px;color:#333;font-size:.72rem;cursor:text;';
-      if(!todos.length&&!hasFocus){clickZone.textContent='+ 할 일 추가';clickZone.onclick=function(){_ttFocusRow=rowIdx;renderTT();setTimeout(function(){var inps=el.querySelectorAll('.tt-add-inp');inps.forEach(function(i2){if(i2.dataset.ri==rowIdx)i2.focus();});},20);};}
-      else if(!hasFocus){clickZone.textContent='+ 추가';clickZone.onclick=function(){_ttFocusRow=rowIdx;renderTT();setTimeout(function(){var inps=el.querySelectorAll('.tt-add-inp');inps.forEach(function(i2){if(i2.dataset.ri==rowIdx)i2.focus();});},20);};}
-      if(clickZone.textContent)el.appendChild(clickZone);
-    })(ri);
   });
 
-  // +과목 추가
+  // +과목
   var addSec=document.createElement('div');
-  addSec.style.cssText='display:flex;align-items:center;padding:14px 12px;cursor:pointer;color:#333;font-size:.78rem;gap:6px;border-top:1px solid #1a1a1a;margin-top:6px;';
-  addSec.innerHTML='<span style="font-size:1rem;font-weight:700">＋</span> 과목 추가';
-  addSec.onclick=function(){_ttSnap();_ttData.push({subjId:null,todos:[]});svTT();_ttPickRow=_ttData.length-1;openTTSubjPicker();};
+  addSec.style.cssText='display:flex;align-items:center;padding:14px 12px;cursor:pointer;color:#444;font-size:.78rem;gap:6px;border-top:1px solid #1a1a1a;';
+  addSec.innerHTML='<span style="font-size:1rem;font-weight:700;color:#555">＋</span> 과목 추가';
+  addSec.onclick=function(){_ttSnap();_ttStorage[_ttKey()].push({subjId:null,todos:[]});svTT();_ttPickRow=rows.length;openTTSubjPicker();};
   el.appendChild(addSec);
 }
 function openTTSubjPicker(){
@@ -320,7 +345,7 @@ function openTTSubjPicker(){
     var btn=document.createElement('button');
     btn.style.cssText='display:flex;align-items:center;gap:10px;width:100%;padding:11px 14px;background:#111;border:1px solid '+s.color+';border-radius:10px;cursor:pointer;font-family:inherit;margin-bottom:6px;';
     btn.innerHTML='<div style="width:10px;height:10px;border-radius:50%;background:'+s.color+'"></div><div style="font-size:.85rem;font-weight:700;color:#fff">'+escapeHtml(s.name)+'</div>';
-    btn.onclick=function(){if(_ttPickRow!=null&&_ttData[_ttPickRow])_ttData[_ttPickRow].subjId=s.id;svTT();closeModal('ttSubjPickerM');_ttFocusRow=_ttPickRow;renderTT();};
+    btn.onclick=function(){var rows2=_ttRows();if(_ttPickRow!=null&&rows2[_ttPickRow])rows2[_ttPickRow].subjId=s.id;svTT();closeModal('ttSubjPickerM');_ttFocusRow=_ttPickRow;renderTT();};
     list.appendChild(btn);
   });
   openModal('ttSubjPickerM');
