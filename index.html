@@ -124,9 +124,12 @@
 <!-- ══════════ TIMER (플래너) ══════════ -->
 <div class="page" id="pg-timer">
   <div class="t-hd">
-    <div>
-      <div class="t-date" id="timerDay"></div>
-      <div class="t-total" id="timerTotal">0H 00M 00S</div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="plan-toggle" id="ttBtn" onclick="goTimetable()" style="font-size:.72rem;padding:6px 10px">시간표</button>
+      <div>
+        <div class="t-date" id="timerDay"></div>
+        <div class="t-total" id="timerTotal">0H 00M 00S</div>
+      </div>
     </div>
     <div style="text-align:right">
       <button class="plan-toggle" id="planToggle" onclick="togglePlanMode()">계획짜기</button>
@@ -160,6 +163,24 @@
       <div class="todo-panel" id="todoPanel"></div>
     </div>
   </div>
+</div>
+
+<!-- ══════════ TIMETABLE ══════════ -->
+<div class="page" id="pg-timetable" style="display:none;flex-direction:column;height:calc(100vh - 44px);background:#111;color:#fff">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #2a2a2a;flex-shrink:0">
+    <button onclick="goPlanner()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff;border-radius:8px;padding:6px 12px;font-size:.72rem;cursor:pointer;font-family:inherit">플래너</button>
+    <div style="font-size:.8rem;font-weight:700;color:rgba(255,255,255,.7)" id="ttDateLabel"></div>
+    <div style="display:flex;gap:6px">
+      <button onclick="ttUndo()" id="ttUndoBtn" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:8px;padding:6px 10px;font-size:.8rem;cursor:pointer">↩</button>
+      <button onclick="ttRedo()" id="ttRedoBtn" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:8px;padding:6px 10px;font-size:.8rem;cursor:pointer">↪</button>
+    </div>
+  </div>
+  <div style="display:flex;flex:0 0 30px;border-bottom:1px solid #2a2a2a;font-size:.65rem;color:rgba(255,255,255,.3)">
+    <div style="width:90px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-right:1px solid #2a2a2a">과목</div>
+    <div style="flex:1;display:flex;align-items:center;padding-left:10px;border-right:1px solid #2a2a2a">할 일</div>
+    <div style="width:36px;flex-shrink:0"></div>
+  </div>
+  <div id="ttBody" style="flex:1;overflow-y:auto;padding-bottom:calc(70px + env(safe-area-inset-bottom,0))"></div>
 </div>
 
 <!-- ══════════ ROOM ══════════ -->
@@ -708,6 +729,14 @@
       </div>
       <button onclick="shareToRoom()" style="width:46px;height:46px;border-radius:50%;background:var(--acc);color:#fff;border:none;font-size:1.15rem;cursor:pointer;flex-shrink:0;align-self:flex-end;display:flex;align-items:center;justify-content:center">➤</button>
     </div>
+  </div>
+</div>
+
+<!-- 시간표 과목 선택 -->
+<div class="modal-bg" id="ttSubjPickerM" onclick="if(event.target===this)closeModal('ttSubjPickerM')">
+  <div class="modal"><div class="m-handle"></div><button class="m-close" onclick="closeModal('ttSubjPickerM')">✕</button>
+    <div class="m-title">과목 선택</div>
+    <div id="ttSubjPickerList" style="display:flex;flex-direction:column;gap:8px"></div>
   </div>
 </div>
 

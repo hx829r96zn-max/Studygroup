@@ -183,6 +183,62 @@ function resetPomo(){clearInterval(pInt);pRun=false;pFocus=true;pCur=pSec;pSN=0;
 var ddayList=JSON.parse(localStorage.getItem('sg_dday')||'[]');
 function svDday(){localStorage.setItem('sg_dday',JSON.stringify(ddayList));}
 function getDdayDiff(dateStr){var now=new Date();now.setHours(0,0,0,0);var t=new Date(dateStr);t.setHours(0,0,0,0);return Math.ceil((t-now)/(1000*60*60*24));}
+// ── 시간표 ──
+var _ttData=JSON.parse(localStorage.getItem('sg_tt')||'[]');
+var _ttHistory=[],_ttFuture=[],_ttPickRow=null;
+function svTT(){localStorage.setItem('sg_tt',JSON.stringify(_ttData));}
+function _ttSnap(){_ttHistory.push(JSON.stringify(_ttData));if(_ttHistory.length>40)_ttHistory.shift();_ttFuture=[];}
+function ttUndo(){if(!_ttHistory.length)return;_ttFuture.push(JSON.stringify(_ttData));_ttData=JSON.parse(_ttHistory.pop());svTT();renderTT();}
+function ttRedo(){if(!_ttFuture.length)return;_ttHistory.push(JSON.stringify(_ttData));_ttData=JSON.parse(_ttFuture.pop());svTT();renderTT();}
+function goTimetable(){var pg=document.getElementById('pg-timetable');if(pg)pg.style.display='flex';var pt=document.getElementById('pg-timer');if(pt){pt.style.display='none';pt.classList.remove('on');}var ttDate=document.getElementById('ttDateLabel');if(ttDate){var now=new Date();ttDate.textContent=(now.getMonth()+1)+'월 '+now.getDate()+'일';}renderTT();var ttBtn=document.getElementById('ttBtn');if(ttBtn)ttBtn.textContent='플래너';}
+function goPlanner(){var pg=document.getElementById('pg-timetable');if(pg)pg.style.display='none';var pt=document.getElementById('pg-timer');if(pt){pt.style.display='flex';pt.classList.add('on');}var ttBtn=document.getElementById('ttBtn');if(ttBtn)ttBtn.textContent='시간표';}
+function renderTT(){
+  var el=document.getElementById('ttBody');if(!el)return;
+  el.innerHTML='';
+  _ttData.forEach(function(row,ri){
+    var sub=subjs.find(function(s){return s.id===row.subjId;});
+    var section=document.createElement('div');section.style.cssText='display:flex;border-bottom:1px solid #222;min-height:44px;';
+    var subjCell=document.createElement('div');subjCell.style.cssText='width:90px;flex-shrink:0;border-right:1px solid #2a2a2a;display:flex;align-items:flex-start;padding:10px 8px;cursor:pointer;';
+    if(sub){subjCell.innerHTML='<div style="display:flex;align-items:center;gap:5px"><div style="width:8px;height:8px;border-radius:50%;background:'+sub.color+';flex-shrink:0"></div><div style="font-size:.72rem;font-weight:700;color:'+sub.color+';word-break:break-all;line-height:1.3">'+escapeHtml(sub.name)+'</div></div>';}
+    else{subjCell.innerHTML='<div style="font-size:.7rem;color:rgba(255,255,255,.25)">+과목</div>';}
+    subjCell.onclick=function(){_ttPickRow=ri;openTTSubjPicker();};
+    var todoCell=document.createElement('div');todoCell.style.cssText='flex:1;border-right:1px solid #2a2a2a;padding:6px 8px;display:flex;flex-direction:column;gap:4px;';
+    (row.todos||[]).forEach(function(t,ti){
+      var item=document.createElement('div');item.style.cssText='display:flex;align-items:center;gap:6px;';
+      var txt=document.createElement('div');txt.textContent=t.text;
+      txt.style.cssText='flex:1;font-size:.75rem;color:'+(t.done?'rgba(255,255,255,.35)':'rgba(255,255,255,.85)')+';text-decoration:'+(t.done?'line-through':'none')+';cursor:pointer;user-select:none;';
+      txt.onclick=function(){_ttSnap();t.done=!t.done;svTT();renderTT();};
+      txt.ondblclick=function(e){e.stopPropagation();var inp=document.createElement('input');inp.value=t.text;inp.style.cssText='flex:1;font-size:.75rem;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:5px;padding:2px 5px;width:100%;';inp.onblur=function(){_ttSnap();t.text=inp.value.trim()||t.text;svTT();renderTT();};inp.onkeydown=function(e2){if(e2.key==='Enter'||e2.key==='Escape')inp.blur();e2.stopPropagation();};item.replaceChild(inp,txt);inp.focus();inp.select();};
+      var del=document.createElement('button');del.textContent='✕';del.style.cssText='background:none;border:none;color:rgba(255,255,255,.3);font-size:.65rem;cursor:pointer;padding:2px 4px;flex-shrink:0;';
+      del.onclick=function(){_ttSnap();row.todos.splice(ti,1);svTT();renderTT();};
+      item.appendChild(txt);item.appendChild(del);todoCell.appendChild(item);
+    });
+    var addRow=document.createElement('div');addRow.style.cssText='display:flex;align-items:center;margin-top:3px;';
+    var inp2=document.createElement('input');inp2.placeholder='+ 할 일';inp2.style.cssText='flex:1;font-size:.72rem;background:transparent;border:none;border-bottom:1px dashed rgba(255,255,255,.12);color:rgba(255,255,255,.7);padding:3px 0;outline:none;';
+    inp2.onkeydown=function(e){if(e.key==='Enter'&&inp2.value.trim()){_ttSnap();if(!row.todos)row.todos=[];row.todos.push({text:inp2.value.trim(),done:false});svTT();renderTT();}e.stopPropagation();};
+    addRow.appendChild(inp2);todoCell.appendChild(addRow);
+    var delCell=document.createElement('div');delCell.style.cssText='width:36px;flex-shrink:0;display:flex;align-items:flex-start;justify-content:center;padding-top:10px;';
+    var rowDel=document.createElement('button');rowDel.textContent='✕';rowDel.style.cssText='background:none;border:none;color:rgba(255,255,255,.2);font-size:.75rem;cursor:pointer;';
+    rowDel.onclick=function(){_ttSnap();_ttData.splice(ri,1);svTT();renderTT();};
+    delCell.appendChild(rowDel);section.appendChild(subjCell);section.appendChild(todoCell);section.appendChild(delCell);el.appendChild(section);
+  });
+  var addSection=document.createElement('div');addSection.style.cssText='display:flex;align-items:center;padding:14px;cursor:pointer;color:rgba(255,255,255,.25);font-size:.8rem;gap:6px;';
+  addSection.innerHTML='<span style="font-size:1.1rem">＋</span> 과목';
+  addSection.onclick=function(){_ttSnap();_ttData.push({subjId:null,todos:[]});svTT();_ttPickRow=_ttData.length-1;openTTSubjPicker();};
+  el.appendChild(addSection);
+}
+function openTTSubjPicker(){
+  var list=document.getElementById('ttSubjPickerList');if(!list)return;
+  list.innerHTML='';
+  subjs.forEach(function(s){
+    var btn=document.createElement('button');
+    btn.style.cssText='display:flex;align-items:center;gap:10px;width:100%;padding:11px 12px;background:rgba(0,0,0,.04);border:1.5px solid '+s.color+';border-radius:10px;cursor:pointer;font-family:inherit;margin-bottom:4px;';
+    btn.innerHTML='<div style="width:10px;height:10px;border-radius:50%;background:'+s.color+'"></div><div style="font-size:.85rem;font-weight:700;color:var(--ink)">'+escapeHtml(s.name)+'</div>';
+    btn.onclick=function(){if(_ttPickRow!=null&&_ttData[_ttPickRow])_ttData[_ttPickRow].subjId=s.id;svTT();closeModal('ttSubjPickerM');renderTT();};
+    list.appendChild(btn);
+  });
+  openModal('ttSubjPickerM');
+}
 function renderDdayCard(){var el=document.getElementById('ddayCard');if(!el)return;if(!ddayList.length){el.style.display='none';return;}el.style.display='block';el.innerHTML='';ddayList.slice().sort(function(a,b){return getDdayDiff(a.date)-getDdayDiff(b.date);}).forEach(function(d,i){var diff=getDdayDiff(d.date),label=diff>0?'D-'+diff:diff===0?'D-DAY':'D+'+Math.abs(diff),urgent=diff>=0&&diff<=7;var row=document.createElement('div');row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:'+(ddayList.length===1?'4px 0':'6px 0')+';'+(i<ddayList.length-1?'border-bottom:1px solid rgba(255,255,255,.08);':'');row.innerHTML='<div style="display:flex;align-items:center;gap:8px"><div style="font-size:.82rem;font-weight:700;color:#fff">'+d.name+'</div>'+(d.date?'<div style="font-size:.68rem;color:rgba(255,255,255,.4)">'+d.date.slice(5).replace('-','/')+'</div>':'')+'</div><div style="display:flex;align-items:center;gap:6px"><div style="font-family:monospace;font-size:'+(ddayList.length===1?'1.6rem':'1.2rem')+';font-weight:800;color:'+(diff<0?'rgba(255,255,255,.35)':urgent?'#f97316':'#fff')+'">'+label+'</div><button onclick="removeDday('+i+')" style="background:none;border:none;color:rgba(255,255,255,.25);cursor:pointer;font-size:.75rem;padding:2px 4px">✕</button></div>';el.appendChild(row);});}
 function removeDday(i){ddayList.splice(i,1);svDday();renderDdayCard();}
 function openDdayModal(){var m=document.getElementById('ddayModalBg');if(m){m.classList.add('open');var n=document.getElementById('dday_name'),dt=document.getElementById('dday_date');if(n)n.value='';if(dt)dt.value='';}}
