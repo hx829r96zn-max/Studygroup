@@ -144,8 +144,16 @@ function getSecsDate(y,mo,d){var key=new Date(y,mo,d).toDateString();return sess
 
 // NAV
 function go(id){
-  // 그룹 전체화면 열려있으면 먼저 닫기
+  // 그룹 전체화면 닫기
   var rv=document.getElementById('pg-roomview');if(rv&&rv.style.display==='flex')closeRoomView();
+  // 시간표 뷰 닫기 → 플래너 복원
+  var tt=document.getElementById('pg-timetable');
+  if(tt&&tt.style.display==='flex'){
+    tt.style.display='none';
+    var ttBtn=document.getElementById('ttBtn');if(ttBtn)ttBtn.textContent='시간표';
+  }
+  // pg-timer는 항상 display 초기화 (시간표에서 none으로 숨겼을 수 있음)
+  var pt=document.getElementById('pg-timer');if(pt)pt.style.display='';
   localStorage.setItem('sg_lasttab',id);
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('on');});
   document.querySelectorAll('.ntab,.tbtab').forEach(function(t){t.classList.remove('on');});
@@ -378,7 +386,19 @@ function toggleSubj(){if(!selId)return;if(aId===selId){var sid=selId;stopSubj();
 function stopSubjBtn(){var sid=aId;stopSubj();if(cfg.linkPomoStop!==false&&pRun&&pomoSubjId===sid)pomoPause();}
 function updatePomoSubjBadge(){var el=document.getElementById('pomoSubjBadge');if(!el)return;if(aId){var sub=subjs.find(function(s){return s.id===aId;});if(sub){el.textContent=sub.name;el.style.background=sub.color;el.style.display='block';return;}}el.style.display='none';}
 function startSubj(id){if(aId)_stopSil(aId);aId=id;aStart=Date.now();var sub=subjs.find(function(s){return s.id===id;});var bar=document.getElementById('activeBar');if(bar)bar.classList.add('on');var ad=document.getElementById('adot');if(ad)ad.style.background=sub.color;var an=document.getElementById('aname');if(an)an.textContent=sub.name;restartFbSync();clearInterval(aInt);aInt=setInterval(function(){var at=document.getElementById('atime');if(at)at.textContent=f3(Math.floor((Date.now()-aStart)/1000));syncAllScreens();},500);var ts=document.getElementById('tcStop');if(ts)ts.style.display='flex';selSubj(id);renderTL();updatePomoSubjBadge();}
-function stopSubj(){if(!aId)return;var endT=Date.now();var sub=subjs.find(function(s){return s.id===aId;});sess.push({subjectId:aId,color:(sub&&sub.color)||'#888',start:aStart,end:endT});svSess();var sid=aId;aId=null;aStart=null;clearInterval(aInt);var bar=document.getElementById('activeBar');if(bar)bar.classList.remove('on');var ts=document.getElementById('tcStop');if(ts)ts.style.display='none';var at=document.getElementById('atime');if(at)at.textContent='00:00:00';selSubj(sid);renderTL();renderTH();updateHome();fbPushMyData();saveUserDataToFirebase();restartFbSync();updatePomoSubjBadge();toast('⏱ '+fmtHM(getSecs(sid)));}
+function stopSubj(){
+  if(!aId)return;
+  var endT=Date.now(),sid=aId,sstart=aStart;
+  var sub=subjs.find(function(s){return s.id===sid;});
+  if(sstart&&endT>sstart)sess.push({subjectId:sid,color:(sub&&sub.color)||'#888',start:sstart,end:endT});
+  svSess();
+  aId=null;aStart=null;clearInterval(aInt);
+  var bar=document.getElementById('activeBar');if(bar)bar.classList.remove('on');
+  var ts=document.getElementById('tcStop');if(ts)ts.style.display='none';
+  var at=document.getElementById('atime');if(at)at.textContent='00:00:00';
+  selSubj(sid);renderTL();renderTH();updateHome();fbPushMyData();saveUserDataToFirebase();restartFbSync();updatePomoSubjBadge();
+  toast('⏱ '+fmtHM(getSecs(sid)));
+}
 function _stopSil(id){sess.push({subjectId:id,color:(subjs.find(function(s){return s.id===id;})||{}).color||'#888',start:aStart,end:Date.now()});sv();}
 
 // PLANNER
