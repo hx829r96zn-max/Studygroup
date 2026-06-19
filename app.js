@@ -188,7 +188,7 @@ var _ttStorage=JSON.parse(localStorage.getItem('sg_tts')||'{}');
 var _ttHistory=[],_ttFuture=[],_ttPickRow=null,_ttFocusRow=null;
 var _ttDate=today(); // 현재 보는 날짜 (studyDayOf 기준)
 function _ttKey(){return _ttDate;}
-function _ttRows(){if(!_ttStorage[_ttKey()]){_ttStorage[_ttKey()]=[];for(var i=0;i<20;i++)_ttStorage[_ttKey()].push({subjId:null,todos:[]});}return _ttStorage[_ttKey()];}
+function _ttRows(){if(!_ttStorage[_ttKey()]){_ttStorage[_ttKey()]=[];for(var i=0;i<5;i++)_ttStorage[_ttKey()].push({subjId:null,todos:[]});}return _ttStorage[_ttKey()];}
 function svTT(){localStorage.setItem('sg_tts',JSON.stringify(_ttStorage));}
 function _ttSnap(){_ttHistory.push(JSON.stringify({k:_ttKey(),d:_ttStorage[_ttKey()]}));if(_ttHistory.length>40)_ttHistory.shift();_ttFuture=[];}
 function ttUndo(){if(!_ttHistory.length)return;var s=JSON.parse(_ttHistory.pop());_ttFuture.push(JSON.stringify({k:_ttKey(),d:_ttStorage[_ttKey()]}));_ttStorage[s.k]=s.d;svTT();renderTT();}
@@ -289,7 +289,7 @@ function renderTT(){
         stBtn.addEventListener('pointerleave',function(){if(_hold){clearTimeout(_hold);_hold=null;}});
       })(t);
       var delBtn=document.createElement('div');
-      delBtn.style.cssText='font-size:.6rem;color:#333;cursor:pointer;padding:4px;flex-shrink:0;';
+      delBtn.style.cssText='font-size:.6rem;color:#333;cursor:pointer;padding:4px 8px 4px 16px;flex-shrink:0;';
       delBtn.textContent='✕';
       delBtn.onclick=function(){_ttSnap();todos.splice(ti,1);svTT();renderTT();};
       line.appendChild(txt);line.appendChild(stBtn);line.appendChild(delBtn);
