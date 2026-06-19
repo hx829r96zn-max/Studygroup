@@ -198,7 +198,7 @@ function ttRedo(){if(!_ttFuture.length)return;_ttHistory.push(JSON.stringify(_tt
 function goTimetable(){var pg=document.getElementById('pg-timetable');if(pg)pg.style.display='flex';var pt=document.getElementById('pg-timer');if(pt){pt.style.display='none';pt.classList.remove('on');}var ttDate=document.getElementById('ttDateLabel');if(ttDate){var now=new Date();ttDate.textContent=(now.getMonth()+1)+'월 '+now.getDate()+'일';}renderTT();var ttBtn=document.getElementById('ttBtn');if(ttBtn)ttBtn.textContent='플래너';}
 function goPlanner(){var pg=document.getElementById('pg-timetable');if(pg)pg.style.display='none';var pt=document.getElementById('pg-timer');if(pt){pt.style.display='flex';pt.classList.add('on');}var ttBtn=document.getElementById('ttBtn');if(ttBtn)ttBtn.textContent='시간표';}
 function _stColor(st){return st==='O'?'#16a34a':st==='△'?'#d97706':'#dc2626';}
-function _stBg(st){return '#fff';}
+function _stBg(st){return '#000';}
 function renderTT(){
   var el=document.getElementById('ttBody');if(!el)return;
   el.innerHTML='';
@@ -208,7 +208,7 @@ function renderTT(){
     var hasFocus=(_ttFocusRow===ri);
     // ── 한 행 그룹 (과목 + 여러 todo줄)
     var group=document.createElement('div');
-    group.style.cssText='background:#fff;border-bottom:1.5px solid #e8eaed;';
+    group.style.cssText='background:#000;border-bottom:1.5px solid #1a1a1a;';
 
     // todo 항목들 (각 줄마다 [과목칸 | 할일 | 상태])
     var totalRows=todos.length+(hasFocus?1:0);
@@ -218,11 +218,11 @@ function renderTT(){
       var isAddRow=(hasFocus&&li===todos.length);
       var t=isAddRow?null:todos[li];
       var line=document.createElement('div');
-      line.style.cssText='display:flex;align-items:center;min-height:38px;border-bottom:'+(li<todos.length+(hasFocus?0:-1)?'1px solid #f1f3f5':'none')+';';
+      line.style.cssText='display:flex;align-items:center;min-height:38px;border-bottom:'+(li<todos.length+(hasFocus?0:-1)?'1px solid #1a1a1a':'none')+';';
 
       // 과목 칸: 첫 줄만 표시, 나머지는 빈칸
       var subjCell=document.createElement('div');
-      subjCell.style.cssText='width:88px;flex-shrink:0;border-right:1px solid #e8eaed;display:flex;align-items:center;justify-content:center;padding:8px 6px;min-height:38px;align-self:stretch;';
+      subjCell.style.cssText='width:88px;flex-shrink:0;border-right:1px solid #1a1a1a;display:flex;align-items:center;justify-content:center;padding:8px 6px;min-height:38px;align-self:stretch;';
       if(li===0){
         if(sub){
           subjCell.innerHTML='<div style="text-align:center;cursor:pointer"><div style="width:30px;height:30px;border-radius:50%;background:'+sub.color+';display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:800;color:#fff;margin:0 auto 2px">'+escapeHtml(sub.name.slice(0,2))+'</div><div style="font-size:.58rem;font-weight:700;color:'+sub.color+';line-height:1.2;word-break:break-all">'+escapeHtml(sub.name)+'</div></div>';
@@ -235,12 +235,12 @@ function renderTT(){
 
       // 할일 칸
       var todoCell=document.createElement('div');
-      todoCell.style.cssText='flex:1;padding:6px 10px;display:flex;align-items:center;';
+      todoCell.style.cssText='flex:1;padding:6px 10px;display:flex;align-items:center;border-right:1px solid #1a1a1a;';
       if(isAddRow){
         var addInp=document.createElement('input');
         addInp.placeholder='할 일 입력 후 Enter...';
         addInp.className='tt-add-inp';addInp.dataset.ri=ri;
-        addInp.style.cssText='width:100%;font-size:.78rem;background:transparent;border:none;border-bottom:1.5px dashed #ddd;color:#444;padding:2px 0;outline:none;';
+        addInp.style.cssText='width:100%;font-size:.78rem;background:transparent;border:none;border-bottom:1.5px dashed #333;color:#ccc;padding:2px 0;outline:none;';
         addInp.onkeydown=function(e){
           e.stopPropagation();
           if(e.key==='Enter'){
@@ -259,11 +259,11 @@ function renderTT(){
         group.appendChild(line);continue;
       }
       var txtEl=document.createElement('div');
-      txtEl.style.cssText='flex:1;font-size:.78rem;color:#222;line-height:1.5;cursor:pointer;user-select:none;';
+      txtEl.style.cssText='flex:1;font-size:.78rem;color:#e0e0e0;line-height:1.5;cursor:pointer;user-select:none;';
       txtEl.textContent=t.text;
       txtEl.ondblclick=function(e){e.stopPropagation();
         var inp=document.createElement('input');inp.value=t.text;
-        inp.style.cssText='width:100%;font-size:.78rem;background:transparent;border:none;border-bottom:1.5px solid '+(sub?sub.color:'#999')+';color:#222;padding:1px 0;outline:none;';
+        inp.style.cssText='width:100%;font-size:.78rem;background:transparent;border:none;border-bottom:1.5px solid '+(sub?sub.color:'#555')+';color:#e0e0e0;padding:1px 0;outline:none;';
         inp.onblur=function(){_ttSnap();t.text=inp.value.trim()||t.text;svTT();renderTT();};
         inp.onkeydown=function(e2){if(e2.key==='Enter'||e2.key==='Escape')inp.blur();e2.stopPropagation();};
         txtEl.parentNode.replaceChild(inp,txtEl);inp.focus();inp.select();
@@ -301,7 +301,7 @@ function renderTT(){
 
   // 과목 추가
   var addSection=document.createElement('div');
-  addSection.style.cssText='display:flex;align-items:center;padding:13px 16px;cursor:pointer;color:#bbb;font-size:.78rem;gap:7px;background:#fafafa;border-top:1px dashed #e0e3e8;';
+  addSection.style.cssText='display:flex;align-items:center;padding:13px 16px;cursor:pointer;color:#444;font-size:.78rem;gap:7px;background:#000;border-top:1px dashed #222;';
   addSection.innerHTML='<span style="font-size:1rem;font-weight:700">＋</span> 과목 추가';
   addSection.onclick=function(){_ttSnap();_ttData.push({subjId:null,todos:[]});svTT();_ttPickRow=_ttData.length-1;openTTSubjPicker();};
   el.appendChild(addSection);
