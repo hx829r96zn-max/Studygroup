@@ -89,6 +89,11 @@ function loadUserDataFromFirebase(uid){
       planCells=data.planCells.cells;svPlanLocal();
       var _tp=document.getElementById('pg-timer');if(_tp&&_tp.classList.contains('on')){renderTL();}
     }
+    // 다른 기기에서 진행 중인 타이머 추적 (내 기기에 활성 타이머가 없을 때만)
+    if(!aId){
+      if(data.liveSession&&data.liveSession.subjectId&&data.liveSession.start){_remoteLiveSession=data.liveSession;}
+      else{_remoteLiveSession=null;}
+    }
     // 순공시간 기록(sess)은 절대 덮어쓰지 않고 항상 병합만 함
     var changed=false;
     if(data.sessBackup&&data.sessBackup.length&&mergeSessArray(data.sessBackup))changed=true;
@@ -101,7 +106,7 @@ function loadUserDataFromFirebase(uid){
     if(todoOpenSubjId)renderTodoPanel();
   });
 }
-function saveUserDataToFirebase(){if(!window._fbReady||!window._fbUser)return;var uid=window._fbUser.uid;if(uid.indexOf('offline_')===0)return;var todaySess=sess.filter(function(s){return studyDayOf(new Date(s.start))===today();});var cutoff=Date.now()-90*24*3600*1000;var sessBackup=sess.filter(function(s){return s.start>=cutoff;});return window._fbSet('userdata/'+uid,{prof:prof,subjs:subjs,ctr:ctr,frds:frds,bets:bets,cfg:cfg,todaySess:todaySess,todayDate:today(),planCells:{date:today(),cells:planCells},todos:todos,sessBackup:sessBackup,lastSaved:Date.now(),srcDevice:_myDeviceId});}
+function saveUserDataToFirebase(){if(!window._fbReady||!window._fbUser)return;var uid=window._fbUser.uid;if(uid.indexOf('offline_')===0)return;var todaySess=sess.filter(function(s){return studyDayOf(new Date(s.start))===today();});var cutoff=Date.now()-90*24*3600*1000;var sessBackup=sess.filter(function(s){return s.start>=cutoff;});var liveSession=(aId&&aStart)?{subjectId:aId,start:aStart,deviceId:_myDeviceId}:null;return window._fbSet('userdata/'+uid,{prof:prof,subjs:subjs,ctr:ctr,frds:frds,bets:bets,cfg:cfg,todaySess:todaySess,todayDate:today(),planCells:{date:today(),cells:planCells},todos:todos,sessBackup:sessBackup,liveSession:liveSession,lastSaved:Date.now(),srcDevice:_myDeviceId});}
 function updateAccountUI(user){var nE=document.getElementById('accountName'),eE=document.getElementById('accountEmail'),aE=document.getElementById('accountAvatar'),lB=document.getElementById('loginBtn'),oB=document.getElementById('logoutBtn');if(user&&user.email){if(nE)nE.textContent=user.displayName||prof.name||'사용자';if(eE)eE.textContent=user.email;if(aE)aE.textContent=(user.displayName||'?')[0].toUpperCase();if(lB)lB.style.display='none';if(oB)oB.style.display='flex';}else{if(nE)nE.textContent='오프라인 모드';if(eE)eE.textContent='로그인하면 기기간 동기화 가능';if(aE)aE.textContent='?';if(lB)lB.style.display='flex';if(oB)oB.style.display='none';}}
 window.addEventListener('load',function(){setTimeout(_loadFirebase,100);});
 
@@ -165,7 +170,7 @@ function svcfg(){localStorage.setItem('sg_cfg',JSON.stringify(cfg));}
 function svpd(){localStorage.setItem('sg_pd',JSON.stringify(pdata));}
 
 // HELPERS
-function getResetHour(){var h=cfg&&cfg.resetHour;return(h===0||h)?h:5;}
+function getResetHour(){var h=cfg&&cfg.resetHour;if(h!==0&&!h)return 5;h=parseInt(h);if(isNaN(h))return 5;if(h>=24)h=h-24;if(h<0||h>11)return 5;return h;}
 function studyDayOf(date){var d=new Date(date.getTime());d.setHours(d.getHours()-getResetHour());return d.toDateString();}
 function today(){return studyDayOf(new Date());}
 function f3(s){var h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');}
@@ -173,7 +178,8 @@ function fmtHM(s){var h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=Math.fl
 function fmtSh(s){var h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;return h>0?h+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'):m+':'+String(sec).padStart(2,'0');}
 function fmtLiveSecs(secs){var h=Math.floor(secs/3600),m=Math.floor((secs%3600)/60),s=Math.floor(secs%60);return h+'h '+String(m).padStart(2,'0')+'m '+String(s).padStart(2,'0')+'s';}
 function goal(){return(prof.goal||6.5)*3600;}
-function getTSecs(){var ss=sess.filter(function(s){return studyDayOf(new Date(s.start))===today();});var t=ss.reduce(function(a,s){return a+(s.end-s.start)/1000;},0);if(aId&&aStart)t+=(Date.now()-aStart)/1000;return Math.floor(t);}
+var _remoteLiveSession=null; // 다른 기기에서 현재 진행 중인 타이머
+function getTSecs(){var ss=sess.filter(function(s){return studyDayOf(new Date(s.start))===today();});var t=ss.reduce(function(a,s){return a+(s.end-s.start)/1000;},0);if(aId&&aStart)t+=(Date.now()-aStart)/1000;else if(_remoteLiveSession&&_remoteLiveSession.start)t+=(Date.now()-_remoteLiveSession.start)/1000;return Math.floor(t);}
 function getSecs(id){var ss=sess.filter(function(s){return s.subjectId===id&&studyDayOf(new Date(s.start))===today();});var t=ss.reduce(function(a,s){return a+(s.end-s.start)/1000;},0);if(aId===id&&aStart)t+=(Date.now()-aStart)/1000;return Math.floor(t);}
 function getSecsDate(y,mo,d){var key=new Date(y,mo,d).toDateString();return sess.filter(function(s){return studyDayOf(new Date(s.start))===key;}).reduce(function(a,s){return a+(s.end-s.start)/1000;},0);}
 
@@ -396,7 +402,7 @@ function addDdayItem(){var n=(document.getElementById('dday_name')||{}).value.tr
 
 // HOME
 function syncAllScreens(){var t=getTSecs();updateHome();var tt=document.getElementById('timerTotal');if(tt)tt.textContent=fmtHM(t);renderSL();renderTL();checkStreakPoints();checkGoalBonus();if(Math.floor(Date.now()/1000)%30===0)pushAgeData();if(frds.some(function(f){return f.fbLiveTimer&&f.fbLiveTimer.active;}))renderConnectedMembers();}
-function updateHome(){var t=getTSecs(),h=Math.floor(t/3600),m=Math.floor((t%3600)/60),sec=Math.floor(t%60);var ht=document.getElementById('homeTotal');if(ht)ht.innerHTML=h+'<span style="font-size:.85rem;color:var(--ink2)">h</span>'+String(m).padStart(2,'0')+'<span style="font-size:.85rem;color:var(--ink2)">m</span>'+String(sec).padStart(2,'0')+'<span style="font-size:.85rem;color:var(--ink2)">s</span>';var pct=Math.min(100,Math.round(t/goal()*100));var hb=document.getElementById('homeBar');if(hb)hb.style.width=pct+'%';var hp=document.getElementById('homePct');if(hp)hp.textContent=pct+'%';var gl=document.getElementById('goalLbl');if(gl){var gh=Math.floor(goal()/3600),gm=Math.floor((goal()%3600)/60);gl.textContent='목표 '+gh+'h'+(gm>0?' '+gm+'m':'');}var bars=document.getElementById('homeSubjBars');if(!bars)return;bars.innerHTML='';var mx=1;subjs.forEach(function(s){var sc=getSecs(s.id);if(sc>mx)mx=sc;});subjs.forEach(function(sub){var st=getSecs(sub.id);if(!st)return;var sh=Math.floor(st/3600),sm=Math.floor((st%3600)/60),ss2=st%60;var ts=sh>0?sh+':'+String(sm).padStart(2,'0')+':'+String(ss2).padStart(2,'0'):sm+':'+String(ss2).padStart(2,'0');var r=document.createElement('div');r.style.cssText='display:flex;align-items:center;gap:6px;margin-bottom:5px';r.innerHTML='<div style="width:34px;font-size:.68rem;font-weight:600;color:'+sub.color+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+sub.name+'</div><div style="flex:1;height:5px;background:var(--line);border-radius:3px;overflow:hidden"><div style="height:100%;border-radius:3px;background:'+sub.color+';width:'+Math.round(st/mx*100)+'%"></div></div><div style="font-family:monospace;font-size:.63rem;color:var(--ink2);width:40px;text-align:right">'+ts+'</div>';bars.appendChild(r);});}
+function updateHome(){var t=getTSecs(),h=Math.floor(t/3600),m=Math.floor((t%3600)/60),sec=Math.floor(t%60);var ht=document.getElementById('homeTotal');if(ht)ht.innerHTML=h+'<span style="font-size:.85rem;color:var(--ink2)">h</span>'+String(m).padStart(2,'0')+'<span style="font-size:.85rem;color:var(--ink2)">m</span>'+String(sec).padStart(2,'0')+'<span style="font-size:.85rem;color:var(--ink2)">s</span>';var rb=document.getElementById('remoteLiveBadge');if(rb)rb.style.display=(!aId&&_remoteLiveSession)?'block':'none';var pct=Math.min(100,Math.round(t/goal()*100));var hb=document.getElementById('homeBar');if(hb)hb.style.width=pct+'%';var hp=document.getElementById('homePct');if(hp)hp.textContent=pct+'%';var gl=document.getElementById('goalLbl');if(gl){var gh=Math.floor(goal()/3600),gm=Math.floor((goal()%3600)/60);gl.textContent='목표 '+gh+'h'+(gm>0?' '+gm+'m':'');}var bars=document.getElementById('homeSubjBars');if(!bars)return;bars.innerHTML='';var mx=1;subjs.forEach(function(s){var sc=getSecs(s.id);if(sc>mx)mx=sc;});subjs.forEach(function(sub){var st=getSecs(sub.id);if(!st)return;var sh=Math.floor(st/3600),sm=Math.floor((st%3600)/60),ss2=st%60;var ts=sh>0?sh+':'+String(sm).padStart(2,'0')+':'+String(ss2).padStart(2,'0'):sm+':'+String(ss2).padStart(2,'0');var r=document.createElement('div');r.style.cssText='display:flex;align-items:center;gap:6px;margin-bottom:5px';r.innerHTML='<div style="width:34px;font-size:.68rem;font-weight:600;color:'+sub.color+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+sub.name+'</div><div style="flex:1;height:5px;background:var(--line);border-radius:3px;overflow:hidden"><div style="height:100%;border-radius:3px;background:'+sub.color+';width:'+Math.round(st/mx*100)+'%"></div></div><div style="font-family:monospace;font-size:.63rem;color:var(--ink2);width:40px;text-align:right">'+ts+'</div>';bars.appendChild(r);});}
 function renderHBet(){var el=document.getElementById('homeBetContent');if(!el)return;var act=bets.filter(function(b){return b.status!=='done';});if(!act.length){el.innerHTML='<div style="font-size:.76rem;color:var(--ink3);padding:7px 0;text-align:center">진행 중인 내기 없음</div>';return;}el.innerHTML='';act.forEach(function(b){var row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:7px;padding:8px 0;border-bottom:1px solid var(--line)';row.innerHTML='<div style="flex:1"><div style="font-size:.83rem;font-weight:700">vs '+b.opp+'</div><div style="font-size:.68rem;color:var(--ink2);margin-top:1px">'+b.cl+' · '+b.s+'~'+b.e+'</div></div><div style="text-align:right"><div style="font-family:monospace;font-size:.88rem;color:var(--green)">'+Number(b.amt).toLocaleString()+'원</div></div>';el.appendChild(row);});}
 
 // TIMER
@@ -420,7 +426,7 @@ function clickSubj(id){
 function toggleSubj(){if(!selId)return;if(aId===selId){var sid=selId;stopSubj();if(cfg.linkPomoStop!==false&&pRun&&pomoSubjId===sid)pomoPause();}else{startSubj(selId);if(cfg.linkPomoStart!==false&&!pRun&&pomoSubjId===selId)pomoResume();}}
 function stopSubjBtn(){var sid=aId;stopSubj();if(cfg.linkPomoStop!==false&&pRun&&pomoSubjId===sid)pomoPause();}
 function updatePomoSubjBadge(){var el=document.getElementById('pomoSubjBadge');if(!el)return;if(aId){var sub=subjs.find(function(s){return s.id===aId;});if(sub){el.textContent=sub.name;el.style.background=sub.color;el.style.display='block';return;}}el.style.display='none';}
-function startSubj(id){if(aId)_stopSil(aId);aId=id;aStart=Date.now();var sub=subjs.find(function(s){return s.id===id;});var bar=document.getElementById('activeBar');if(bar)bar.classList.add('on');var ad=document.getElementById('adot');if(ad)ad.style.background=sub.color;var an=document.getElementById('aname');if(an)an.textContent=sub.name;restartFbSync();clearInterval(aInt);aInt=setInterval(function(){var at=document.getElementById('atime');if(at)at.textContent=f3(Math.floor((Date.now()-aStart)/1000));syncAllScreens();},500);var ts=document.getElementById('tcStop');if(ts)ts.style.display='flex';selSubj(id);renderTL();updatePomoSubjBadge();}
+function startSubj(id){if(aId)_stopSil(aId);_remoteLiveSession=null;aId=id;aStart=Date.now();var sub=subjs.find(function(s){return s.id===id;});var bar=document.getElementById('activeBar');if(bar)bar.classList.add('on');var ad=document.getElementById('adot');if(ad)ad.style.background=sub.color;var an=document.getElementById('aname');if(an)an.textContent=sub.name;restartFbSync();clearInterval(aInt);aInt=setInterval(function(){var at=document.getElementById('atime');if(at)at.textContent=f3(Math.floor((Date.now()-aStart)/1000));syncAllScreens();},500);var ts=document.getElementById('tcStop');if(ts)ts.style.display='flex';selSubj(id);renderTL();updatePomoSubjBadge();updateHome();}
 function stopSubj(){
   if(!aId)return;
   var endT=Date.now(),sid=aId,sstart=aStart;
@@ -828,7 +834,7 @@ function rmFr(i){if(confirm('삭제?')){frds.splice(i,1);svf();renderSet();}}
 // SETTINGS
 function saveProfile(){var ni=document.getElementById('s_name');if(ni&&ni.value.trim())prof.name=ni.value.trim();var si=document.getElementById('s_school');if(si&&si.value.trim())prof.school=si.value.trim();var gi=document.getElementById('s_grade');if(gi&&gi.value.trim())prof.grade=gi.value.trim();var ai=document.getElementById('s_age');if(ai&&ai.value)prof.age=parseInt(ai.value)||prof.age||0;var go2=document.getElementById('s_goal');if(go2&&go2.value)prof.goal=parseFloat(go2.value)||prof.goal||6.5;var pi=document.getElementById('s_phone');if(pi&&pi.value.trim())prof.phone=pi.value.trim();svp();renderProfUI();document.getElementById('profEdit').style.display='none';document.getElementById('profView').style.display='block';document.getElementById('profEditBtn').textContent='수정';toast('프로필 저장됨! ✅');fbPushMyData();}
 function toggleProfileEdit(){var view=document.getElementById('profView'),edit=document.getElementById('profEdit'),btn=document.getElementById('profEditBtn');if(!view||!edit)return;if(edit.style.display!=='none'){edit.style.display='none';view.style.display='block';if(btn)btn.textContent='수정';}else{['s_name','s_school','s_grade'].forEach(function(id){var el=document.getElementById(id);if(el)el.value=prof[id.replace('s_','')]||'';});var ai=document.getElementById('s_age');if(ai)ai.value=prof.age||'';var go2=document.getElementById('s_goal');if(go2)go2.value=prof.goal||6.5;var pi=document.getElementById('s_phone');if(pi)pi.value=prof.phone||'';edit.style.display='block';view.style.display='none';if(btn)btn.textContent='닫기';}}
-function savePomoSet(){var pf=parseInt((document.getElementById('s_pf')||{}).value)||70,pb=parseInt((document.getElementById('s_pb')||{}).value)||10;var rh=parseInt((document.getElementById('s_reset')||{}).value);if(isNaN(rh)||rh<0||rh>11)rh=5;cfg.pf=pf;cfg.pb=pb;cfg.resetHour=rh;svcfg();pSec=pf*60;pBrk=pb*60;resetPomo();reloadPlanForToday();updateHome();_lastStudyDay=today();if(todoOpenSubjId)renderTodoPanel();toast('저장됨 · 초기화 새벽 '+rh+'시');}
+function savePomoSet(){var pf=parseInt((document.getElementById('s_pf')||{}).value)||70,pb=parseInt((document.getElementById('s_pb')||{}).value)||10;var rh=parseInt((document.getElementById('s_reset')||{}).value);if(isNaN(rh))rh=5;if(rh>=24)rh=rh-24;if(rh<0||rh>11)rh=5;cfg.pf=pf;cfg.pb=pb;cfg.resetHour=rh;svcfg();pSec=pf*60;pBrk=pb*60;resetPomo();reloadPlanForToday();updateHome();_lastStudyDay=today();if(todoOpenSubjId)renderTodoPanel();toast('저장됨 · 초기화 새벽 '+rh+'시');}
 function saveLinkSettings(){var s1=document.getElementById('s_linkstop'),s2=document.getElementById('s_linkstart');cfg.linkPomoStop=s1?s1.checked:true;cfg.linkPomoStart=s2?s2.checked:true;svcfg();toast('저장됨');}
 function renderProfUI(){var n=prof.name||'나';['profAv','myAv'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent=n[0]||'나';});var pn=document.getElementById('profName');if(pn)pn.textContent=n;var sv2=document.getElementById('profSchoolView');if(sv2)sv2.textContent=prof.school||'학교 미입력';var gv=document.getElementById('profGradeView');if(gv)gv.textContent=prof.grade||'학년 미입력';var phv=document.getElementById('profPhoneView');if(phv)phv.textContent=prof.phone||'연락처 미입력';}
 function applyTheme(k,v){document.documentElement.style.setProperty(k,v);if(!cfg.themeC)cfg.themeC={};cfg.themeC[k]=v;svcfg();}
@@ -836,7 +842,7 @@ function switchColorTab(n){var p1=document.getElementById('colorPane1'),p2=docum
 function resetTheme(){var def={'--green':'#16734a','--acc':'#4f46e5','--bg':'#f0eff6','--plan':'#60a5fa','--streak':'#1a1a1a','--streak2':'#2a2a2a'};cfg.themeC=def;svcfg();Object.keys(def).forEach(function(k){document.documentElement.style.setProperty(k,def[k]);});renderSet();toast('초기화됨');}
 function applyAllTheme(){var tc=cfg.themeC||{};Object.keys(tc).forEach(function(k){document.documentElement.style.setProperty(k,tc[k]);});}
 function exportData(){var blob=new Blob([JSON.stringify({subjs:subjs,sess:sess,ctr:ctr,frds:frds,bets:bets,prof:prof,pdata:pdata},null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sg_data.json';a.click();toast('내보내기 완료');}
-function renderSet(){var fields={s_name:prof.name,s_school:prof.school,s_grade:prof.grade,s_goal:prof.goal,s_phone:prof.phone,s_pf:cfg.pf||70,s_pb:cfg.pb||10,s_reset:(cfg.resetHour===0||cfg.resetHour)?cfg.resetHour:5};Object.keys(fields).forEach(function(id){var el=document.getElementById(id);if(el&&fields[id]!==undefined)el.value=fields[id];});var ls1=document.getElementById('s_linkstop');if(ls1)ls1.checked=cfg.linkPomoStop!==false;var ls2=document.getElementById('s_linkstart');if(ls2)ls2.checked=cfg.linkPomoStart!==false;renderProfUI();renderFriendList();renderScList();renderBetList();renderShareCode();renderAlertSettings();var tc=cfg.themeC||{};var picks={'tc_g':'--green','tc_a':'--acc','tc_b':'--bg','tc_plan':'--plan','tc_streak':'--streak'};Object.keys(picks).forEach(function(id){var el=document.getElementById(id);if(el)el.value=tc[picks[id]]||getComputedStyle(document.documentElement).getPropertyValue(picks[id]).trim();});}
+function renderSet(){var fields={s_name:prof.name,s_school:prof.school,s_grade:prof.grade,s_goal:prof.goal,s_phone:prof.phone,s_pf:cfg.pf||70,s_pb:cfg.pb||10,s_reset:getResetHour()};Object.keys(fields).forEach(function(id){var el=document.getElementById(id);if(el&&fields[id]!==undefined)el.value=fields[id];});var ls1=document.getElementById('s_linkstop');if(ls1)ls1.checked=cfg.linkPomoStop!==false;var ls2=document.getElementById('s_linkstart');if(ls2)ls2.checked=cfg.linkPomoStart!==false;renderProfUI();renderFriendList();renderScList();renderBetList();renderShareCode();renderAlertSettings();var tc=cfg.themeC||{};var picks={'tc_g':'--green','tc_a':'--acc','tc_b':'--bg','tc_plan':'--plan','tc_streak':'--streak'};Object.keys(picks).forEach(function(id){var el=document.getElementById(id);if(el)el.value=tc[picks[id]]||getComputedStyle(document.documentElement).getPropertyValue(picks[id]).trim();});}
 
 // SHARE CODE & FB SYNC
 function getMyCode(){var c=localStorage.getItem('sg_mycode');if(!c){c=Math.random().toString(36).substring(2,8).toUpperCase();localStorage.setItem('sg_mycode',c);}return c;}
@@ -1208,9 +1214,21 @@ if(!_pomoSaved){pCur=pSec;}else{
 updatePUI();renderHomeSubjGrid();buildHm('hmHome');buildStreak();updateHome();renderHBet();renderDdayCard();renderProfUI();updatePomoSubjLabel();
 startAlertSchedule();subscribeMockScores();
 
+function _splitSessionAtDayBoundary(){
+  // 진행 중인 세션을 강제 종료하지 않고, 직전 study-day 분량만 sess에 기록하고
+  // 같은 과목으로 타이머를 끊김 없이 이어가서 시간이 절대 사라지지 않도록 함
+  if(!aId||!aStart)return;
+  var endT=Date.now();
+  if(endT<=aStart)return;
+  var sub=subjs.find(function(s){return s.id===aId;});
+  sess.push({subjectId:aId,color:(sub&&sub.color)||'#888',start:aStart,end:endT});
+  svSess();
+  aStart=endT; // 같은 과목, 새 study-day로 이어서 계속 기록
+  fbPushMyData();saveUserDataToFirebase();
+}
 var _lastStudyDay=today();
 var _lastCalDay=new Date().toDateString();
-setInterval(function(){var td=today();if(td!==_lastStudyDay){_lastStudyDay=td;if(aId)stopSubj();reloadPlanForToday();updateHome();renderTL();buildHm('hmHome');buildStreak();if(todoOpenSubjId)renderTodoPanel();toast('새로운 하루가 시작되었습니다');}var cd=new Date().toDateString();if(cd!==_lastCalDay){_lastCalDay=cd;renderDdayCard();}buildHm('hmHome');buildStreak();var sp=document.getElementById('pg-stats');if(sp&&sp.classList.contains('on'))renderCal();},30000);
+setInterval(function(){var td=today();if(td!==_lastStudyDay){_lastStudyDay=td;_splitSessionAtDayBoundary();reloadPlanForToday();updateHome();renderTL();buildHm('hmHome');buildStreak();if(todoOpenSubjId)renderTodoPanel();toast('새로운 하루가 시작되었습니다');}var cd=new Date().toDateString();if(cd!==_lastCalDay){_lastCalDay=cd;renderDdayCard();}buildHm('hmHome');buildStreak();var sp=document.getElementById('pg-stats');if(sp&&sp.classList.contains('on'))renderCal();},30000);
 
 setInterval(function(){
   var hp=document.getElementById('pg-home');
@@ -1220,6 +1238,8 @@ setInterval(function(){
   if(aId&&aStart){
     if(hp&&hp.classList.contains('on'))updateHome();
     if(tp&&tp.classList.contains('on'))updatePlanStat();
+  }else if(_remoteLiveSession){
+    if(hp&&hp.classList.contains('on'))updateHome();
   }
   if(tp&&tp.classList.contains('on'))updateNowLine();
   if((rp&&rp.classList.contains('on'))||(ttp&&ttp.style.display==='flex')){

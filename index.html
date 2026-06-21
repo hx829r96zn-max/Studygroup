@@ -114,6 +114,7 @@
     </div>
     <div style="display:flex;align-items:flex-end;gap:7px;margin-bottom:7px">
       <div style="font-family:monospace;font-size:1.9rem;font-weight:500;line-height:1;color:#fff" id="homeTotal">0<span style="font-size:.85rem;color:rgba(255,255,255,.4)">h</span>00<span style="font-size:.85rem;color:rgba(255,255,255,.4)">m</span>00<span style="font-size:.85rem;color:rgba(255,255,255,.4)">s</span></div>
+      <div id="remoteLiveBadge" style="display:none;font-size:.66rem;color:#22c55e;margin-top:3px;font-weight:600">🔴 다른 기기에서 공부 중</div>
       <div style="font-size:.7rem;color:rgba(255,255,255,.5);margin-bottom:2px" id="homePct">0%</div>
     </div>
     <div style="height:5px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;margin-bottom:9px"><div id="homeBar" style="height:100%;border-radius:3px;background:var(--green);width:0%"></div></div>
@@ -401,7 +402,7 @@
       <div><div style="font-size:.68rem;color:var(--ink2);margin-bottom:4px">집중 (분)</div><input class="inp" id="s_pf" type="number" min="10" max="120" value="70" style="margin:0"></div>
       <div><div style="font-size:.68rem;color:var(--ink2);margin-bottom:4px">휴식 (분)</div><input class="inp" id="s_pb" type="number" min="1" max="30" value="10" style="margin:0"></div>
     </div>
-    <div style="margin-top:8px"><div style="font-size:.68rem;color:var(--ink2);margin-bottom:4px">초기화 시각 (시, 예:5 → 새벽5시)</div><input class="inp" id="s_reset" type="number" min="0" max="11" value="5" style="margin:0"></div>
+    <div style="margin-top:8px"><div style="font-size:.68rem;color:var(--ink2);margin-bottom:4px">초기화 시각 (예: 5 → 새벽 5시, 26 → 익일 새벽 2시)</div><input class="inp" id="s_reset" type="number" min="0" max="29" value="5" style="margin:0"></div>
     <button class="btn btn-dk btn-sm" style="margin-top:9px" onclick="savePomoSet()">저장</button>
     <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line)">
       <div class="trow"><span class="tlbl">정지하면 둘 다 정지</span><label class="toggle"><input type="checkbox" id="s_linkstop" onchange="saveLinkSettings()"><span class="tsl"></span></label></div>
