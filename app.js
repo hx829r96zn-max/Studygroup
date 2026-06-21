@@ -49,7 +49,15 @@ function renderLiveTimeline(){
 var _FB_CFG={apiKey:"AIzaSyAn8xDsf1WM0jXQyBqTsCJizA8rzFBO2pc",authDomain:"studygroup-app-81786.firebaseapp.com",databaseURL:"https://studygroup-app-81786-default-rtdb.firebaseio.com",projectId:"studygroup-app-81786",storageBucket:"studygroup-app-81786.firebasestorage.app",messagingSenderId:"800017756511",appId:"1:800017756511:web:d1c81b7ce8853db66386ea"};
 window._fbReady=false;window._fbDB=null;window._fbAuth=null;window._fbUser=null;
 window._fbSet=function(){return Promise.resolve();};window._fbGet=function(){return Promise.resolve(null);};window._fbUpdate=function(){return Promise.resolve();};window._fbListen=function(){return function(){};};
-function _loadFirebase(){function loadScript(url,cb){var s=document.createElement('script');s.src=url;s.onload=cb;s.onerror=function(){cb&&cb();};document.head.appendChild(s);}loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js',function(){loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js',function(){loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js',function(){loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js',function(){_initFirebase();});});});});}
+function _loadFirebase(){
+  function loadScript(url,cb){var s=document.createElement('script');s.src=url;s.onload=cb;s.onerror=function(){cb&&cb();};document.head.appendChild(s);}
+  loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js',function(){
+    var left=3,done=function(){left--;if(left<=0)_initFirebase();};
+    loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js',done);
+    loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js',done);
+    loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js',done);
+  });
+}
 function _initFirebase(){try{if(typeof firebase==='undefined'){setTimeout(_initFirebase,300);return;}var app=firebase.apps&&firebase.apps.length>0?firebase.apps[0]:firebase.initializeApp(_FB_CFG);var db=firebase.database(app);var auth=firebase.auth(app);window._fbDB=db;window._fbAuth=auth;window._fbReady=true;window._fbSet=function(p,d){return db.ref(p).set(d);};window._fbGet=function(p){return db.ref(p).get();};window._fbUpdate=function(p,d){return db.ref(p).update(d);};window._fbListen=function(p,cb){var r=db.ref(p);r.on('value',function(s){cb(s.val());});return function(){r.off('value');};};var el=document.getElementById('fbStatus');if(el){el.textContent='🟢 Firebase 연결됨';el.style.color='#16734a';}var _resolved=false;auth.onAuthStateChanged(function(user){if(_resolved)return;_resolved=true;if(user){window._fbUser=user;_doLogin(user);}else if(localStorage.getItem('sg_authchoice')==='offline'){useOfflineMode(true);}else{_showLogin();}});}catch(e){console.warn('[Firebase] 실패:',e.message);_showLogin();}}
 function _showLogin(){var ls=document.getElementById('loginScreen');if(ls)ls.style.display='flex';var nav=document.querySelector('nav');if(nav)nav.style.display='none';document.querySelectorAll('.page').forEach(function(p){p.classList.remove('on');});}
 function _isInAppBrowser(){var ua=navigator.userAgent||'';return /KAKAOTALK|Instagram|FBAN|FBAV|Line\/|NAVER\(|everytimeApp|; ?wv\)/i.test(ua);}
@@ -60,14 +68,40 @@ function _doLogin(user){window._fbUser=user;localStorage.setItem('sg_authchoice'
 function loginWithGoogle(){if(!window._fbAuth){toast('잠시 후 다시 시도해주세요');return;}var errEl=document.getElementById('loginError');if(errEl)errEl.style.display='none';var provider=new firebase.auth.GoogleAuthProvider();provider.setCustomParameters({prompt:'select_account'});window._fbAuth.signInWithPopup(provider).then(function(r){if(r.user)_doLogin(r.user);}).catch(function(e){if(errEl){errEl.textContent=e.code==='auth/popup-blocked'?'팝업이 차단됐습니다':e.code==='auth/popup-closed-by-user'?'로그인 창이 닫혔습니다':'로그인 실패: '+e.message;errEl.style.display='block';}});}
 function useOfflineMode(silent){window._offlineMode=true;localStorage.setItem('sg_authchoice','offline');document.documentElement.removeAttribute('data-new-user');var ls=document.getElementById('loginScreen');if(ls)ls.style.display='none';var nav=document.querySelector('nav');if(nav)nav.style.display='flex';setTimeout(function(){renderProfUI();renderHBet();buildStreak();buildHm('hmHome');},200);setTimeout(function(){startFbSync();resumeFbSubscriptions();checkJoinParam();},500);if(!silent)toast('오프라인 모드로 시작합니다');_restoreLastTab();}
 function logoutUser(){if(!confirm('로그아웃 할까요?'))return;saveUserDataToFirebase();if(window._fbAuth)window._fbAuth.signOut().then(function(){window._fbUser=null;updateAccountUI(null);window.location.reload();});}
-function loadUserDataFromFirebase(uid){if(!window._fbReady)return;window._fbGet('userdata/'+uid).then(function(snap){if(!snap)return;var data=snap.val?snap.val():null;if(!data)return;if(data.prof&&data.prof.name){prof=data.prof;svp();}if(data.subjs&&data.subjs.length){subjs=data.subjs;sv();}if(data.ctr&&data.ctr.rules){ctr=data.ctr;svc();}if(data.frds&&data.frds.length){frds=data.frds;svf();}if(data.bets&&data.bets.length){bets=data.bets;svb();}if(data.cfg){cfg=data.cfg;svcfg();applyAllTheme();}if(data.todos){todos=data.todos;svTodos();}if(data.planCells&&data.planCells.date===today()&&data.planCells.cells){planCells=data.planCells.cells;svPlanLocal();var _tp=document.getElementById('pg-timer');if(_tp&&_tp.classList.contains('on')){renderTL();}}
-  // 순공시간 기록(sess)은 절대 덮어쓰지 않고 항상 병합만 함 (로컬 저장소가 비어도 클라우드 백업으로 복원)
-  var changed=false;
-  if(data.sessBackup&&data.sessBackup.length&&mergeSessArray(data.sessBackup))changed=true;
-  if(data.todaySess&&data.todaySess.length&&mergeSessArray(data.todaySess))changed=true;
-  if(changed){svSess();renderTL();updateHome();}
-  renderProfUI();updateHome();renderHBet();buildStreak();buildHm('hmHome');if(data.prof&&data.prof.name)toast('🔄 기록 복원됨!');}).catch(function(e){console.warn('복원 실패:',e);});}
-function saveUserDataToFirebase(){if(!window._fbReady||!window._fbUser)return;var uid=window._fbUser.uid;if(uid.indexOf('offline_')===0)return;var todaySess=sess.filter(function(s){return studyDayOf(new Date(s.start))===today();});var cutoff=Date.now()-90*24*3600*1000;var sessBackup=sess.filter(function(s){return s.start>=cutoff;});return window._fbSet('userdata/'+uid,{prof:prof,subjs:subjs,ctr:ctr,frds:frds,bets:bets,cfg:cfg,todaySess:todaySess,todayDate:today(),planCells:{date:today(),cells:planCells},todos:todos,sessBackup:sessBackup,lastSaved:Date.now()});}
+function loadUserDataFromFirebase(uid){
+  if(!window._fbReady)return;
+  var key='userdata_'+uid;
+  if(_fbListeners[key])return; // 이미 실시간 구독 중
+  var firstLoad=true;
+  _fbListeners[key]=window._fbListen('userdata/'+uid,function(data){
+    if(!data)return;
+    // 이 기기에서 방금 보낸 데이터는 다시 적용하지 않음 (불필요한 깜빡임/루프 방지)
+    if(!firstLoad&&data.srcDevice&&data.srcDevice===_myDeviceId)return;
+    firstLoad=false;
+    if(data.prof&&data.prof.name){prof=data.prof;svp();}
+    if(data.subjs&&data.subjs.length){subjs=data.subjs;sv();}
+    if(data.ctr&&data.ctr.rules){ctr=data.ctr;svc();}
+    if(data.frds&&data.frds.length){frds=data.frds;svf();}
+    if(data.bets&&data.bets.length){bets=data.bets;svb();}
+    if(data.cfg){cfg=data.cfg;svcfg();applyAllTheme();}
+    if(data.todos){todos=data.todos;svTodos();}
+    if(data.planCells&&data.planCells.date===today()&&data.planCells.cells){
+      planCells=data.planCells.cells;svPlanLocal();
+      var _tp=document.getElementById('pg-timer');if(_tp&&_tp.classList.contains('on')){renderTL();}
+    }
+    // 순공시간 기록(sess)은 절대 덮어쓰지 않고 항상 병합만 함
+    var changed=false;
+    if(data.sessBackup&&data.sessBackup.length&&mergeSessArray(data.sessBackup))changed=true;
+    if(data.todaySess&&data.todaySess.length&&mergeSessArray(data.todaySess))changed=true;
+    if(changed){svSess();renderTL();updateHome();}
+    renderProfUI();updateHome();renderHBet();buildStreak();buildHm('hmHome');
+    renderHomeSubjGrid();renderSL();renderDdayCard();
+    if(document.getElementById('pg-settings')&&document.getElementById('pg-settings').classList.contains('on'))renderSet();
+    var ttp=document.getElementById('pg-timetable');if(ttp&&ttp.style.display==='flex')renderTT();
+    if(todoOpenSubjId)renderTodoPanel();
+  });
+}
+function saveUserDataToFirebase(){if(!window._fbReady||!window._fbUser)return;var uid=window._fbUser.uid;if(uid.indexOf('offline_')===0)return;var todaySess=sess.filter(function(s){return studyDayOf(new Date(s.start))===today();});var cutoff=Date.now()-90*24*3600*1000;var sessBackup=sess.filter(function(s){return s.start>=cutoff;});return window._fbSet('userdata/'+uid,{prof:prof,subjs:subjs,ctr:ctr,frds:frds,bets:bets,cfg:cfg,todaySess:todaySess,todayDate:today(),planCells:{date:today(),cells:planCells},todos:todos,sessBackup:sessBackup,lastSaved:Date.now(),srcDevice:_myDeviceId});}
 function updateAccountUI(user){var nE=document.getElementById('accountName'),eE=document.getElementById('accountEmail'),aE=document.getElementById('accountAvatar'),lB=document.getElementById('loginBtn'),oB=document.getElementById('logoutBtn');if(user&&user.email){if(nE)nE.textContent=user.displayName||prof.name||'사용자';if(eE)eE.textContent=user.email;if(aE)aE.textContent=(user.displayName||'?')[0].toUpperCase();if(lB)lB.style.display='none';if(oB)oB.style.display='flex';}else{if(nE)nE.textContent='오프라인 모드';if(eE)eE.textContent='로그인하면 기기간 동기화 가능';if(aE)aE.textContent='?';if(lB)lB.style.display='flex';if(oB)oB.style.display='none';}}
 window.addEventListener('load',function(){setTimeout(_loadFirebase,100);});
 
@@ -77,6 +111,7 @@ window.addEventListener('load',function(){setTimeout(_loadFirebase,100);});
 var COLORS=['#ff6b9d','#ff9a3c','#a78bfa','#34d399','#38bdf8','#f59e0b','#f472b6','#fb7185','#4ade80','#60a5fa','#ef4444','#f97316','#84cc16','#06b6d4','#8b5cf6','#10b981','#6366f1','#f43f5e','#0ea5e9','#d946ef'];
 var DEF_SUBJS=[{id:'s1',name:'국어',color:'#ff6b9d'},{id:'s2',name:'영어',color:'#38bdf8'},{id:'s3',name:'수학',color:'#a78bfa'},{id:'s4',name:'사회',color:'#34d399'},{id:'s5',name:'과학',color:'#f59e0b'},{id:'s6',name:'한국사',color:'#fb7185'}];
 var subjs=JSON.parse(localStorage.getItem('sg_s')||'null')||DEF_SUBJS.map(function(s){return{id:s.id,name:s.name,color:s.color};});
+var _myDeviceId=localStorage.getItem('sg_devid')||(function(){var id=Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('sg_devid',id);return id;})();
 var sess=JSON.parse(localStorage.getItem('sg_ss')||'[]');
 function svSess(){localStorage.setItem('sg_ss',JSON.stringify(sess));}
 function mergeSessArray(extra){ // start 타임스탬프 기준 중복 제거 후 합치기만 함 (절대 교체하지 않음)
@@ -427,7 +462,17 @@ function bindPlanDrag(grid){if(grid._planDragBound)return;grid._planDragBound=tr
 function planTargetMins(){return Object.keys(planCells).length*COL_MINS;}
 function updatePlanStat(){var tgt=planTargetMins(),th=Math.floor(tgt/60),tm=tgt%60;var te=document.getElementById('planTarget');if(te)te.textContent=th+'h '+String(tm).padStart(2,'0')+'m';var actSec=getTSecs(),ah=Math.floor(actSec/3600),am=Math.floor((actSec%3600)/60);var ae=document.getElementById('planActual');if(ae)ae.textContent=ah+'h '+String(am).padStart(2,'0')+'m';var pct=tgt>0?Math.round(actSec/60/tgt*100):0;var pe=document.getElementById('planPct');if(pe)pe.textContent=pct+'%';}
 function renderTL(){var grid=document.getElementById('pGrid');if(!grid)return;var gr=grid.getBoundingClientRect();var wrap=document.getElementById('pScroll');var gridW=gr.width||grid.clientWidth||grid.offsetWidth||(wrap?wrap.clientWidth:220);if(gridW<20)gridW=220;window._planGridW=gridW;var colW=Math.floor((gridW-AXIS_W)/NCOLS);if(colW<4)colW=4;var totalH=24*ROW_H;grid.style.height=totalH+'px';grid.innerHTML='';for(var i=0;i<24;i++){var rowY=i*ROW_H;var hline=document.createElement('div');hline.style.cssText='position:absolute;left:'+AXIS_W+'px;right:0;top:'+rowY+'px;height:1px;background:#2c2c2c;z-index:1;pointer-events:none;';grid.appendChild(hline);var lbl=document.createElement('div');lbl.style.cssText='position:absolute;left:0;width:'+AXIS_W+'px;top:'+(rowY+1)+'px;height:10px;display:flex;align-items:center;justify-content:center;font-family:monospace;font-size:.58rem;font-weight:600;color:rgba(255,255,255,.5);z-index:3;pointer-events:none;';lbl.textContent=rowToHour(i);grid.appendChild(lbl);}var bot=document.createElement('div');bot.style.cssText='position:absolute;left:'+AXIS_W+'px;right:0;top:'+(24*ROW_H)+'px;height:1px;background:#2c2c2c;';grid.appendChild(bot);for(var c2=0;c2<=NCOLS;c2++){var vl=document.createElement('div');vl.style.cssText='position:absolute;top:0;bottom:0;left:'+(AXIS_W+c2*colW)+'px;width:1px;background:#2c2c2c;z-index:1;pointer-events:none;';grid.appendChild(vl);}
-  (function drawNowLine(){var now=new Date();var h=now.getHours(),min=now.getMinutes(),sec=now.getSeconds();var xPx=AXIS_W+(min+sec/60)/60*(gridW-AXIS_W);var row=hourToRow(h);var yPx=row*ROW_H;var line=document.createElement('div');line.style.cssText='position:absolute;top:'+yPx+'px;height:'+ROW_H+'px;left:'+xPx+'px;width:2px;background:#ef4444;z-index:10;pointer-events:none;';var dot=document.createElement('div');dot.style.cssText='position:absolute;top:'+(yPx+ROW_H/2-4)+'px;left:'+(xPx-4)+'px;width:8px;height:8px;border-radius:50%;background:#ef4444;z-index:11;pointer-events:none;';grid.appendChild(line);grid.appendChild(dot);})();var tSess=sess.filter(function(s){return studyDayOf(new Date(s.start))===today();});function drawCont(startMs,endMs,color){var st=new Date(startMs),en=new Date(endMs);var stMin=st.getHours()*60+st.getMinutes()+st.getSeconds()/60;var enMin=en.getHours()*60+en.getMinutes()+en.getSeconds()/60;if(enMin<=stMin)return;for(var h=Math.floor(stMin/60);h<=Math.min(23,Math.floor(enMin/60));h++){var rowMin=h*60;var segS=Math.max(stMin,rowMin),segE=Math.min(enMin,rowMin+60);if(segE<=segS)continue;var x1=Math.round((segS-rowMin)*(gridW-AXIS_W)/60),x2=Math.round((segE-rowMin)*(gridW-AXIS_W)/60);var blk=document.createElement('div');blk.style.cssText='position:absolute;top:'+(hourToRow(h)*ROW_H+1)+'px;height:'+(ROW_H-2)+'px;left:'+(AXIS_W+x1)+'px;width:'+Math.max(1,x2-x1)+'px;background:'+color+';z-index:2;';grid.appendChild(blk);}}var cellW2=(gridW-AXIS_W)/NCOLS;for(var h2=0;h2<24;h2++){var dRow=hourToRow(h2);for(var c3=0;c3<NCOLS;c3++){var idx=h2*NCOLS+c3;var cv=planCells[idx];var filled=!!cv;if(!filled&&!planMode)continue;var cell=document.createElement('div');var baseStyle='position:absolute;top:'+(dRow*ROW_H+1)+'px;height:'+(ROW_H-2)+'px;left:'+(AXIS_W+c3*cellW2)+'px;width:'+cellW2+'px;box-sizing:border-box;';if(filled){var col=cellColor(cv);cell.style.cssText=baseStyle+'background:'+hexToRGBA(col,.30)+';border:1px solid '+hexToRGBA(col,.6)+';'}else{cell.style.cssText=baseStyle+'background:transparent;border:1px dashed rgba(255,255,255,.12);'}if(planMode){cell.style.cursor='pointer';cell.style.zIndex='6';cell.setAttribute('data-cell',idx);cell.className='plan-cell';}else{cell.style.zIndex=filled?'1':'4';cell.style.pointerEvents='none';}grid.appendChild(cell);}}tSess.forEach(function(s){drawCont(s.start,s.end||Date.now(),s.color);});if(aId&&aStart){var ac=(subjs.find(function(x){return x.id===aId;})||{}).color||'#a78bfa';drawCont(aStart,Date.now(),ac);}bindPlanDrag(grid);updatePlanStat();}
+  (function drawNowLine(){var now=new Date();var h=now.getHours(),min=now.getMinutes(),sec=now.getSeconds();var xPx=AXIS_W+(min+sec/60)/60*(gridW-AXIS_W);var row=hourToRow(h);var yPx=row*ROW_H;var line=document.createElement('div');line.id='ttNowLine';line.style.cssText='position:absolute;top:'+yPx+'px;height:'+ROW_H+'px;left:'+xPx+'px;width:2px;background:#ef4444;z-index:10;pointer-events:none;';var dot=document.createElement('div');dot.id='ttNowDot';dot.style.cssText='position:absolute;top:'+(yPx+ROW_H/2-4)+'px;left:'+(xPx-4)+'px;width:8px;height:8px;border-radius:50%;background:#ef4444;z-index:11;pointer-events:none;';grid.appendChild(line);grid.appendChild(dot);})();var tSess=sess.filter(function(s){return studyDayOf(new Date(s.start))===today();});function drawCont(startMs,endMs,color){var st=new Date(startMs),en=new Date(endMs);var stMin=st.getHours()*60+st.getMinutes()+st.getSeconds()/60;var enMin=en.getHours()*60+en.getMinutes()+en.getSeconds()/60;if(enMin<=stMin)return;for(var h=Math.floor(stMin/60);h<=Math.min(23,Math.floor(enMin/60));h++){var rowMin=h*60;var segS=Math.max(stMin,rowMin),segE=Math.min(enMin,rowMin+60);if(segE<=segS)continue;var x1=Math.round((segS-rowMin)*(gridW-AXIS_W)/60),x2=Math.round((segE-rowMin)*(gridW-AXIS_W)/60);var blk=document.createElement('div');blk.style.cssText='position:absolute;top:'+(hourToRow(h)*ROW_H+1)+'px;height:'+(ROW_H-2)+'px;left:'+(AXIS_W+x1)+'px;width:'+Math.max(1,x2-x1)+'px;background:'+color+';z-index:2;';grid.appendChild(blk);}}var cellW2=(gridW-AXIS_W)/NCOLS;for(var h2=0;h2<24;h2++){var dRow=hourToRow(h2);for(var c3=0;c3<NCOLS;c3++){var idx=h2*NCOLS+c3;var cv=planCells[idx];var filled=!!cv;if(!filled&&!planMode)continue;var cell=document.createElement('div');var baseStyle='position:absolute;top:'+(dRow*ROW_H+1)+'px;height:'+(ROW_H-2)+'px;left:'+(AXIS_W+c3*cellW2)+'px;width:'+cellW2+'px;box-sizing:border-box;';if(filled){var col=cellColor(cv);cell.style.cssText=baseStyle+'background:'+hexToRGBA(col,.30)+';border:1px solid '+hexToRGBA(col,.6)+';'}else{cell.style.cssText=baseStyle+'background:transparent;border:1px dashed rgba(255,255,255,.12);'}if(planMode){cell.style.cursor='pointer';cell.style.zIndex='6';cell.setAttribute('data-cell',idx);cell.className='plan-cell';}else{cell.style.zIndex=filled?'1':'4';cell.style.pointerEvents='none';}grid.appendChild(cell);}}tSess.forEach(function(s){drawCont(s.start,s.end||Date.now(),s.color);});if(aId&&aStart){var ac=(subjs.find(function(x){return x.id===aId;})||{}).color||'#a78bfa';drawCont(aStart,Date.now(),ac);}bindPlanDrag(grid);updatePlanStat();}
+function updateNowLine(){
+  var line=document.getElementById('ttNowLine'),dot=document.getElementById('ttNowDot');
+  if(!line||!dot)return;
+  var gridW=window._planGridW||220;
+  var now=new Date(),h=now.getHours(),min=now.getMinutes(),sec=now.getSeconds();
+  var xPx=AXIS_W+(min+sec/60)/60*(gridW-AXIS_W);
+  var yPx=hourToRow(h)*ROW_H;
+  line.style.top=yPx+'px';line.style.left=xPx+'px';
+  dot.style.top=(yPx+ROW_H/2-4)+'px';dot.style.left=(xPx-4)+'px';
+}
 function scrollNow(){var sc=document.getElementById('pScroll');if(!sc)return;var now=new Date();sc.scrollTop=Math.max(0,(hourToRow(now.getHours())+now.getMinutes()/60)*ROW_H-160);}
 
 // TODO 패널 (플래너 - 과목별)
@@ -1111,39 +1156,7 @@ function renderDayDetail(){
   var subjContainer=document.querySelector('#dayDetailM .dd-subj-bars');if(subjContainer)subjContainer.innerHTML='<div class="dd-subj-hd">과목별 공부시간</div>'+(subjBarsHTML||'<div style="font-size:.76rem;color:var(--ink3);text-align:center;padding:6px 0">기록 없음</div>');
 }
 
-// 실시간 타임라인
-function renderLiveTimeline(){
-  var myT=getTSecs(),myH=Math.floor(myT/3600),myM=Math.floor((myT%3600)/60),myS=Math.floor(myT%60);
-  var myDot=document.getElementById('liveMyDot'),mySubjEl=document.getElementById('liveMySubj'),myTimeEl=document.getElementById('liveMyTime'),myBar=document.getElementById('liveMyBar'),myNameEl=document.getElementById('liveMyName');
-  if(myNameEl)myNameEl.textContent=prof.name||'나';
-  if(aId&&aStart){var sub=subjs.find(function(s){return s.id===aId;});if(myDot)myDot.style.background=sub?sub.color:'var(--acc)';if(mySubjEl)mySubjEl.innerHTML='<span style="background:'+(sub?sub.color:'var(--acc)')+';color:#fff;padding:2px 7px;border-radius:10px;font-size:.65rem;font-weight:700">'+(sub?sub.name:'공부 중')+'</span> 공부 중';}else{if(myDot)myDot.style.background='#ddd';if(mySubjEl)mySubjEl.textContent='공부 중 아님';}
-  if(myTimeEl)myTimeEl.textContent=myH+'h '+String(myM).padStart(2,'0')+'m '+String(myS).padStart(2,'0')+'s';
-  var goalSecs=(prof.goal||6.5)*3600;
-  if(myBar)myBar.style.width=Math.min(100,Math.round(myT/goalSecs*100))+'%';
-  var fw=document.getElementById('liveFriendTimelines');if(!fw)return;
-  var connected=JSON.parse(localStorage.getItem('sg_connected')||'[]');
-  frds.forEach(function(f){if(f.shareCode&&!connected.find(function(c){return c.code===f.shareCode;}))connected.push({code:f.shareCode,name:f.name,color:f.color||'#5b4fcf'});});
-  fw.innerHTML='';
-  if(!connected.length){fw.innerHTML='<div style="font-size:.78rem;color:var(--ink3);padding:8px 0;text-align:center">연동된 친구 없음</div>';return;}
-  connected.forEach(function(c){
-    var f=frds.find(function(x){return x.shareCode===c.code;});
-    if(!f||(!f.fbStudy&&!f.fbLiveTimer))fetchFriendLatest(c.code);
-    var fSecs=getFriendLiveSecs(c.code);
-    var fH=Math.floor(fSecs/3600),fM2=Math.floor((fSecs%3600)/60);
-    var isLive=f&&f.fbLiveTimer&&f.fbLiveTimer.active;
-    var fColor=(f&&f.color)||c.color||'#5b4fcf';
-    var wrap=document.createElement('div');wrap.style.cssText='margin-bottom:12px';
-    var topRow=document.createElement('div');topRow.style.cssText='display:flex;align-items:center;gap:7px;margin-bottom:5px';
-    var dot=document.createElement('div');dot.style.cssText='width:8px;height:8px;border-radius:50%;background:'+(isLive?fColor:'#ddd')+';flex-shrink:0';
-    var nm=document.createElement('div');nm.style.cssText='font-size:.8rem;font-weight:700';nm.textContent=(f&&f.name)||c.name||'친구';
-    var timeEl=document.createElement('div');timeEl.style.cssText='margin-left:auto;font-family:monospace;font-size:.78rem;font-weight:600;color:var(--green)';
-    timeEl.textContent=fH+'h '+String(fM2).padStart(2,'0')+'m';
-    topRow.appendChild(dot);topRow.appendChild(nm);topRow.appendChild(timeEl);
-    var barBg=document.createElement('div');barBg.style.cssText='height:10px;background:var(--bg);border-radius:5px;overflow:hidden';
-    var barFill=document.createElement('div');barFill.style.cssText='height:100%;border-radius:5px;background:'+fColor+';width:'+Math.min(100,Math.round(fSecs/goalSecs*100))+'%;transition:width .5s';
-    barBg.appendChild(barFill);wrap.appendChild(topRow);wrap.appendChild(barBg);fw.appendChild(wrap);
-  });
-}
+
 
 // 또래 비교 / 스트릭
 function pushAgeData(){if(!window._fbReady||!prof.age)return;window._fbSet('ageStats/'+prof.age+'/'+getMyCode(),{secs:getTSecs(),date:new Date().toISOString().split('T')[0],code:getMyCode()});}
@@ -1199,10 +1212,27 @@ var _lastStudyDay=today();
 var _lastCalDay=new Date().toDateString();
 setInterval(function(){var td=today();if(td!==_lastStudyDay){_lastStudyDay=td;if(aId)stopSubj();reloadPlanForToday();updateHome();renderTL();buildHm('hmHome');buildStreak();if(todoOpenSubjId)renderTodoPanel();toast('새로운 하루가 시작되었습니다');}var cd=new Date().toDateString();if(cd!==_lastCalDay){_lastCalDay=cd;renderDdayCard();}buildHm('hmHome');buildStreak();var sp=document.getElementById('pg-stats');if(sp&&sp.classList.contains('on'))renderCal();},30000);
 
-setInterval(function(){if(aId&&aStart){var hp=document.getElementById('pg-home');if(hp&&hp.classList.contains('on'))updateHome();var tp=document.getElementById('pg-timer');if(tp&&tp.classList.contains('on'))updatePlanStat();}var rp=document.getElementById('pg-room');if(rp&&rp.classList.contains('on')){var lp=document.getElementById('rp-live');if(lp&&lp.classList.contains('on')){try{renderMemberCards();}catch(e){}}}renderLiveTimeline();updatePomoSubjBadge();},1000);
+setInterval(function(){
+  var hp=document.getElementById('pg-home');
+  var tp=document.getElementById('pg-timer');
+  var rp=document.getElementById('pg-room');
+  var ttp=document.getElementById('pg-timetable');
+  if(aId&&aStart){
+    if(hp&&hp.classList.contains('on'))updateHome();
+    if(tp&&tp.classList.contains('on'))updatePlanStat();
+  }
+  if(tp&&tp.classList.contains('on'))updateNowLine();
+  if((rp&&rp.classList.contains('on'))||(ttp&&ttp.style.display==='flex')){
+    if(rp&&rp.classList.contains('on')){
+      var lp=document.getElementById('rp-live');
+      if(lp&&lp.classList.contains('on')){try{renderMemberCards();}catch(e){}renderLiveTimeline();}
+    }
+  }
+  updatePomoSubjBadge();
+},1000);
 
 setTimeout(checkJoinParam,1000);
 
 window.addEventListener('beforeunload',function(){if(aId&&aStart)sess.push({subjectId:aId,color:(subjs.find(function(s){return s.id===aId;})||{}).color||'#888',start:aStart,end:Date.now()});localStorage.setItem('sg_s',JSON.stringify(subjs));svSess();localStorage.setItem('sg_c',JSON.stringify(ctr));localStorage.setItem('sg_f',JSON.stringify(frds));localStorage.setItem('sg_b',JSON.stringify(bets));localStorage.setItem('sg_p',JSON.stringify(prof));localStorage.setItem('sg_cfg',JSON.stringify(cfg));try{saveUserDataToFirebase();}catch(e){}});
 
-setInterval(function(){svSess();saveUserDataToFirebase();},30000);
+setInterval(function(){svSess();saveUserDataToFirebase();},10000);
