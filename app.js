@@ -89,10 +89,38 @@ function loadUserDataFromFirebase(uid){
       planCells=data.planCells.cells;svPlanLocal();
       var _tp=document.getElementById('pg-timer');if(_tp&&_tp.classList.contains('on')){renderTL();}
     }
-    // 다른 기기에서 진행 중인 타이머 추적 (내 기기에 활성 타이머가 없을 때만)
-    if(!aId){
-      if(data.liveSession&&data.liveSession.subjectId&&data.liveSession.start){_remoteLiveSession=data.liveSession;}
-      else{_remoteLiveSession=null;}
+    // 다른 기기에서 진행 중인 타이머 미러링 (내 기기에 활성 타이머가 없을 때)
+    if(data.liveSession&&data.liveSession.subjectId&&data.liveSession.start&&data.liveSession.deviceId!==_myDeviceId){
+      _remoteLiveSession=data.liveSession;
+      if(!aId){
+        // 실제로 타이머 미러링 — aId/aStart를 원격 기기 값으로 설정하되 _mirroredSession 플래그로 구분
+        var rid=data.liveSession.subjectId,rst=data.liveSession.start;
+        if(aId!==rid||aStart!==rst){
+          if(aId)clearInterval(aInt);
+          aId=rid;aStart=rst;_mirroredSession=true;
+          clearInterval(aInt);
+          aInt=setInterval(function(){
+            var at=document.getElementById('atime');
+            if(at)at.textContent=f3(Math.floor((Date.now()-aStart)/1000));
+            syncAllScreens();
+          },500);
+          var rsub=subjs.find(function(s){return s.id===rid;});
+          var bar=document.getElementById('activeBar');if(bar)bar.classList.add('on');
+          var ad=document.getElementById('adot');if(ad&&rsub)ad.style.background=rsub.color;
+          var an=document.getElementById('aname');if(an&&rsub)an.textContent=rsub.name+' (원격)';
+          var ts=document.getElementById('tcStop');if(ts)ts.style.display='none'; // 원격 세션은 정지 못 함
+          updateHome();renderHomeSubjGrid();
+        }
+      }
+    }else if(!data.liveSession||!data.liveSession.start){
+      // 원격 기기가 타이머 멈춤 → 미러 세션도 정리 (sess에는 추가 안 함)
+      if(_mirroredSession){
+        clearInterval(aInt);aId=null;aStart=null;_mirroredSession=false;
+        var bar2=document.getElementById('activeBar');if(bar2)bar2.classList.remove('on');
+        var ts2=document.getElementById('tcStop');if(ts2)ts2.style.display='none';
+        updateHome();renderHomeSubjGrid();
+      }
+      _remoteLiveSession=null;
     }
     // 순공시간 기록(sess)은 절대 덮어쓰지 않고 항상 병합만 함
     var changed=false;
@@ -179,6 +207,7 @@ function fmtSh(s){var h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;re
 function fmtLiveSecs(secs){var h=Math.floor(secs/3600),m=Math.floor((secs%3600)/60),s=Math.floor(secs%60);return h+'h '+String(m).padStart(2,'0')+'m '+String(s).padStart(2,'0')+'s';}
 function goal(){return(prof.goal||6.5)*3600;}
 var _remoteLiveSession=null; // 다른 기기에서 현재 진행 중인 타이머
+var _mirroredSession=false;  // 현재 타이머가 원격 기기를 미러링 중인지
 function getTSecs(){var ss=sess.filter(function(s){return studyDayOf(new Date(s.start))===today();});var t=ss.reduce(function(a,s){return a+(s.end-s.start)/1000;},0);if(aId&&aStart)t+=(Date.now()-aStart)/1000;else if(_remoteLiveSession&&_remoteLiveSession.start)t+=(Date.now()-_remoteLiveSession.start)/1000;return Math.floor(t);}
 function getSecs(id){var ss=sess.filter(function(s){return s.subjectId===id&&studyDayOf(new Date(s.start))===today();});var t=ss.reduce(function(a,s){return a+(s.end-s.start)/1000;},0);if(aId===id&&aStart)t+=(Date.now()-aStart)/1000;return Math.floor(t);}
 function getSecsDate(y,mo,d){var key=new Date(y,mo,d).toDateString();return sess.filter(function(s){return studyDayOf(new Date(s.start))===key;}).reduce(function(a,s){return a+(s.end-s.start)/1000;},0);}
@@ -201,7 +230,11 @@ function go(id){
   var pg=document.getElementById('pg-'+id);if(pg)pg.classList.add('on');
   var map={home:0,timer:1,room:2,stats:3,mock:4,settings:5};
   if(map[id]!==undefined){var tabs=document.querySelectorAll('.ntab');if(tabs[map[id]])tabs[map[id]].classList.add('on');var tbs=document.querySelectorAll('.tbtab');if(tbs[map[id]])tbs[map[id]].classList.add('on');}
-  if(id==='timer'){renderTH();renderSL();setTimeout(function(){renderTL();scrollNow();renderTodoPanel();},80);}
+  if(id==='timer'){renderTH();renderSL();setTimeout(function(){renderTL();scrollNow();
+    // 플래너 열면 첫 번째 과목 todo 자동 표시
+    if(!todoOpenSubjId&&subjs.length){todoOpenSubjId=subjs[0].id;renderTodoPanel();}
+    else{renderTodoPanel();}
+  },80);}
   if(id==='home'){updateHome();renderHBet();renderDdayCard();renderHomeSubjGrid();if(pCur<=0)pCur=pSec;updatePUI();}
   if(id==='stats'){renderCal();updateStats();}
   if(id==='settings')renderSet();
@@ -426,14 +459,15 @@ function clickSubj(id){
 function toggleSubj(){if(!selId)return;if(aId===selId){var sid=selId;stopSubj();if(cfg.linkPomoStop!==false&&pRun&&pomoSubjId===sid)pomoPause();}else{startSubj(selId);if(cfg.linkPomoStart!==false&&!pRun&&pomoSubjId===selId)pomoResume();}}
 function stopSubjBtn(){var sid=aId;stopSubj();if(cfg.linkPomoStop!==false&&pRun&&pomoSubjId===sid)pomoPause();}
 function updatePomoSubjBadge(){var el=document.getElementById('pomoSubjBadge');if(!el)return;if(aId){var sub=subjs.find(function(s){return s.id===aId;});if(sub){el.textContent=sub.name;el.style.background=sub.color;el.style.display='block';return;}}el.style.display='none';}
-function startSubj(id){if(aId)_stopSil(aId);_remoteLiveSession=null;aId=id;aStart=Date.now();var sub=subjs.find(function(s){return s.id===id;});var bar=document.getElementById('activeBar');if(bar)bar.classList.add('on');var ad=document.getElementById('adot');if(ad)ad.style.background=sub.color;var an=document.getElementById('aname');if(an)an.textContent=sub.name;restartFbSync();clearInterval(aInt);aInt=setInterval(function(){var at=document.getElementById('atime');if(at)at.textContent=f3(Math.floor((Date.now()-aStart)/1000));syncAllScreens();},500);var ts=document.getElementById('tcStop');if(ts)ts.style.display='flex';selSubj(id);renderTL();updatePomoSubjBadge();updateHome();}
+function startSubj(id){if(aId&&!_mirroredSession)_stopSil(aId);_remoteLiveSession=null;_mirroredSession=false;aId=id;aStart=Date.now();var sub=subjs.find(function(s){return s.id===id;});var bar=document.getElementById('activeBar');if(bar)bar.classList.add('on');var ad=document.getElementById('adot');if(ad)ad.style.background=sub.color;var an=document.getElementById('aname');if(an)an.textContent=sub.name;restartFbSync();clearInterval(aInt);aInt=setInterval(function(){var at=document.getElementById('atime');if(at)at.textContent=f3(Math.floor((Date.now()-aStart)/1000));syncAllScreens();},500);var ts=document.getElementById('tcStop');if(ts)ts.style.display='flex';selSubj(id);renderTL();updatePomoSubjBadge();updateHome();}
 function stopSubj(){
   if(!aId)return;
+  if(_mirroredSession){_mirroredSession=false;aId=null;aStart=null;clearInterval(aInt);var bar3=document.getElementById('activeBar');if(bar3)bar3.classList.remove('on');updateHome();renderHomeSubjGrid();return;}
   var endT=Date.now(),sid=aId,sstart=aStart;
   var sub=subjs.find(function(s){return s.id===sid;});
   if(sstart&&endT>sstart)sess.push({subjectId:sid,color:(sub&&sub.color)||'#888',start:sstart,end:endT});
   svSess();
-  aId=null;aStart=null;clearInterval(aInt);
+  aId=null;aStart=null;_mirroredSession=false;clearInterval(aInt);
   var bar=document.getElementById('activeBar');if(bar)bar.classList.remove('on');
   var ts=document.getElementById('tcStop');if(ts)ts.style.display='none';
   var at=document.getElementById('atime');if(at)at.textContent='00:00:00';
@@ -453,14 +487,14 @@ var _planHistory=[],_planRedo=[];
 function pushPlanHistory(){_planHistory.push(JSON.stringify(planCells));if(_planHistory.length>50)_planHistory.shift();_planRedo=[];updateUndoBtn();}
 function undoPlan(){if(!_planHistory.length){toast('되돌릴 작업이 없습니다');return;}_planRedo.push(JSON.stringify(planCells));planCells=JSON.parse(_planHistory.pop());svPlan();renderTL();updateUndoBtn();toast('되돌렸습니다');}
 function redoPlan(){if(!_planRedo.length){toast('다시 실행할 작업이 없습니다');return;}_planHistory.push(JSON.stringify(planCells));planCells=JSON.parse(_planRedo.pop());svPlan();renderTL();updateUndoBtn();toast('다시 실행했습니다');}
-function updateUndoBtn(){var b=document.getElementById('planUndoBtn');if(b)b.style.opacity=_planHistory.length?'1':'.35';var r=document.getElementById('planRedoBtn');if(r)r.style.opacity=_planRedo.length?'1':'.35';}
+function updateUndoBtn(){var b=document.getElementById('planUndoBtn');if(b){b.style.opacity=_planHistory.length?'1':'.35';b.style.display='inline-block';}var r=document.getElementById('planRedoBtn');if(r){r.style.opacity=_planRedo.length?'1':'.35';r.style.display='inline-block';}}
 var planCells=JSON.parse(localStorage.getItem(planKey())||'{}');
 function svPlanLocal(){localStorage.setItem(planKey(),JSON.stringify(planCells));}
 var _planPushTimer=null;
 function pushPlanToFirebase(){if(!window._fbReady||!window._fbUser)return;var uid=window._fbUser.uid;if(uid.indexOf('offline_')===0)return;clearTimeout(_planPushTimer);_planPushTimer=setTimeout(function(){window._fbSet('userdata/'+uid+'/planCells',{date:today(),cells:planCells});},800);}
 function svPlan(){svPlanLocal();pushPlanToFirebase();}
-function reloadPlanForToday(){try{planCells=JSON.parse(localStorage.getItem(planKey())||'{}');}catch(e){planCells={};}}
-function togglePlanMode(){planMode=!planMode;var btn=document.getElementById('planToggle'),sbtn=document.getElementById('planSaveBtn'),ubtn=document.getElementById('planUndoBtn'),pg=document.getElementById('pg-timer');if(btn){btn.classList.toggle('active',planMode);btn.textContent=planMode?'계획 수정 중':'계획짜기';}if(sbtn)sbtn.style.display=planMode?'inline-block':'none';if(ubtn)ubtn.style.display=planMode?'inline-block':'none';var rbtn=document.getElementById('planRedoBtn');if(rbtn)rbtn.style.display=planMode?'inline-block':'none';if(pg)pg.classList.toggle('plan-mode',planMode);if(planMode){_planHistory=[];_planRedo=[];updateUndoBtn();todoOpenSubjId=null;renderTodoPanel();}renderTL();toast(planMode?'계획 모드: 왼쪽 과목을 고르면 그 색으로 칠해집니다':'계획 모드 종료');}
+function reloadPlanForToday(){var saved=localStorage.getItem(planKey());if(saved){try{planCells=JSON.parse(saved);}catch(e){}}else{svPlanLocal();}}
+function togglePlanMode(){planMode=!planMode;var btn=document.getElementById('planToggle'),sbtn=document.getElementById('planSaveBtn'),pg=document.getElementById('pg-timer');if(btn){btn.classList.toggle('active',planMode);btn.textContent=planMode?'계획 수정 중':'계획짜기';}if(sbtn)sbtn.style.display=planMode?'inline-block':'none';if(pg)pg.classList.toggle('plan-mode',planMode);if(planMode){_planHistory=[];_planRedo=[];updateUndoBtn();todoOpenSubjId=null;renderTodoPanel();}renderTL();toast(planMode?'계획 모드: 왼쪽 과목을 고르면 그 색으로 칠해집니다':'계획 모드 종료');}
 function savePlan(){svPlan();planMode=false;var btn=document.getElementById('planToggle'),sbtn=document.getElementById('planSaveBtn'),pg=document.getElementById('pg-timer');if(btn){btn.classList.remove('active');btn.textContent='계획짜기';}if(sbtn)sbtn.style.display='none';var ub=document.getElementById('planUndoBtn');if(ub)ub.style.display='none';var rb=document.getElementById('planRedoBtn');if(rb)rb.style.display='none';if(pg)pg.classList.remove('plan-mode');renderTL();toast('계획이 저장되었습니다');}
 function cellIdxFromEvent(grid,e){var pt=e.touches&&e.touches[0]?e.touches[0]:(e.changedTouches&&e.changedTouches[0]?e.changedTouches[0]:e);if(!pt)return-1;var rect=grid.getBoundingClientRect();var x=pt.clientX-rect.left,y=pt.clientY-rect.top;var gw=rect.width||window._planGridW||grid.offsetWidth||220;if(x<AXIS_W)return-1;var cellW=(gw-AXIS_W)/NCOLS;var col=Math.floor((x-AXIS_W)/cellW);var dispRow=Math.floor(y/ROW_H);if(col<0)col=0;if(col>=NCOLS)col=NCOLS-1;if(dispRow<0||dispRow>=24)return-1;return rowToHour(dispRow)*NCOLS+col;}
 function paintQuickState(grid,idx,filled,color){var cell=grid.querySelector('[data-cell="'+idx+'"]');if(!cell)return;if(filled){var col=color||currentPlanColor();cell.style.background=hexToRGBA(col,.30);cell.style.border='1px solid '+hexToRGBA(col,.6);}else{cell.style.background='transparent';cell.style.border='1px dashed rgba(255,255,255,.12)';}}
@@ -483,24 +517,33 @@ function scrollNow(){var sc=document.getElementById('pScroll');if(!sc)return;var
 
 // TODO 패널 (플래너 - 과목별)
 function escapeHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function _getTodoStatus(idx){var dk=today(),sid=todoOpenSubjId;if(!_ttStatuses[dk]||!_ttStatuses[dk][sid])return'X';return _ttStatuses[dk][sid][idx]||'X';}
+function _setTodoStatus(idx,st){var dk=today(),sid=todoOpenSubjId;if(!_ttStatuses[dk])_ttStatuses[dk]={};if(!_ttStatuses[dk][sid])_ttStatuses[dk][sid]=[];_ttStatuses[dk][sid][idx]=st;localStorage.setItem('sg_ttst',JSON.stringify(_ttStatuses));var list=getTodoList(dk,sid);if(list[idx])list[idx].done=(st==='O');svTodos();}
+function cycleTodoStatus(idx,longPress){var cur=_getTodoStatus(idx);var nxt=longPress?(cur==='△'?'X':'△'):(cur==='X'?'O':cur==='O'?'X':'X');_setTodoStatus(idx,nxt);var item=document.querySelector('[data-todo-idx="'+idx+'"]');if(item){var stEl=item.querySelector('.todo-status');var stColor=nxt==='O'?'#22c55e':nxt==='△'?'#eab308':'#ef4444';if(stEl){stEl.textContent=nxt;stEl.style.color=stColor;}item.classList.toggle('done',nxt==='O');var txt=item.querySelector('.todo-text');if(txt){txt.style.textDecoration=nxt==='O'?'line-through':'none';txt.style.opacity=nxt==='O'?'.45':'1';}}_syncTTIfOpen(todoOpenSubjId);saveUserDataToFirebase();}
 function renderTodoPanel(){
   var panel=document.getElementById('todoPanel');if(!panel)return;
-  if(!todoOpenSubjId){
-    panel.classList.remove('show');
-    setTimeout(function(){if(!todoOpenSubjId)panel.innerHTML='';},300);
-    return;
-  }
+  if(!todoOpenSubjId){panel.classList.remove('show');setTimeout(function(){if(!todoOpenSubjId)panel.innerHTML='';},300);return;}
   var sub=subjs.find(function(s){return s.id===todoOpenSubjId;});
   if(!sub){todoOpenSubjId=null;panel.classList.remove('show');setTimeout(function(){if(!todoOpenSubjId)panel.innerHTML='';},300);return;}
   var list=getTodoList(today(),todoOpenSubjId);
-  var html='<div class="todo-hd" style="color:'+sub.color+'">'+sub.name+' TODO</div>';
+  var scrollY=panel.scrollTop;
+  var html='<div class="todo-hd" style="color:'+sub.color+'">'+escapeHtml(sub.name)+' TODO</div>';
   html+='<div class="todo-add"><input class="todo-input" id="todoNewInput" placeholder="할 일 추가" onkeydown="if(event.key===\'Enter\')addTodo()"><button class="todo-add-btn" onclick="addTodo()">+</button></div>';
   html+='<div class="todo-list">';
   if(!list.length){html+='<div style="font-size:.72rem;color:rgba(255,255,255,.3);text-align:center;padding:14px 0">할 일이 없습니다</div>';}
-  list.forEach(function(t,i){html+='<div class="todo-item'+(t.done?' done':'')+'"><div class="todo-circle'+(t.done?' done':'')+'" onclick="toggleTodo('+i+')">'+(t.done?'✓':'')+'</div><div class="todo-text" id="todoText_'+i+'" ondblclick="startEditTodo('+i+')">'+escapeHtml(t.text)+'</div><button class="todo-del" onclick="delTodo('+i+')">✕</button></div>';});
+  list.forEach(function(t,i){
+    var st=_getTodoStatus(i);
+    var stColor=st==='O'?'#22c55e':st==='△'?'#eab308':'#ef4444';
+    html+='<div class="todo-item'+(st==='O'?' done':'')+'" data-todo-idx="'+i+'">'
+      +'<button class="todo-del" onclick="delTodo('+i+')" style="flex-shrink:0;order:-1">✕</button>'
+      +'<div class="todo-text" ondblclick="startEditTodo('+i+')" style="text-decoration:'+(st==='O'?'line-through':'none')+';opacity:'+(st==='O'?'.45':'1')+'">'+escapeHtml(t.text)+'</div>'
+      +'<div class="todo-status" style="font-size:.85rem;font-weight:900;color:'+stColor+';cursor:pointer;padding:4px 6px;user-select:none;flex-shrink:0;min-width:24px;text-align:center" ontouchstart="(function(el){el._h=setTimeout(function(){el._lp=true;cycleTodoStatus('+i+',true);},700);el._lp=false;})(this)" ontouchend="(function(el){clearTimeout(el._h);if(!el._lp)cycleTodoStatus('+i+',false);})(this)" onclick="cycleTodoStatus('+i+',false)">'+st+'</div>'
+      +'</div>';
+  });
   html+='</div>';
   panel.innerHTML=html;
   panel.classList.add('show');
+  panel.scrollTop=scrollY;
   _bindTodoSwipeClose(panel);
 }
 // 오른쪽으로 밀면(스와이프) todo 패널 닫기 — 속도 기반 판정 + rAF 적용
@@ -568,9 +611,9 @@ function startEditTodo(i){
   inp.onblur=save;inp.onkeydown=function(e){if(e.key==='Enter'||e.key==='Escape')inp.blur();e.stopPropagation();};
   el.parentNode.replaceChild(inp,el);inp.focus();inp.select();
 }
-function addTodo(){var inp=document.getElementById('todoNewInput');var v=(inp&&inp.value||'').trim();if(!v||!todoOpenSubjId)return;var dk=today();if(!todos[dk])todos[dk]={};if(!todos[dk][todoOpenSubjId])todos[dk][todoOpenSubjId]=[];todos[dk][todoOpenSubjId].push({text:v,done:false});svTodos();renderTodoPanel();saveUserDataToFirebase();_syncTTIfOpen(todoOpenSubjId);}
-function toggleTodo(idx){var dk=today();if(!todoOpenSubjId||!todos[dk]||!todos[dk][todoOpenSubjId]||!todos[dk][todoOpenSubjId][idx])return;todos[dk][todoOpenSubjId][idx].done=!todos[dk][todoOpenSubjId][idx].done;svTodos();renderTodoPanel();saveUserDataToFirebase();_syncTTIfOpen(todoOpenSubjId);}
-function delTodo(idx){var dk=today();if(!todoOpenSubjId||!todos[dk]||!todos[dk][todoOpenSubjId])return;todos[dk][todoOpenSubjId].splice(idx,1);svTodos();renderTodoPanel();saveUserDataToFirebase();_syncTTIfOpen(todoOpenSubjId);}
+function toggleTodo(idx){cycleTodoStatus(idx,false);}
+function addTodo(){var inp=document.getElementById('todoNewInput');var v=(inp&&inp.value||'').trim();if(!v||!todoOpenSubjId)return;var dk=today();if(!todos[dk])todos[dk]={};if(!todos[dk][todoOpenSubjId])todos[dk][todoOpenSubjId]=[];todos[dk][todoOpenSubjId].push({text:v,done:false});if(inp)inp.value='';svTodos();renderTodoPanel();saveUserDataToFirebase();_syncTTIfOpen(todoOpenSubjId);}
+function delTodo(idx){var dk=today();if(!todoOpenSubjId||!todos[dk]||!todos[dk][todoOpenSubjId])return;todos[dk][todoOpenSubjId].splice(idx,1);if(_ttStatuses[dk]&&_ttStatuses[dk][todoOpenSubjId])_ttStatuses[dk][todoOpenSubjId].splice(idx,1);localStorage.setItem('sg_ttst',JSON.stringify(_ttStatuses));svTodos();renderTodoPanel();saveUserDataToFirebase();_syncTTIfOpen(todoOpenSubjId);}
 
 // 과목 드래그 순서변경
 var _scDrag={active:false,idx:-1,el:null};
@@ -1215,15 +1258,15 @@ updatePUI();renderHomeSubjGrid();buildHm('hmHome');buildStreak();updateHome();re
 startAlertSchedule();subscribeMockScores();
 
 function _splitSessionAtDayBoundary(){
-  // 진행 중인 세션을 강제 종료하지 않고, 직전 study-day 분량만 sess에 기록하고
-  // 같은 과목으로 타이머를 끊김 없이 이어가서 시간이 절대 사라지지 않도록 함
   if(!aId||!aStart)return;
   var endT=Date.now();
   if(endT<=aStart)return;
   var sub=subjs.find(function(s){return s.id===aId;});
   sess.push({subjectId:aId,color:(sub&&sub.color)||'#888',start:aStart,end:endT});
   svSess();
-  aStart=endT; // 같은 과목, 새 study-day로 이어서 계속 기록
+  aStart=endT;
+  // 현재 planCells를 새 날짜 키로도 저장 (날아가지 않게)
+  svPlanLocal();
   fbPushMyData();saveUserDataToFirebase();
 }
 var _lastStudyDay=today();
