@@ -1,53 +1,8 @@
-function renderLiveTimeline(){
-  var myT=getTSecs(),myH=Math.floor(myT/3600),myM=Math.floor((myT%3600)/60),myS=Math.floor(myT%60);
-  var myDot=document.getElementById('liveMyDot'),mySubjEl=document.getElementById('liveMySubj');
-  var myTimeEl=document.getElementById('liveMyTime'),myBar=document.getElementById('liveMyBar'),myNameEl=document.getElementById('liveMyName');
-  if(myNameEl)myNameEl.textContent=prof.name||'나';
-  if(aId&&aStart){
-    var sub=subjs.find(function(s){return s.id===aId;});
-    if(myDot)myDot.style.background=sub?sub.color:'var(--acc)';
-    if(mySubjEl)mySubjEl.innerHTML='<span style="background:'+(sub?sub.color:'var(--acc)')+';color:#fff;padding:2px 7px;border-radius:10px;font-size:.65rem;font-weight:700">'+(sub?sub.name:'공부 중')+'</span> 공부 중';
-  }else{if(myDot)myDot.style.background='#ddd';if(mySubjEl)mySubjEl.textContent='공부 중 아님';}
-  if(myTimeEl)myTimeEl.textContent=myH+'h '+String(myM).padStart(2,'0')+'m '+String(myS).padStart(2,'0')+'s';
-  var goalSecs=(prof.goal||6.5)*3600;
-  if(myBar)myBar.style.width=Math.min(100,Math.round(myT/goalSecs*100))+'%';
-  var fw=document.getElementById('liveFriendTimelines');if(!fw)return;
-  // sg_connected + frds 합쳐서 모든 친구 목록 구성
-  var allCodes={};
-  var connected=JSON.parse(localStorage.getItem('sg_connected')||'[]');
-  connected.forEach(function(c){if(c.code)allCodes[c.code]=c;});
-  frds.forEach(function(f){if(f.shareCode&&!allCodes[f.shareCode])allCodes[f.shareCode]={code:f.shareCode,name:f.name,color:f.color||'#5b4fcf'};});
-  var codes=Object.keys(allCodes);
-  fw.innerHTML='';
-  if(!codes.length){fw.innerHTML='<div style="font-size:.78rem;color:var(--ink3);padding:8px 0;text-align:center">연동된 친구 없음</div>';return;}
-  codes.forEach(function(code){
-    var c=allCodes[code];
-    var d=_friendData[code]||{};
-    // 데이터 없으면 즉시 가져오기
-    if(!d.lastFetch)fetchFriendLatest(code);
-    var fSecs=getFriendLiveSecs(code);
-    var fH=Math.floor(fSecs/3600),fM2=Math.floor((fSecs%3600)/60);
-    var isLive=d.live&&d.live.active;
-    var frd=frds.find(function(x){return x.shareCode===code;});
-    var fColor=(frd&&frd.color)||c.color||'#5b4fcf';
-    var nm=d.name||c.name||'친구';
-    var wrap=document.createElement('div');wrap.style.cssText='margin-bottom:12px';
-    var topRow=document.createElement('div');topRow.style.cssText='display:flex;align-items:center;gap:7px;margin-bottom:5px';
-    var dot=document.createElement('div');dot.style.cssText='width:8px;height:8px;border-radius:50%;background:'+(isLive?fColor:'#ddd')+';flex-shrink:0';
-    var nmEl=document.createElement('div');nmEl.style.cssText='font-size:.8rem;font-weight:700';nmEl.textContent=nm;
-    var timeEl=document.createElement('div');timeEl.style.cssText='margin-left:auto;font-family:monospace;font-size:.78rem;font-weight:600;color:var(--green)';
-    timeEl.textContent=fH+'h '+String(fM2).padStart(2,'0')+'m'+(isLive?' 🔴':'');
-    topRow.appendChild(dot);topRow.appendChild(nmEl);topRow.appendChild(timeEl);
-    var barBg=document.createElement('div');barBg.style.cssText='height:10px;background:var(--bg);border-radius:5px;overflow:hidden';
-    var barFill=document.createElement('div');barFill.style.cssText='height:100%;border-radius:5px;background:'+fColor+';width:'+Math.min(100,Math.round(fSecs/goalSecs*100))+'%;transition:width .5s';
-    barBg.appendChild(barFill);wrap.appendChild(topRow);wrap.appendChild(barBg);fw.appendChild(wrap);
-  });
-}
-// ══════════════════════════════════════════════
-// FIREBASE 설정 & 초기화
-// ══════════════════════════════════════════════
 var _FB_CFG={apiKey:"AIzaSyAn8xDsf1WM0jXQyBqTsCJizA8rzFBO2pc",authDomain:"studygroup-app-81786.firebaseapp.com",databaseURL:"https://studygroup-app-81786-default-rtdb.firebaseio.com",projectId:"studygroup-app-81786",storageBucket:"studygroup-app-81786.firebasestorage.app",messagingSenderId:"800017756511",appId:"1:800017756511:web:d1c81b7ce8853db66386ea"};
 window._fbReady=false;window._fbDB=null;window._fbAuth=null;window._fbUser=null;
+var _myDeviceId=localStorage.getItem('sg_devid')||(function(){var id=Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('sg_devid',id);return id;})();
+var _remoteLiveSession=null;
+var _mirroredSession=false;
 window._fbSet=function(){return Promise.resolve();};window._fbGet=function(){return Promise.resolve(null);};window._fbUpdate=function(){return Promise.resolve();};window._fbListen=function(){return function(){};};
 function _loadFirebase(){
   function loadScript(url,cb){var s=document.createElement('script');s.src=url;s.onload=cb;s.onerror=function(){cb&&cb();};document.head.appendChild(s);}
@@ -144,7 +99,6 @@ window.addEventListener('load',function(){setTimeout(_loadFirebase,100);});
 var COLORS=['#ff6b9d','#ff9a3c','#a78bfa','#34d399','#38bdf8','#f59e0b','#f472b6','#fb7185','#4ade80','#60a5fa','#ef4444','#f97316','#84cc16','#06b6d4','#8b5cf6','#10b981','#6366f1','#f43f5e','#0ea5e9','#d946ef'];
 var DEF_SUBJS=[{id:'s1',name:'국어',color:'#ff6b9d'},{id:'s2',name:'영어',color:'#38bdf8'},{id:'s3',name:'수학',color:'#a78bfa'},{id:'s4',name:'사회',color:'#34d399'},{id:'s5',name:'과학',color:'#f59e0b'},{id:'s6',name:'한국사',color:'#fb7185'}];
 var subjs=JSON.parse(localStorage.getItem('sg_s')||'null')||DEF_SUBJS.map(function(s){return{id:s.id,name:s.name,color:s.color};});
-var _myDeviceId=localStorage.getItem('sg_devid')||(function(){var id=Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('sg_devid',id);return id;})();
 var sess=JSON.parse(localStorage.getItem('sg_ss')||'[]');
 function svSess(){localStorage.setItem('sg_ss',JSON.stringify(sess));}
 function mergeSessArray(extra){ // start 타임스탬프 기준 중복 제거 후 합치기만 함 (절대 교체하지 않음)
@@ -206,8 +160,6 @@ function fmtHM(s){var h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=Math.fl
 function fmtSh(s){var h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;return h>0?h+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'):m+':'+String(sec).padStart(2,'0');}
 function fmtLiveSecs(secs){var h=Math.floor(secs/3600),m=Math.floor((secs%3600)/60),s=Math.floor(secs%60);return h+'h '+String(m).padStart(2,'0')+'m '+String(s).padStart(2,'0')+'s';}
 function goal(){return(prof.goal||6.5)*3600;}
-var _remoteLiveSession=null; // 다른 기기에서 현재 진행 중인 타이머
-var _mirroredSession=false;  // 현재 타이머가 원격 기기를 미러링 중인지
 function getTSecs(){var ss=sess.filter(function(s){return studyDayOf(new Date(s.start))===today();});var t=ss.reduce(function(a,s){return a+(s.end-s.start)/1000;},0);if(aId&&aStart)t+=(Date.now()-aStart)/1000;else if(_remoteLiveSession&&_remoteLiveSession.start)t+=(Date.now()-_remoteLiveSession.start)/1000;return Math.floor(t);}
 function getSecs(id){var ss=sess.filter(function(s){return s.subjectId===id&&studyDayOf(new Date(s.start))===today();});var t=ss.reduce(function(a,s){return a+(s.end-s.start)/1000;},0);if(aId===id&&aStart)t+=(Date.now()-aStart)/1000;return Math.floor(t);}
 function getSecsDate(y,mo,d){var key=new Date(y,mo,d).toDateString();return sess.filter(function(s){return studyDayOf(new Date(s.start))===key;}).reduce(function(a,s){return a+(s.end-s.start)/1000;},0);}
