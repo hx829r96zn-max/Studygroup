@@ -55,7 +55,6 @@ html[data-boot-tab="settings"] .tabbar .tbtab:nth-child(6){color:var(--acc);back
 .page{display:none;flex:1;overflow-y:auto;padding:14px 14px calc(70px + env(safe-area-inset-bottom,0));background:var(--bg);}
 .page.on{display:flex;flex-direction:column;animation:pgIn .16s ease;}
 @keyframes pgIn{from{opacity:.3;transform:translateY(5px);}to{opacity:1;transform:translateY(0);}}
-.page.on{display:block;}
 .page::-webkit-scrollbar{width:0;}
 
 /* ── 홈 — 검정 배경 ── */

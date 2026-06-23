@@ -3,6 +3,7 @@ window._fbReady=false;window._fbDB=null;window._fbAuth=null;window._fbUser=null;
 var _myDeviceId=localStorage.getItem('sg_devid')||(function(){var id=Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('sg_devid',id);return id;})();
 var _remoteLiveSession=null;
 var _mirroredSession=false;
+var _friendData={};
 var _fbListeners={};
 var _pendingCode2=null,_pendingFbData=null,_fbSyncInt=null;
 var _alertInts=[],_planHistory=[],_planRedo=[];
@@ -905,7 +906,6 @@ function fbPushMyData(){if(!window._fbReady)return;var code=getMyCode(),myT=getT
 function startFbSync(){if(!window._fbReady){setTimeout(startFbSync,1000);return;}fbPushMyData();pushFcmTokenIfReady();window._fbSet('users/'+getMyCode()+'/alertCfg',alertCfg);if(_fbSyncInt)clearInterval(_fbSyncInt);_fbSyncInt=setInterval(function(){fbPushMyData();},aId?3000:15000);}
 function restartFbSync(){if(_fbSyncInt)clearInterval(_fbSyncInt);_fbSyncInt=null;startFbSync();}
 // 친구 실시간 데이터 캐시 (frds 의존 없음, 코드 키로 직접 저장)
-var _friendData={};
 function _storeFriendData(code,data){
   if(!code||!data)return;
   if(!_friendData[code])_friendData[code]={};
