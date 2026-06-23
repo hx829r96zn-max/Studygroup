@@ -519,7 +519,7 @@ function scrollNow(){var sc=document.getElementById('pScroll');if(!sc)return;var
 function escapeHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function _getTodoStatus(idx){var dk=today(),sid=todoOpenSubjId;if(!_ttStatuses[dk]||!_ttStatuses[dk][sid])return'X';return _ttStatuses[dk][sid][idx]||'X';}
 function _setTodoStatus(idx,st){var dk=today(),sid=todoOpenSubjId;if(!_ttStatuses[dk])_ttStatuses[dk]={};if(!_ttStatuses[dk][sid])_ttStatuses[dk][sid]=[];_ttStatuses[dk][sid][idx]=st;localStorage.setItem('sg_ttst',JSON.stringify(_ttStatuses));var list=getTodoList(dk,sid);if(list[idx])list[idx].done=(st==='O');svTodos();}
-function cycleTodoStatus(idx,longPress){var cur=_getTodoStatus(idx);var nxt=longPress?(cur==='△'?'X':'△'):(cur==='X'?'O':cur==='O'?'X':'X');_setTodoStatus(idx,nxt);var item=document.querySelector('[data-todo-idx="'+idx+'"]');if(item){var stEl=item.querySelector('.todo-status');var stColor=nxt==='O'?'#22c55e':nxt==='△'?'#eab308':'#ef4444';if(stEl){stEl.textContent=nxt;stEl.style.color=stColor;}item.classList.toggle('done',nxt==='O');var txt=item.querySelector('.todo-text');if(txt){txt.style.textDecoration=nxt==='O'?'line-through':'none';txt.style.opacity=nxt==='O'?'.45':'1';}}_syncTTIfOpen(todoOpenSubjId);saveUserDataToFirebase();}
+var _ctsLast=0;function cycleTodoStatus(idx,longPress){var _n=Date.now();if(!longPress&&_n-_ctsLast<400)return;_ctsLast=_n;var cur=_getTodoStatus(idx);var nxt=longPress?(cur==='△'?'X':'△'):(cur==='X'?'O':cur==='O'?'X':'X');_setTodoStatus(idx,nxt);var item=document.querySelector('[data-todo-idx="'+idx+'"]');if(item){var stEl=item.querySelector('.todo-status');var stColor=nxt==='O'?'#22c55e':nxt==='△'?'#eab308':'#ef4444';if(stEl){stEl.textContent=nxt;stEl.style.color=stColor;}item.classList.toggle('done',nxt==='O');var txt=item.querySelector('.todo-text');if(txt){txt.style.textDecoration=nxt==='O'?'line-through':'none';txt.style.opacity=nxt==='O'?'.45':'1';}}_syncTTIfOpen(todoOpenSubjId);saveUserDataToFirebase();}
 function renderTodoPanel(){
   var panel=document.getElementById('todoPanel');if(!panel)return;
   if(!todoOpenSubjId){panel.classList.remove('show');setTimeout(function(){if(!todoOpenSubjId)panel.innerHTML='';},300);return;}
@@ -537,34 +537,14 @@ function renderTodoPanel(){
     html+='<div class="todo-item'+(st==='O'?' done':'')+'" data-todo-idx="'+i+'">'
       +'<button class="todo-del" onclick="delTodo('+i+')" style="flex-shrink:0;order:-1">✕</button>'
       +'<div class="todo-text" ondblclick="startEditTodo('+i+')" style="text-decoration:'+(st==='O'?'line-through':'none')+';opacity:'+(st==='O'?'.45':'1')+'">'+escapeHtml(t.text)+'</div>'
-      +'<div class="todo-status" data-ti="'+i+'" style="font-size:.85rem;font-weight:900;color:'+stColor+';cursor:pointer;padding:4px 6px;user-select:none;flex-shrink:0;min-width:24px;text-align:center">'+st+'</div>'
+      +'<div class="todo-status" data-ti="'+i+'" onclick="cycleTodoStatus('+i+',false)" style="font-size:.85rem;font-weight:900;color:'+stColor+';cursor:pointer;padding:4px 6px;user-select:none;flex-shrink:0;min-width:24px;text-align:center;-webkit-tap-highlight-color:transparent">'+st+'</div>'
       +'</div>';
   });
   html+='</div>';
   panel.innerHTML=html;
   panel.classList.add('show');
   panel.scrollTop=scrollY;
-  // 상태 버튼: touch는 touchend+preventDefault로 합성 click 차단, 데스크탑은 click 사용
-  panel.querySelectorAll('.todo-status').forEach(function(el){
-    var idx=parseInt(el.getAttribute('data-ti'));
-    var holdT=null,didLong=false,touched=false;
-    el.addEventListener('touchstart',function(e){
-      e.stopPropagation();touched=true;didLong=false;
-      holdT=setTimeout(function(){didLong=true;cycleTodoStatus(idx,true);},700);
-    },{passive:true});
-    el.addEventListener('touchend',function(e){
-      e.stopPropagation();e.preventDefault();// 합성 click 차단
-      clearTimeout(holdT);
-      if(!didLong)cycleTodoStatus(idx,false);
-      setTimeout(function(){touched=false;},500);
-    },{passive:false});
-    el.addEventListener('touchcancel',function(){clearTimeout(holdT);touched=false;});
-    el.addEventListener('click',function(e){
-      e.stopPropagation();
-      if(touched)return;// touch로 이미 처리됨
-      cycleTodoStatus(idx,false);
-    });
-  });
+
   _bindTodoSwipeClose(panel);
 }
 // 오른쪽으로 밀면(스와이프) todo 패널 닫기 — 속도 기반 판정 + rAF 적용
@@ -586,6 +566,7 @@ function _bindTodoSwipeClose(panel){
       isHorizontal=ddx>0&&Math.abs(ddx)>Math.abs(ddy)*1.3;
       deciding=false;
       if(!isHorizontal){onEnd();return;}
+      dragging=true;
       panel.classList.add('dragging');
     }
     if(!isHorizontal)return;
@@ -612,12 +593,9 @@ function _bindTodoSwipeClose(panel){
     if(shouldClose){todoOpenSubjId=null;renderTodoPanel();}
   }
   function onStart(e){
-    // 버튼·인풋 위에서 시작된 터치는 스와이프 처리 안 함
-    var tgt=e.target;
-    if(tgt&&(tgt.classList.contains('todo-status')||tgt.classList.contains('todo-del')||tgt.tagName==='INPUT'||tgt.tagName==='BUTTON'))return;
     var p=pt(e);
     startX=lastX=p.clientX;startY=p.clientY;lastT=performance.now();
-    dx=0;vx=0;dragging=true;deciding=true;isHorizontal=false;
+    dx=0;vx=0;dragging=false;deciding=true;isHorizontal=false;
     document.addEventListener('touchmove',onMove,{passive:false});
     document.addEventListener('touchend',onEnd);
     document.addEventListener('mousemove',onMove);
