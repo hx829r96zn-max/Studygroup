@@ -186,11 +186,7 @@ function go(id){
   var pg=document.getElementById('pg-'+id);if(pg)pg.classList.add('on');
   var map={home:0,timer:1,room:2,stats:3,mock:4,settings:5};
   if(map[id]!==undefined){var tabs=document.querySelectorAll('.ntab');if(tabs[map[id]])tabs[map[id]].classList.add('on');var tbs=document.querySelectorAll('.tbtab');if(tbs[map[id]])tbs[map[id]].classList.add('on');}
-  if(id==='timer'){renderTH();renderSL();setTimeout(function(){renderTL();scrollNow();
-    // 플래너 열면 첫 번째 과목 todo 자동 표시
-    if(!todoOpenSubjId&&subjs.length){todoOpenSubjId=subjs[0].id;renderTodoPanel();}
-    else{renderTodoPanel();}
-  },80);}
+  if(id==='timer'){renderTH();renderSL();setTimeout(function(){renderTL();scrollNow();renderTodoPanel();},80);}
   if(id==='home'){updateHome();renderHBet();renderDdayCard();renderHomeSubjGrid();if(pCur<=0)pCur=pSec;updatePUI();}
   if(id==='stats'){renderCal();updateStats();}
   if(id==='settings')renderSet();
