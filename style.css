@@ -171,30 +171,21 @@ textarea.inp{resize:vertical;min-height:70px;}
 #pg-timer.plan-mode .pgrid{cursor:crosshair;}
 
 /* ── TODO 패널 (플래너 - 과목별) ── */
-.todo-panel{position:absolute;top:calc(44px + env(safe-area-inset-top,0));right:0;bottom:calc(55px + env(safe-area-inset-bottom,0));width:80%;max-width:300px;background:rgba(15,15,15,.97);border-left:1px solid #2a2a2a;z-index:30;display:flex;flex-direction:column;padding:10px;overflow:hidden;box-shadow:-4px 0 16px rgba(0,0,0,.4);transform:translateX(105%);visibility:hidden;pointer-events:none;transition:transform .28s cubic-bezier(.32,.72,0,1),visibility 0s .28s;touch-action:pan-y;will-change:transform;}
+.todo-panel{position:absolute;top:calc(44px + env(safe-area-inset-top,0));right:0;bottom:calc(55px + env(safe-area-inset-bottom,0));width:82%;max-width:320px;background:#0e0e0e;border-left:1px solid #2a2a2a;z-index:30;display:flex;flex-direction:column;overflow:hidden;box-shadow:-4px 0 20px rgba(0,0,0,.5);transform:translateX(105%);visibility:hidden;pointer-events:none;transition:transform .28s cubic-bezier(.32,.72,0,1),visibility 0s .28s;touch-action:pan-y;will-change:transform;}
 .todo-panel.show{transform:translateX(0);visibility:visible;pointer-events:auto;transition:transform .28s cubic-bezier(.32,.72,0,1);}
 .todo-panel.dragging{transition:none;}
-.todo-hd{font-size:.78rem;font-weight:800;margin-bottom:8px;flex-shrink:0;}
-.todo-add{display:flex;gap:5px;margin-bottom:8px;flex-shrink:0;}
-.todo-input{flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:7px;padding:6px 8px;color:#fff;font-size:.75rem;outline:none;}
-.todo-add-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:7px;color:#fff;font-size:1rem;padding:0 10px;cursor:pointer;}
+.todo-hd{font-size:.8rem;font-weight:800;padding:12px 12px 8px;color:#fff;flex-shrink:0;border-bottom:1px solid #222;}
+.todo-add{display:flex;gap:0;flex-shrink:0;border-bottom:1px solid #222;}
+.todo-input{flex:1;background:transparent;border:none;color:#fff;font-size:.78rem;padding:10px 12px;font-family:'Noto Sans KR',sans-serif;outline:none;}
+.todo-add-btn{width:40px;border:none;background:transparent;color:rgba(255,255,255,.5);font-size:1.2rem;cursor:pointer;flex-shrink:0;}
 .todo-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
-.todo-item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07);}
-.todo-del{background:none;border:none;color:rgba(255,255,255,.3);font-size:.78rem;cursor:pointer;padding:0 2px;flex-shrink:0;order:-1;}
-.todo-text{flex:1;font-size:.76rem;color:#fff;word-break:break-all;}
+.todo-item{display:flex;align-items:center;width:100%;padding:0;border-bottom:1px solid rgba(255,255,255,.06);}
+.todo-del{background:none;border:none;color:rgba(255,255,255,.25);font-size:.7rem;cursor:pointer;padding:12px 8px 12px 12px;flex-shrink:0;}
+.todo-text{flex:1;font-size:.78rem;color:#fff;word-break:break-all;padding:12px 4px;line-height:1.4;}
 .todo-item.done .todo-text{opacity:.35;text-decoration:line-through;}
-.todo-status{font-size:.85rem;font-weight:900;cursor:pointer;padding:4px 6px;user-select:none;flex-shrink:0;min-width:24px;text-align:center;}
-.todo-hd{font-size:.78rem;font-weight:800;margin-bottom:8px;}
-.todo-add{display:flex;gap:5px;margin-bottom:8px;}
-.todo-input{flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:8px;color:#fff;font-size:.76rem;padding:7px 9px;font-family:'Noto Sans KR',sans-serif;outline:none;}
-.todo-add-btn{width:32px;height:32px;border-radius:8px;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:.95rem;cursor:pointer;flex-shrink:0;}
-.todo-list{flex:1;overflow-y:auto;}
-.todo-item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07);}
-.todo-circle{width:17px;height:17px;border-radius:50%;border:1.5px solid rgba(255,255,255,.4);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.62rem;cursor:pointer;color:#000;transition:.12s;}
-.todo-circle.done{background:#22c55e;border-color:#22c55e;}
-.todo-text{flex:1;font-size:.76rem;color:#fff;word-break:break-all;}
-.todo-item.done .todo-text{opacity:.35;text-decoration:line-through;}
-.todo-del{background:none;border:none;color:rgba(255,255,255,.3);font-size:.78rem;cursor:pointer;padding:0 2px;flex-shrink:0;}
+.todo-status{font-size:.88rem;font-weight:900;cursor:pointer;padding:12px 14px 12px 6px;user-select:none;flex-shrink:0;-webkit-tap-highlight-color:transparent;}
+.todo-circle{display:none;}
+
 
 /* ══════════════════════════════════════════════
    ROOM 탭
