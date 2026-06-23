@@ -18,9 +18,6 @@
     if(t&&valid.indexOf(t)>=0&&t!=='home'){
       document.documentElement.setAttribute('data-boot-tab',t);
     }
-    if(!localStorage.getItem('sg_authchoice')){
-      document.documentElement.setAttribute('data-new-user','1');
-    }
   }catch(e){}
 })();
 </script>
