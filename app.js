@@ -507,9 +507,9 @@ function renderTodoPanel(){
     var st=_getTodoStatus(i);
     var stColor=st==='O'?'#22c55e':st==='△'?'#eab308':'#ef4444';
     html+='<div class="todo-item'+(st==='O'?' done':'')+'" data-todo-idx="'+i+'">'
-      +'<button class="todo-del" onclick="delTodo('+i+')" style="flex-shrink:0;order:-1">✕</button>'
+      +'<button class="todo-del" onclick="delTodo('+i+')" >✕</button>'
       +'<div class="todo-text" ondblclick="startEditTodo('+i+')" style="text-decoration:'+(st==='O'?'line-through':'none')+';opacity:'+(st==='O'?'.45':'1')+'">'+escapeHtml(t.text)+'</div>'
-      +'<div class="todo-status" data-ti="'+i+'" onclick="cycleTodoStatus('+i+',false)" style="font-size:.85rem;font-weight:900;color:'+stColor+';cursor:pointer;padding:4px 6px;user-select:none;flex-shrink:0;min-width:24px;text-align:center;-webkit-tap-highlight-color:transparent">'+st+'</div>'
+      +'<div class="todo-status" data-ti="'+i+'" onclick="cycleTodoStatus('+i+',false)" style="color:'+stColor+'">'+st+'</div>'
       +'</div>';
   });
   html+='</div>';
