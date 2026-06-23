@@ -3,6 +3,9 @@ window._fbReady=false;window._fbDB=null;window._fbAuth=null;window._fbUser=null;
 var _myDeviceId=localStorage.getItem('sg_devid')||(function(){var id=Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('sg_devid',id);return id;})();
 var _remoteLiveSession=null;
 var _mirroredSession=false;
+var _fbListeners={};
+var _pendingCode2=null,_pendingFbData=null,_fbSyncInt=null;
+var _alertInts=[],_planHistory=[],_planRedo=[];
 window._fbSet=function(){return Promise.resolve();};window._fbGet=function(){return Promise.resolve(null);};window._fbUpdate=function(){return Promise.resolve();};window._fbListen=function(){return function(){};};
 function _loadFirebase(){
   function loadScript(url,cb){var s=document.createElement('script');s.src=url;s.onload=cb;s.onerror=function(){cb&&cb();};document.head.appendChild(s);}
