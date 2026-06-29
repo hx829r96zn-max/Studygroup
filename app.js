@@ -68,7 +68,7 @@ function svPomoState(){localStorage.setItem('sg_pomo_state',JSON.stringify({pFoc
 function clearPomoState(){localStorage.removeItem('sg_pomo_state');}
 var ncRules=[],pickedC=COLORS[0];
 var calY=new Date().getFullYear(),calM=new Date().getMonth(),_pickY=new Date().getFullYear();
-var ROW_H=36,NCOLS=6,COL_MINS=10,AXIS_W=28,GRID_START_HOUR=5;
+var ROW_H=28,NCOLS=6,COL_MINS=10,AXIS_W=22,GRID_START_HOUR=5;
 function hourToRow(h){return(h-GRID_START_HOUR+24)%24;}
 function rowToHour(r){return(r+GRID_START_HOUR)%24;}
 var PCIRC=848.2;
@@ -149,7 +149,6 @@ function renderHBet(){var el=document.getElementById('homeBetContent');if(!el)re
 
 // TIMER
 function renderTH(){var now=new Date(),days=['일','월','화','수','목','금','토'];var td=document.getElementById('timerDay');if(td)td.textContent=now.getFullYear()+'. '+(now.getMonth()+1)+'. '+now.getDate()+' ('+days[now.getDay()]+')';var tt=document.getElementById('timerTotal');if(tt)tt.textContent=fmtHM(getTSecs());}
-function renderTH(){var now=new Date(),days=['일','월','화','수','목','금','토'];var td=document.getElementById('timerDay');if(td)td.textContent=now.getFullYear()+'. '+(now.getMonth()+1)+'. '+now.getDate()+' ('+days[now.getDay()]+')';var tt=document.getElementById('timerTotal');if(tt)tt.textContent=fmtHM(getTSecs());}
 
 function initDiaryMemo(){
   var dk=today();
@@ -157,46 +156,56 @@ function initDiaryMemo(){
   ['diaryLine1','diaryLine2','diaryMemo'].forEach(function(id){
     var el=document.getElementById(id);if(!el)return;
     el.value=saved[id]||'';
-    el.oninput=function(){
-      var d=JSON.parse(localStorage.getItem('sg_diary_'+dk)||'{}');
-      d[id]=el.value;localStorage.setItem('sg_diary_'+dk,JSON.stringify(d));
-    };
+    el.oninput=function(){var d=JSON.parse(localStorage.getItem('sg_diary_'+dk)||'{}');d[id]=el.value;localStorage.setItem('sg_diary_'+dk,JSON.stringify(d));};
   });
 }
 
 function renderSL(){
   var w=document.getElementById('subjList');if(!w)return;
   w.innerHTML='';
+  var dk=today();
   subjs.forEach(function(sub){
     var sc=getSecs(sub.id);
     var isRunning=aId===sub.id;
-    var r=document.createElement('div');
-    r.className='dl-subj-row'+(isRunning?' running':'');
-    // 칸1: dot + 이름
+    var list=getTodoList(dk,sub.id);
+    var hasTodos=list.length>0;
+    var row=document.createElement('div');
+    row.className='dl-subj-row'+(isRunning?' running':'')+(hasTodos?' has-todos':'');
+    // 메인 행 (과목명|시간|●)
+    var main=document.createElement('div');main.className='dl-subj-main';
     var c1=document.createElement('div');c1.className='dl-s-col1';
     c1.innerHTML='<div class="dl-s-dot" style="background:'+sub.color+'"></div><div class="dl-s-name">'+escapeHtml(sub.name)+'</div>';
-    // 칸2: 공부시간
     var c2=document.createElement('div');c2.className='dl-s-col2';
     c2.textContent=sc>0?fmtSh(sc):'';
-    // 칸3: 상태 점
     var c3=document.createElement('div');c3.className='dl-s-col3';
     c3.textContent=isRunning?'●':'·';
-    r.appendChild(c1);r.appendChild(c2);r.appendChild(c3);
-    r.onclick=(function(id){return function(){clickSubj(id);};})(sub.id);
-    w.appendChild(r);
+    main.appendChild(c1);main.appendChild(c2);main.appendChild(c3);
+    row.appendChild(main);
+    // todo 미리보기 (최대 3개)
+    if(hasTodos){
+      var prev=document.createElement('div');prev.className='dl-todo-preview';
+      list.slice(0,3).forEach(function(t){
+        var ti=document.createElement('div');
+        ti.className='dl-todo-prev-item'+(t.done?' done':'');
+        ti.textContent=(t.done?'✓ ':'· ')+t.text;
+        prev.appendChild(ti);
+      });
+      if(list.length>3){var more=document.createElement('div');more.className='dl-todo-prev-item';more.textContent='···';prev.appendChild(more);}
+      row.appendChild(prev);
+    }
+    row.onclick=(function(id){return function(){clickSubj(id);};})(sub.id);
+    w.appendChild(row);
   });
-  // 정지 버튼
   var sb=document.getElementById('tcStop');if(sb){sb.classList.toggle('vis',!!aId);}
 }
 
 function selSubj(id){selId=id;renderSL();}
-
 var _lastSubjClick={id:null,time:0};
 function clickSubj(id){
   if(planMode){selId=id;renderSL();return;}
   var now=Date.now();
   if(_lastSubjClick.id===id&&(now-_lastSubjClick.time)<400){
-    // 더블탭: TODO 패널
+    // 더블탭: TODO 슬라이드 패널
     todoOpenSubjId=(todoOpenSubjId===id)?null:id;
     renderTodoPanel();
     _lastSubjClick={id:null,time:0};
@@ -204,7 +213,6 @@ function clickSubj(id){
   }
   _lastSubjClick={id:id,time:now};
   selId=id;
-  // 한번 탭: 시작/정지
   if(aId===id){
     stopSubj();
     if(cfg.linkPomoStop!==false&&pRun&&pomoSubjId===id)pomoPause();
@@ -326,9 +334,9 @@ function _bindTodoSwipeClose(panel){
   panel.addEventListener('touchstart',onStart,{passive:true});
   panel.addEventListener('mousedown',onStart);
 }
-function addTodo(){var inp=document.getElementById('todoNewInput');var v=(inp&&inp.value||'').trim();if(!v||!todoOpenSubjId)return;var dk=today();if(!todos[dk])todos[dk]={};if(!todos[dk][todoOpenSubjId])todos[dk][todoOpenSubjId]=[];todos[dk][todoOpenSubjId].push({text:v,done:false});svTodos();renderTodoPanel();saveUserDataToFirebase();}
-function toggleTodo(idx){var dk=today();if(!todoOpenSubjId||!todos[dk]||!todos[dk][todoOpenSubjId]||!todos[dk][todoOpenSubjId][idx])return;todos[dk][todoOpenSubjId][idx].done=!todos[dk][todoOpenSubjId][idx].done;svTodos();renderTodoPanel();saveUserDataToFirebase();}
-function delTodo(idx){var dk=today();if(!todoOpenSubjId||!todos[dk]||!todos[dk][todoOpenSubjId])return;todos[dk][todoOpenSubjId].splice(idx,1);svTodos();renderTodoPanel();saveUserDataToFirebase();}
+function addTodo(){var inp=document.getElementById('todoNewInput');var v=(inp&&inp.value||'').trim();if(!v||!todoOpenSubjId)return;var dk=today();if(!todos[dk])todos[dk]={};if(!todos[dk][todoOpenSubjId])todos[dk][todoOpenSubjId]=[];todos[dk][todoOpenSubjId].push({text:v,done:false});svTodos();renderTodoPanel();renderSL();saveUserDataToFirebase();}
+function toggleTodo(idx){var dk=today();if(!todoOpenSubjId||!todos[dk]||!todos[dk][todoOpenSubjId]||!todos[dk][todoOpenSubjId][idx])return;todos[dk][todoOpenSubjId][idx].done=!todos[dk][todoOpenSubjId][idx].done;svTodos();renderTodoPanel();renderSL();saveUserDataToFirebase();}
+function delTodo(idx){var dk=today();if(!todoOpenSubjId||!todos[dk]||!todos[dk][todoOpenSubjId])return;todos[dk][todoOpenSubjId].splice(idx,1);svTodos();renderTodoPanel();renderSL();saveUserDataToFirebase();}
 
 // 과목 드래그 순서변경
 var _scDrag={active:false,idx:-1,el:null};

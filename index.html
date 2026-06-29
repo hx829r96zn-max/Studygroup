@@ -146,48 +146,28 @@
     <div class="atime" id="atime">00:00:00</div>
   </div>
   <div class="diary-split">
-
     <!-- 왼쪽: 다이어리 노트 -->
     <div class="diary-left">
       <div class="diary-scroll">
-
-        <!-- date / d-day -->
         <div class="dl-hdr">
-          <span class="dl-lbl">date</span>
-          <span class="dl-ln"></span>
-          <span class="dl-lbl">d-day</span>
-          <span class="dl-ln"></span>
+          <span class="dl-lbl">date</span><span class="dl-ln"></span>
+          <span class="dl-lbl">d-day</span><span class="dl-ln"></span>
         </div>
-
-        <!-- 상단 줄 2개 (자유 기입) -->
         <div class="dl-lines-area">
-          <textarea class="dl-line-input" id="diaryLine1" placeholder=""></textarea>
+          <textarea class="dl-line-inp" id="diaryLine1" rows="1"></textarea>
           <div class="dl-rule"></div>
-          <textarea class="dl-line-input" id="diaryLine2" placeholder=""></textarea>
+          <textarea class="dl-line-inp" id="diaryLine2" rows="1"></textarea>
           <div class="dl-rule"></div>
         </div>
-
-        <!-- memo -->
-        <div class="dl-memo-hdr">
-          <span class="dl-lbl">memo</span>
-          <span class="dl-ln"></span>
-        </div>
+        <div class="dl-memo-hdr"><span class="dl-lbl">memo</span><span class="dl-ln"></span></div>
         <div class="dl-memo-area">
-          <textarea class="dl-line-input dl-memo-big" id="diaryMemo" placeholder=""></textarea>
+          <textarea class="dl-line-inp dl-memo-big" id="diaryMemo"></textarea>
         </div>
-
-        <!-- 구분선 -->
         <div class="dl-divider"></div>
-
-        <!-- 과목 테이블: 과목명 | 시간 | ● -->
+        <!-- 과목 테이블: 과목명|시간|● + 그 아래 todo 미리보기 -->
         <div class="dl-subj-table" id="subjList"></div>
-
-        <!-- 과목 추가 -->
         <div class="dl-add-subj" onclick="openAddSM()">+ 과목 추가</div>
-
       </div>
-
-      <!-- 정지 버튼 (sticky bottom) -->
       <div class="dl-stop-wrap">
         <button class="dl-stop-btn" id="tcStop" onclick="stopSubjBtn()">■ 정지</button>
       </div>
@@ -195,20 +175,17 @@
 
     <!-- 오른쪽: 타임라인 -->
     <div class="diary-right">
-      <!-- 10 20 30 40 50 60 헤더 -->
       <div class="dr-hdr">
         <div class="dr-hdr-axis"></div>
         <div class="dr-hdr-cols">
           <span>10</span><span>20</span><span>30</span><span>40</span><span>50</span><span>60</span>
         </div>
       </div>
-      <!-- 타임라인 스크롤 -->
       <div class="pgwrap" id="pScroll">
         <div class="pgrid" id="pGrid"></div>
       </div>
       <div class="todo-panel" id="todoPanel"></div>
     </div>
-
   </div>
 </div>
 
