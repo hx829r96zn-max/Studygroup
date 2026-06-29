@@ -149,85 +149,74 @@ function renderHBet(){var el=document.getElementById('homeBetContent');if(!el)re
 
 // TIMER
 function renderTH(){var now=new Date(),days=['일','월','화','수','목','금','토'];var td=document.getElementById('timerDay');if(td)td.textContent=now.getFullYear()+'. '+(now.getMonth()+1)+'. '+now.getDate()+' ('+days[now.getDay()]+')';var tt=document.getElementById('timerTotal');if(tt)tt.textContent=fmtHM(getTSecs());}
+function renderTH(){var now=new Date(),days=['일','월','화','수','목','금','토'];var td=document.getElementById('timerDay');if(td)td.textContent=now.getFullYear()+'. '+(now.getMonth()+1)+'. '+now.getDate()+' ('+days[now.getDay()]+')';var tt=document.getElementById('timerTotal');if(tt)tt.textContent=fmtHM(getTSecs());}
+
 function initDiaryMemo(){
   var dk=today();
   var saved=JSON.parse(localStorage.getItem('sg_diary_'+dk)||'{}');
-  ['diaryMemoTop','diaryMemoTop2','diaryMemo'].forEach(function(id){
-    var el=document.getElementById(id);
-    if(!el)return;
+  ['diaryLine1','diaryLine2','diaryMemo'].forEach(function(id){
+    var el=document.getElementById(id);if(!el)return;
     el.value=saved[id]||'';
     el.oninput=function(){
       var d=JSON.parse(localStorage.getItem('sg_diary_'+dk)||'{}');
-      d[id]=el.value;
-      localStorage.setItem('sg_diary_'+dk,JSON.stringify(d));
+      d[id]=el.value;localStorage.setItem('sg_diary_'+dk,JSON.stringify(d));
     };
   });
 }
+
 function renderSL(){
-  var w=document.getElementById('subjList');
-  if(!w)return;
+  var w=document.getElementById('subjList');if(!w)return;
   w.innerHTML='';
   subjs.forEach(function(sub){
     var sc=getSecs(sub.id);
     var isRunning=aId===sub.id;
-    var isSel=selId===sub.id;
     var r=document.createElement('div');
-    r.className='dl-subj-row'+(isRunning?' running':'')+(isSel&&!isRunning?' active-subj':'');
-    // 칸1: 과목 dot + 이름
-    var c1=document.createElement('div');
-    c1.className='dl-subj-col1';
-    c1.innerHTML='<div class="dl-subj-dot" style="background:'+sub.color+'"></div><div class="dl-subj-name">'+escapeHtml(sub.name)+'</div>';
+    r.className='dl-subj-row'+(isRunning?' running':'');
+    // 칸1: dot + 이름
+    var c1=document.createElement('div');c1.className='dl-s-col1';
+    c1.innerHTML='<div class="dl-s-dot" style="background:'+sub.color+'"></div><div class="dl-s-name">'+escapeHtml(sub.name)+'</div>';
     // 칸2: 공부시간
-    var c2=document.createElement('div');
-    c2.className='dl-subj-col2';
+    var c2=document.createElement('div');c2.className='dl-s-col2';
     c2.textContent=sc>0?fmtSh(sc):'';
     // 칸3: 상태 점
-    var c3=document.createElement('div');
-    c3.className='dl-subj-col3';
+    var c3=document.createElement('div');c3.className='dl-s-col3';
     c3.textContent=isRunning?'●':'·';
     r.appendChild(c1);r.appendChild(c2);r.appendChild(c3);
     r.onclick=(function(id){return function(){clickSubj(id);};})(sub.id);
     w.appendChild(r);
   });
-  // 과목 추가 행
-  var add=document.createElement('div');
-  add.className='dl-subj-row';
-  add.style.cssText='justify-content:center;color:rgba(255,255,255,.25);font-size:.58rem;cursor:pointer;padding:6px 0;';
-  add.textContent='+ 과목 추가';
-  add.onclick=openAddSM;
-  w.appendChild(add);
-  // 정지 버튼 표시 여부
-  var stopBtn=document.getElementById('tcStop');
-  if(stopBtn){stopBtn.classList.toggle('vis',!!aId);}
+  // 정지 버튼
+  var sb=document.getElementById('tcStop');if(sb){sb.classList.toggle('vis',!!aId);}
 }
+
 function selSubj(id){selId=id;renderSL();}
+
 var _lastSubjClick={id:null,time:0};
 function clickSubj(id){
-  selId=id;
-  if(planMode){renderSL();return;}
+  if(planMode){selId=id;renderSL();return;}
   var now=Date.now();
-  // 더블탭: todo 패널
-  if(_lastSubjClick.id===id&&(now-_lastSubjClick.time)<350){
+  if(_lastSubjClick.id===id&&(now-_lastSubjClick.time)<400){
+    // 더블탭: TODO 패널
     todoOpenSubjId=(todoOpenSubjId===id)?null:id;
     renderTodoPanel();
     _lastSubjClick={id:null,time:0};
     return;
   }
   _lastSubjClick={id:id,time:now};
+  selId=id;
   // 한번 탭: 시작/정지
   if(aId===id){
     stopSubj();
     if(cfg.linkPomoStop!==false&&pRun&&pomoSubjId===id)pomoPause();
-  } else {
+  }else{
     startSubj(id);
     if(cfg.linkPomoStart===true&&!pRun&&pomoSubjId===id)pomoResume();
   }
-  renderSL();
 }
 function toggleSubj(){if(!selId)return;if(aId===selId){var sid=selId;stopSubj();if(cfg.linkPomoStop!==false&&pRun&&pomoSubjId===sid)pomoPause();}else{startSubj(selId);if(cfg.linkPomoStart===true&&!pRun&&pomoSubjId===selId)pomoResume();}}
 function stopSubjBtn(){var sid=aId;stopSubj();if(cfg.linkPomoStop!==false&&pRun&&pomoSubjId===sid)pomoPause();}
 function updatePomoSubjBadge(){var el=document.getElementById('pomoSubjBadge');if(!el)return;if(aId){var sub=subjs.find(function(s){return s.id===aId;});if(sub){el.textContent=sub.name;el.style.background=sub.color;el.style.display='block';return;}}el.style.display='none';}
-function startSubj(id){if(aId)_stopSil(aId);aId=id;aStart=Date.now();var sub=subjs.find(function(s){return s.id===id;});var bar=document.getElementById('activeBar');if(bar)bar.classList.add('on');var ad=document.getElementById('adot');if(ad)ad.style.background=sub.color;var an=document.getElementById('aname');if(an)an.textContent=sub.name;restartFbSync();clearInterval(aInt);aInt=setInterval(function(){var at=document.getElementById('atime');if(at)at.textContent=f3(Math.floor((Date.now()-aStart)/1000));syncAllScreens();},500);var ts=document.getElementById('tcStop');if(ts)ts.style.display='flex';selSubj(id);renderTL();updatePomoSubjBadge();}
+function startSubj(id){if(aId)_stopSil(aId);aId=id;aStart=Date.now();var sub=subjs.find(function(s){return s.id===id;});var bar=document.getElementById('activeBar');if(bar)bar.classList.add('on');var ad=document.getElementById('adot');if(ad)ad.style.background=sub.color;var an=document.getElementById('aname');if(an)an.textContent=sub.name;restartFbSync();clearInterval(aInt);aInt=setInterval(function(){var at=document.getElementById('atime');if(at)at.textContent=f3(Math.floor((Date.now()-aStart)/1000));syncAllScreens();},500);var ts=document.getElementById('tcStop');if(ts)ts.classList.add('vis');selSubj(id);renderTL();updatePomoSubjBadge();}
 function stopSubj(){if(!aId)return;sess.push({subjectId:aId,color:subjs.find(function(s){return s.id===aId;}).color,start:aStart,end:Date.now()});sv();var sid=aId;aId=null;aStart=null;clearInterval(aInt);var bar=document.getElementById('activeBar');if(bar)bar.classList.remove('on');var ts=document.getElementById('tcStop');if(ts)ts.style.display='none';var at=document.getElementById('atime');if(at)at.textContent='00:00:00';selSubj(sid);renderTL();renderTH();updateHome();fbPushMyData();saveUserDataToFirebase();restartFbSync();updatePomoSubjBadge();toast('⏱ '+fmtHM(getSecs(sid)));}
 function _stopSil(id){sess.push({subjectId:id,color:(subjs.find(function(s){return s.id===id;})||{}).color||'#888',start:aStart,end:Date.now()});sv();}
 
