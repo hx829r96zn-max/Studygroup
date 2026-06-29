@@ -14,7 +14,7 @@
 (function(){
   try{
     var t=localStorage.getItem('sg_lasttab');
-    var valid=['home','timer','room','stats','mock','settings'];
+    var valid=['home','timer','room','stats','settings'];
     if(t&&valid.indexOf(t)>=0&&t!=='home'){
       document.documentElement.setAttribute('data-boot-tab',t);
     }
@@ -145,18 +145,6 @@
     <div id="aname" style="font-weight:700;font-size:.8rem;color:#fff;flex:1">-</div>
     <div class="atime" id="atime">00:00:00</div>
   </div>
-  <!-- 플래너쓰기 섹션 -->
-  <div class="diary-planner" id="diaryPlanner">
-    <div class="dp-header">
-      <span class="dp-title">플래너쓰기</span>
-      <button class="dp-toggle" id="dpToggleBtn" onclick="toggleDiaryPlanner()">▲</button>
-    </div>
-    <div class="dp-body" id="dpBody">
-      <div class="dp-subj-list" id="dpSubjList"></div>
-    </div>
-  </div>
-
-  <!-- 다이어리 타임라인 + 과목 패널 -->
   <div class="tsplit">
     <div class="tleft">
       <div class="sli" id="subjList"></div>
@@ -167,10 +155,7 @@
     </div>
     <div class="tright">
       <div class="pscroll">
-        <!-- 다이어리 스타일: 왼쪽 일정칸 + 오른쪽 격자 -->
-        <div class="diary-timeline-wrap" id="pScroll">
-          <div class="diary-grid" id="pGrid"></div>
-        </div>
+        <div class="pgwrap" id="pScroll"><div class="pgrid" id="pGrid"></div></div>
       </div>
       <div class="todo-panel" id="todoPanel"></div>
     </div>
@@ -329,33 +314,6 @@
   </div>
 </div>
 
-<!-- ══════════ MOCK 성적 ══════════ -->
-<div class="page" id="pg-mock">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:13px">
-    <div style="font-size:.95rem;font-weight:900">성적</div>
-    <div style="display:flex;gap:6px">
-      <button class="btn btn-ol btn-sm" id="sum3Btn" onclick="toggle3Sum()">3합</button>
-      <button class="btn btn-ac btn-sm" onclick="openModal('addMockM')">+ 입력</button>
-    </div>
-  </div>
-  <div class="rtabs"><button class="rtab on" onclick="mockTab('table')">성적표</button><button class="rtab" onclick="mockTab('chart')">성적곡선</button></div>
-  <div class="rpanel on" id="mtp-table">
-    <div class="card" style="padding:10px 8px;overflow-x:auto">
-      <table class="grade-tbl" id="gradeTable"></table>
-      <div id="gradeTableEmpty" style="text-align:center;padding:26px 0;color:var(--ink3);font-size:.84rem">입력된 모의고사가 없습니다</div>
-    </div>
-  </div>
-  <div class="rpanel" id="mtp-chart">
-    <div class="card" style="margin-bottom:11px"><div class="lbl">전체 등급합 추이</div><div style="position:relative;height:200px;width:100%" id="chartTotalWrap"></div></div>
-    <div class="card" style="margin-bottom:11px"><div class="lbl">국·영·수 3합 추이</div><div style="position:relative;height:200px;width:100%" id="chart3Wrap"></div></div>
-    <div class="card">
-      <div class="row" style="margin-bottom:10px"><div class="lbl" style="margin-bottom:0">과목별 성적</div><div style="font-size:.68rem;color:var(--ink3)" id="subjChartLbl">과목 선택</div></div>
-      <div class="subj-pick" id="subjChartPick"></div>
-      <div style="position:relative;height:210px;width:100%;margin-top:12px" id="chartSubjWrap"><div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--ink3);font-size:.82rem">과목을 선택하세요</div></div>
-    </div>
-  </div>
-</div>
-
 <!-- ══════════ SETTINGS ══════════ -->
 <div class="page" id="pg-settings">
   <div style="font-size:.95rem;font-weight:900;margin-bottom:13px">설정</div>
@@ -476,7 +434,6 @@
   <button class="tbtab" onclick="go('timer')">플래너</button>
   <button class="tbtab" onclick="go('room')">룸</button>
   <button class="tbtab" onclick="go('stats')">통계</button>
-  <button class="tbtab" onclick="go('mock')">성적</button>
   <button class="tbtab" onclick="go('settings')">설정</button>
 </div>
 
@@ -586,37 +543,7 @@
   </div>
 </div>
 
-<!-- 성적 입력 -->
-<div class="modal-bg" id="addMockM" onclick="if(event.target===this)closeModal('addMockM')">
-  <div class="modal"><div class="m-handle"></div><button class="m-close" onclick="closeModal('addMockM')">✕</button>
-    <div class="m-title">모의고사 성적 입력</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:4px">
-      <div><div style="font-size:.7rem;color:var(--ink2);margin-bottom:4px;font-weight:600">학년</div><select class="inp" id="mock_grade" style="margin:0"><option value="3">고3</option><option value="2" selected>고2</option><option value="1">고1</option></select></div>
-      <div><div style="font-size:.7rem;color:var(--ink2);margin-bottom:4px;font-weight:600">연도</div><select class="inp" id="mock_year" style="margin:0"></select></div>
-      <div><div style="font-size:.7rem;color:var(--ink2);margin-bottom:4px;font-weight:600">월</div><select class="inp" id="mock_month" style="margin:0"><option value="3">3월</option><option value="6">6월</option><option value="9">9월</option><option value="10">10월</option><option value="11">수능</option></select></div>
-    </div>
-    <div style="font-size:.7rem;color:var(--ink2);margin:10px 0 6px;font-weight:600">과목별 점수</div>
-    <div style="display:grid;grid-template-columns:72px 1fr 60px;gap:6px;align-items:center;margin-bottom:8px"><div style="font-size:.82rem;font-weight:700;padding:0 4px">국어</div><input class="inp" id="mock_korean" type="number" min="0" max="100" placeholder="/100" style="margin:0" oninput="previewGrade('korean',this.value)"><div id="grade_korean" style="font-family:monospace;font-size:.9rem;font-weight:700;text-align:center;color:var(--acc)">-</div></div>
-    <div style="display:grid;grid-template-columns:72px 1fr 60px;gap:6px;align-items:center;margin-bottom:8px"><div style="font-size:.82rem;font-weight:700;padding:0 4px">수학</div><input class="inp" id="mock_math" type="number" min="0" max="100" placeholder="/100" style="margin:0" oninput="previewGrade('math',this.value)"><div id="grade_math" style="font-family:monospace;font-size:.9rem;font-weight:700;text-align:center;color:var(--acc)">-</div></div>
-    <div style="display:grid;grid-template-columns:72px 1fr 60px;gap:6px;align-items:center;margin-bottom:8px"><div style="font-size:.82rem;font-weight:700;padding:0 4px">영어</div><input class="inp" id="mock_english" type="number" min="0" max="100" placeholder="/100" style="margin:0" oninput="previewGrade('english',this.value)"><div id="grade_english" style="font-family:monospace;font-size:.9rem;font-weight:700;text-align:center;color:var(--acc)">-</div></div>
-    <div style="display:grid;grid-template-columns:72px 1fr 60px;gap:6px;align-items:center;margin-bottom:8px"><div style="font-size:.82rem;font-weight:700;padding:0 4px">한국사</div><input class="inp" id="mock_history" type="number" min="0" max="50" placeholder="/50" style="margin:0" oninput="previewGrade('history',this.value)"><div id="grade_history" style="font-family:monospace;font-size:.9rem;font-weight:700;text-align:center;color:var(--acc)">-</div></div>
-    <div style="display:grid;grid-template-columns:72px 1fr 60px;gap:6px;align-items:center;margin-bottom:8px"><div style="font-size:.82rem;font-weight:700;padding:0 4px">통합사회</div><input class="inp" id="mock_society" type="number" min="0" max="50" placeholder="/50" style="margin:0" oninput="previewGrade('society',this.value)"><div id="grade_society" style="font-family:monospace;font-size:.9rem;font-weight:700;text-align:center;color:var(--acc)">-</div></div>
-    <div style="display:grid;grid-template-columns:72px 1fr 60px;gap:6px;align-items:center;margin-bottom:8px"><div style="font-size:.82rem;font-weight:700;padding:0 4px">통합과학</div><input class="inp" id="mock_science" type="number" min="0" max="50" placeholder="/50" style="margin:0" oninput="previewGrade('science',this.value)"><div id="grade_science" style="font-family:monospace;font-size:.9rem;font-weight:700;text-align:center;color:var(--acc)">-</div></div>
-    <div style="background:var(--bg);border-radius:10px;padding:12px;margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:.82rem;font-weight:700">합산</span><span style="font-family:monospace;font-size:1.1rem;font-weight:700;color:var(--acc)" id="mock_total_preview">-</span></div></div>
-    <button class="btn-full" onclick="saveMockScore()">저장</button>
-  </div>
-</div>
 
-<!-- 성적 상세 -->
-<div class="modal-bg" id="editMockM" onclick="if(event.target===this)closeModal('editMockM')">
-  <div class="modal"><div class="m-handle"></div><button class="m-close" onclick="closeModal('editMockM')">✕</button>
-    <div class="m-title" id="editMockTitle">성적 상세</div>
-    <input type="hidden" id="editMockId">
-    <div id="editMockRows"></div>
-    <button class="btn-full" onclick="saveRealGrades()">실제 등급 저장</button>
-    <button class="btn btn-ol btn-sm" style="width:100%;margin-top:8px" onclick="deleteMockFromEdit()">삭제</button>
-  </div>
-</div>
 
 <!-- 캘린더 월 선택 -->
 <div class="modal-bg" id="calPickM" onclick="if(event.target===this)closeModal('calPickM')">
