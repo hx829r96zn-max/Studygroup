@@ -68,7 +68,7 @@ function svPomoState(){localStorage.setItem('sg_pomo_state',JSON.stringify({pFoc
 function clearPomoState(){localStorage.removeItem('sg_pomo_state');}
 var ncRules=[],pickedC=COLORS[0];
 var calY=new Date().getFullYear(),calM=new Date().getMonth(),_pickY=new Date().getFullYear();
-var ROW_H=28,NCOLS=6,COL_MINS=10,AXIS_W=22,GRID_START_HOUR=5;
+var ROW_H=22,NCOLS=6,COL_MINS=10,AXIS_W=18,GRID_START_HOUR=5;
 function hourToRow(h){return(h-GRID_START_HOUR+24)%24;}
 function rowToHour(r){return(r+GRID_START_HOUR)%24;}
 var PCIRC=848.2;
@@ -105,7 +105,7 @@ function go(id){
   var pg=document.getElementById('pg-'+id);if(pg)pg.classList.add('on');
   var map={home:0,timer:1,room:2,stats:3,mock:4,settings:5};
   if(map[id]!==undefined){var tabs=document.querySelectorAll('.ntab');if(tabs[map[id]])tabs[map[id]].classList.add('on');var tbs=document.querySelectorAll('.tbtab');if(tbs[map[id]])tbs[map[id]].classList.add('on');}
-  if(id==='timer'){renderTH();renderSL();setTimeout(function(){renderTL();scrollNow();renderTodoPanel();initDiaryMemo();},80);}
+  if(id==='timer'){renderTH();renderSL();setTimeout(function(){renderTL();scrollNow();renderTodoPanel();},80);}
   if(id==='home'){updateHome();renderHBet();renderDdayCard();renderHomeSubjGrid();if(pCur<=0)pCur=pSec;updatePUI();}
   if(id==='stats'){renderCal();updateStats();}
   if(id==='settings')renderSet();
@@ -150,16 +150,6 @@ function renderHBet(){var el=document.getElementById('homeBetContent');if(!el)re
 // TIMER
 function renderTH(){var now=new Date(),days=['일','월','화','수','목','금','토'];var td=document.getElementById('timerDay');if(td)td.textContent=now.getFullYear()+'. '+(now.getMonth()+1)+'. '+now.getDate()+' ('+days[now.getDay()]+')';var tt=document.getElementById('timerTotal');if(tt)tt.textContent=fmtHM(getTSecs());}
 
-function initDiaryMemo(){
-  var dk=today();
-  var saved=JSON.parse(localStorage.getItem('sg_diary_'+dk)||'{}');
-  ['diaryLine1','diaryLine2','diaryMemo'].forEach(function(id){
-    var el=document.getElementById(id);if(!el)return;
-    el.value=saved[id]||'';
-    el.oninput=function(){var d=JSON.parse(localStorage.getItem('sg_diary_'+dk)||'{}');d[id]=el.value;localStorage.setItem('sg_diary_'+dk,JSON.stringify(d));};
-  });
-}
-
 function renderSL(){
   var w=document.getElementById('subjList');if(!w)return;
   w.innerHTML='';
@@ -171,7 +161,6 @@ function renderSL(){
     var hasTodos=list.length>0;
     var row=document.createElement('div');
     row.className='dl-subj-row'+(isRunning?' running':'')+(hasTodos?' has-todos':'');
-    // 메인 행 (과목명|시간|●)
     var main=document.createElement('div');main.className='dl-subj-main';
     var c1=document.createElement('div');c1.className='dl-s-col1';
     c1.innerHTML='<div class="dl-s-dot" style="background:'+sub.color+'"></div><div class="dl-s-name">'+escapeHtml(sub.name)+'</div>';
@@ -181,16 +170,15 @@ function renderSL(){
     c3.textContent=isRunning?'●':'·';
     main.appendChild(c1);main.appendChild(c2);main.appendChild(c3);
     row.appendChild(main);
-    // todo 미리보기 (최대 3개)
     if(hasTodos){
       var prev=document.createElement('div');prev.className='dl-todo-preview';
-      list.slice(0,3).forEach(function(t){
+      list.slice(0,4).forEach(function(t){
         var ti=document.createElement('div');
         ti.className='dl-todo-prev-item'+(t.done?' done':'');
         ti.textContent=(t.done?'✓ ':'· ')+t.text;
         prev.appendChild(ti);
       });
-      if(list.length>3){var more=document.createElement('div');more.className='dl-todo-prev-item';more.textContent='···';prev.appendChild(more);}
+      if(list.length>4){var more=document.createElement('div');more.className='dl-todo-prev-item';more.style.color='rgba(255,255,255,.2)';more.textContent='+ '+(list.length-4)+'개 더';prev.appendChild(more);}
       row.appendChild(prev);
     }
     row.onclick=(function(id){return function(){clickSubj(id);};})(sub.id);
@@ -205,7 +193,6 @@ function clickSubj(id){
   if(planMode){selId=id;renderSL();return;}
   var now=Date.now();
   if(_lastSubjClick.id===id&&(now-_lastSubjClick.time)<400){
-    // 더블탭: TODO 슬라이드 패널
     todoOpenSubjId=(todoOpenSubjId===id)?null:id;
     renderTodoPanel();
     _lastSubjClick={id:null,time:0};
