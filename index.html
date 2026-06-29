@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>StudyGroup</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;600;700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;600;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -17,6 +17,9 @@
     var valid=['home','timer','room','stats','mock','settings'];
     if(t&&valid.indexOf(t)>=0&&t!=='home'){
       document.documentElement.setAttribute('data-boot-tab',t);
+    }
+    if(!localStorage.getItem('sg_authchoice')){
+      document.documentElement.setAttribute('data-new-user','1');
     }
   }catch(e){}
 })();
@@ -111,7 +114,6 @@
     </div>
     <div style="display:flex;align-items:flex-end;gap:7px;margin-bottom:7px">
       <div style="font-family:monospace;font-size:1.9rem;font-weight:500;line-height:1;color:#fff" id="homeTotal">0<span style="font-size:.85rem;color:rgba(255,255,255,.4)">h</span>00<span style="font-size:.85rem;color:rgba(255,255,255,.4)">m</span>00<span style="font-size:.85rem;color:rgba(255,255,255,.4)">s</span></div>
-      <div id="remoteLiveBadge" style="display:none;font-size:.66rem;color:#22c55e;margin-top:3px;font-weight:600">🔴 다른 기기에서 공부 중</div>
       <div style="font-size:.7rem;color:rgba(255,255,255,.5);margin-bottom:2px" id="homePct">0%</div>
     </div>
     <div style="height:5px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;margin-bottom:9px"><div id="homeBar" style="height:100%;border-radius:3px;background:var(--green);width:0%"></div></div>
@@ -122,17 +124,14 @@
 <!-- ══════════ TIMER (플래너) ══════════ -->
 <div class="page" id="pg-timer">
   <div class="t-hd">
-    <div style="display:flex;align-items:center;gap:8px">
-      <button class="plan-toggle" id="ttBtn" onclick="goTimetable()" style="font-size:.72rem;padding:6px 10px">시간표</button>
-      <div>
-        <div class="t-date" id="timerDay"></div>
-        <div class="t-total" id="timerTotal">0H 00M 00S</div>
-      </div>
+    <div>
+      <div class="t-date" id="timerDay"></div>
+      <div class="t-total" id="timerTotal">0H 00M 00S</div>
     </div>
     <div style="text-align:right">
       <button class="plan-toggle" id="planToggle" onclick="togglePlanMode()">계획짜기</button>
-      <button class="plan-toggle" id="planUndoBtn" onclick="undoPlan()" style="margin-left:4px;padding:7px 9px;opacity:.35">↩</button>
-      <button class="plan-toggle" id="planRedoBtn" onclick="redoPlan()" style="margin-left:3px;padding:7px 9px;opacity:.35">↪</button>
+      <button class="plan-toggle" id="planUndoBtn" onclick="undoPlan()" style="display:none;margin-left:4px;padding:7px 9px">↩</button>
+      <button class="plan-toggle" id="planRedoBtn" onclick="redoPlan()" style="display:none;margin-left:3px;padding:7px 9px">↪</button>
       <button class="plan-toggle" id="planSaveBtn" onclick="savePlan()" style="display:none;margin-left:4px;background:#22c55e;color:#000;border-color:#22c55e">저장</button>
       <div class="plan-stat">
         <div><span class="ps-lbl">목표</span> <span id="planTarget">0h 00m</span></div>
@@ -146,6 +145,18 @@
     <div id="aname" style="font-weight:700;font-size:.8rem;color:#fff;flex:1">-</div>
     <div class="atime" id="atime">00:00:00</div>
   </div>
+  <!-- 플래너쓰기 섹션 -->
+  <div class="diary-planner" id="diaryPlanner">
+    <div class="dp-header">
+      <span class="dp-title">플래너쓰기</span>
+      <button class="dp-toggle" id="dpToggleBtn" onclick="toggleDiaryPlanner()">▲</button>
+    </div>
+    <div class="dp-body" id="dpBody">
+      <div class="dp-subj-list" id="dpSubjList"></div>
+    </div>
+  </div>
+
+  <!-- 다이어리 타임라인 + 과목 패널 -->
   <div class="tsplit">
     <div class="tleft">
       <div class="sli" id="subjList"></div>
@@ -156,32 +167,14 @@
     </div>
     <div class="tright">
       <div class="pscroll">
-        <div class="pgwrap" id="pScroll" onclick="if(todoOpenSubjId&&!event.target.closest('#todoPanel')){todoOpenSubjId=null;renderTodoPanel();}"><div class="pgrid" id="pGrid"></div></div>
+        <!-- 다이어리 스타일: 왼쪽 일정칸 + 오른쪽 격자 -->
+        <div class="diary-timeline-wrap" id="pScroll">
+          <div class="diary-grid" id="pGrid"></div>
+        </div>
       </div>
       <div class="todo-panel" id="todoPanel"></div>
     </div>
   </div>
-</div>
-
-<!-- ══════════ TIMETABLE ══════════ -->
-<div class="page" id="pg-timetable" style="display:none;flex-direction:column;height:calc(100vh - 44px);background:#000;color:#fff">
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #222;background:#000;flex-shrink:0">
-    <button onclick="goPlanner()" style="background:#222;border:none;color:#fff;border-radius:8px;padding:6px 12px;font-size:.72rem;cursor:pointer;font-family:inherit;font-weight:600">← 플래너</button>
-    <div style="display:flex;align-items:center;gap:8px">
-      <div id="ttDateLabel" onclick="ttPickDate()" style="font-size:.85rem;font-weight:700;color:#fff;cursor:pointer;padding:4px 8px;border-radius:6px;background:#111"></div>
-      <button id="ttTodayBtn" onclick="ttGoToday()" style="display:none;background:#5b4fcf;border:none;color:#fff;border-radius:7px;padding:5px 10px;font-size:.7rem;cursor:pointer;font-family:inherit;font-weight:600">오늘</button>
-    </div>
-    <div style="display:flex;gap:5px">
-      <button onclick="ttUndo()" style="background:#222;border:none;color:#fff;border-radius:8px;padding:6px 10px;font-size:.78rem;cursor:pointer">↩</button>
-      <button onclick="ttRedo()" style="background:#222;border:none;color:#fff;border-radius:8px;padding:6px 10px;font-size:.78rem;cursor:pointer">↪</button>
-    </div>
-  </div>
-  <div style="display:flex;flex:0 0 28px;border-bottom:1.5px solid #222;background:#000;font-size:.65rem;font-weight:700;color:#555;letter-spacing:.03em">
-    <div style="width:88px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-right:1px solid #222">과목</div>
-    <div style="flex:1;display:flex;align-items:center;padding-left:12px;border-right:1px solid #222">할 일</div>
-    <div style="width:46px;flex-shrink:0;display:flex;align-items:center;justify-content:center">상태</div>
-  </div>
-  <div id="ttBody" style="flex:1;overflow-y:auto;padding-bottom:calc(70px + env(safe-area-inset-bottom,0));background:#000"></div>
 </div>
 
 <!-- ══════════ ROOM ══════════ -->
@@ -288,7 +281,7 @@
 
   <div class="stg">
     <div class="stc"><div class="stn" style="color:var(--green)" id="stTotal">0h</div><div class="stl">오늘</div></div>
-    <div class="stc"><div class="stn" id="stAvg">0h</div><div class="stl">월평균</div></div>
+    <div class="stc"><div class="stn" id="stAvg">0h</div><div class="stl">일평균</div></div>
     <div class="stc"><div class="stn" style="color:var(--acc)" id="stStrk">0일</div><div class="stl">스트릭</div></div>
   </div>
 
@@ -399,7 +392,7 @@
       <div><div style="font-size:.68rem;color:var(--ink2);margin-bottom:4px">집중 (분)</div><input class="inp" id="s_pf" type="number" min="10" max="120" value="70" style="margin:0"></div>
       <div><div style="font-size:.68rem;color:var(--ink2);margin-bottom:4px">휴식 (분)</div><input class="inp" id="s_pb" type="number" min="1" max="30" value="10" style="margin:0"></div>
     </div>
-    <div style="margin-top:8px"><div style="font-size:.68rem;color:var(--ink2);margin-bottom:4px">초기화 시각 (예: 5 → 새벽 5시, 26 → 익일 새벽 2시)</div><input class="inp" id="s_reset" type="number" min="0" max="29" value="5" style="margin:0"></div>
+    <div style="margin-top:8px"><div style="font-size:.68rem;color:var(--ink2);margin-bottom:4px">초기화 시각 (시, 예:5 → 새벽5시)</div><input class="inp" id="s_reset" type="number" min="0" max="11" value="5" style="margin:0"></div>
     <button class="btn btn-dk btn-sm" style="margin-top:9px" onclick="savePomoSet()">저장</button>
     <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line)">
       <div class="trow"><span class="tlbl">정지하면 둘 다 정지</span><label class="toggle"><input type="checkbox" id="s_linkstop" onchange="saveLinkSettings()"><span class="tsl"></span></label></div>
@@ -730,14 +723,6 @@
       </div>
       <button onclick="shareToRoom()" style="width:46px;height:46px;border-radius:50%;background:var(--acc);color:#fff;border:none;font-size:1.15rem;cursor:pointer;flex-shrink:0;align-self:flex-end;display:flex;align-items:center;justify-content:center">➤</button>
     </div>
-  </div>
-</div>
-
-<!-- 시간표 과목 선택 -->
-<div class="modal-bg" id="ttSubjPickerM" onclick="if(event.target===this)closeModal('ttSubjPickerM')">
-  <div class="modal"><div class="m-handle"></div><button class="m-close" onclick="closeModal('ttSubjPickerM')">✕</button>
-    <div class="m-title">과목 선택</div>
-    <div id="ttSubjPickerList" style="display:flex;flex-direction:column;gap:8px"></div>
   </div>
 </div>
 
