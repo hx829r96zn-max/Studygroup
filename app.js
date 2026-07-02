@@ -150,7 +150,7 @@ function renderHBet(){var el=document.getElementById('homeBetContent');if(!el)re
 // TIMER
 function renderTH(){var now=new Date(),days=['일','월','화','수','목','금','토'];var td=document.getElementById('timerDay');if(td)td.textContent=now.getFullYear()+'. '+(now.getMonth()+1)+'. '+now.getDate()+' ('+days[now.getDay()]+')';var tt=document.getElementById('timerTotal');if(tt)tt.textContent=fmtHM(getTSecs());}
 
-/* ── 상태 표시 유틸 ── */
+/* ── 상태 유틸 ── */
 function _stLbl(s){return s==='O'?'O':s==='X'?'X':s==='△'?'△':'·';}
 function _stClr(s){return s==='O'?'#22c55e':s==='X'?'#ef4444':s==='△'?'#eab308':'rgba(255,255,255,.18)';}
 function _stNext(s){return s===null?'O':s==='O'?'X':s==='X'?'△':null;}
@@ -193,14 +193,10 @@ function _dvMove(sid,from,to){
   svTodos();renderSL();saveUserDataToFirebase();
 }
 
-/* ── 메인 renderSL ── */
+/* ── renderSL: dvTbody 기반, 과목별 복수 할일 ── */
 function renderSL(){
   var w=document.getElementById('dvTbody');
-  if(!w){
-    // 혹시 구버전 DOM에서 subjList를 쓰는 경우 대비
-    w=document.getElementById('subjList');
-    if(!w)return;
-  }
+  if(!w)return;
   w.innerHTML='';
   var dk=today();
 
@@ -209,40 +205,52 @@ function renderSL(){
     var isRunning=(aId===sub.id);
     var list=getTodoList(dk,sub.id);
     var grp=document.createElement('div');
-    grp.className='dv-group';
 
-    /* 할일 행들 */
     list.forEach(function(t,i){
       var row=document.createElement('div');
       row.className='dv-row';
       row.setAttribute('data-sid',sub.id);
       row.setAttribute('data-i',String(i));
 
-      /* 칸1: 과목명+시간 — 첫행만 표시 */
+      /* 칸1: 과목명+시간 — 첫행만 표시, 나머지는 색선만
+         탭 = 공부 시작/정지
+         더블탭 = 과목 추가/수정 모달 */
       var c1=document.createElement('div');
-      c1.className='dv-csubj'+(i>0?' empty':'');
-      var bar=document.createElement('div');
-      bar.className='dv-csubj-bar';
-      bar.style.background=sub.color;
-      c1.appendChild(bar);
+      c1.className='dv-csubj'+(i>0?' empty':'')+(i===0&&isRunning?' running':'');
+      var cbar=document.createElement('div');
+      cbar.className='dv-csubj-bar';
+      cbar.style.background=sub.color;
+      c1.appendChild(cbar);
       if(i===0){
-        var nm=document.createElement('div');nm.className='dv-csubj-name';nm.style.color=sub.color;nm.textContent=sub.name;
-        var tm=document.createElement('div');tm.className='dv-csubj-time';tm.textContent=sc>0?fmtSh(sc):'';
-        c1.appendChild(nm);c1.appendChild(tm);
-        c1.title='탭: 공부 시작/정지';
-        c1.onclick=function(e){e.stopPropagation();clickSubj(sub.id);};
+        var nm=document.createElement('div');nm.className='dv-csubj-name';nm.style.color=sub.color;nm.textContent=sub.name;c1.appendChild(nm);
+        var tm=document.createElement('div');tm.className='dv-csubj-time';tm.textContent=sc>0?fmtSh(sc):'';c1.appendChild(tm);
+        // 탭=시작/정지, 더블탭=과목 모달
+        var subjDblT=null;
+        c1.addEventListener('click',function(e){
+          e.stopPropagation();
+          if(subjDblT){
+            // 더블탭: 과목 관리 모달 열기
+            clearTimeout(subjDblT);subjDblT=null;
+            openAddSM();
+          }else{
+            subjDblT=setTimeout(function(){
+              subjDblT=null;
+              // 탭: 공부 시작/정지
+              clickSubj(sub.id);
+            },280);
+          }
+        });
       }
       row.appendChild(c1);
 
-      /* 칸2: ✕ + 텍스트 */
-      var c2=document.createElement('div');c2.className='dv-ctodo';
-      // 삭제 버튼
+      /* 칸2: ✕ 삭제 */
       var del=document.createElement('div');del.className='dv-del';del.textContent='✕';
       (function(sid,ii){del.onclick=function(e){e.stopPropagation();_dvDel(sid,ii);};})(sub.id,i);
-      // 텍스트
+      row.appendChild(del);
+
+      /* 칸3: 텍스트 (더블탭=편집) */
       var txt=document.createElement('div');txt.className='dv-txt'+(t.done?' done':'');
       var sp=document.createElement('span');sp.textContent=t.text;txt.appendChild(sp);
-      // 더블탭 → 인라인 편집
       var dblT=null;
       (function(sid,ii,tc,sp2){
         tc.addEventListener('click',function(e){
@@ -251,34 +259,25 @@ function renderSL(){
             clearTimeout(dblT);dblT=null;
             var inp=document.createElement('input');
             inp.value=sp2.textContent;
-            inp.style.cssText='background:transparent;border:none;outline:none;color:#fff;font-size:.64rem;font-family:\'Noto Sans KR\',sans-serif;width:100%;padding:0;';
-            tc.innerHTML='';tc.appendChild(inp);
-            inp.focus();inp.select();
+            inp.style.cssText='background:transparent;border:none;outline:none;color:#fff;font-size:.65rem;font-family:\'Noto Sans KR\',sans-serif;width:100%;padding:0;';
+            tc.innerHTML='';tc.appendChild(inp);inp.focus();inp.select();
             inp.onblur=function(){_dvSave(sid,ii,inp.value);};
-            inp.onkeydown=function(ev){
-              if(ev.key==='Enter')inp.blur();
-              if(ev.key==='Escape')renderSL();
-            };
+            inp.onkeydown=function(ev){if(ev.key==='Enter')inp.blur();if(ev.key==='Escape')renderSL();};
           }else{
             dblT=setTimeout(function(){dblT=null;},320);
           }
         });
       })(sub.id,i,txt,sp);
-      c2.appendChild(del);c2.appendChild(txt);
-      row.appendChild(c2);
+      row.appendChild(txt);
 
-      /* 칸3: O/X/△ */
+      /* 칸4: O/X/△ */
       var c3=document.createElement('div');c3.className='dv-cst';
       var st=t.status||null;
       c3.textContent=_stLbl(st);c3.style.color=_stClr(st);
       var longT=null;
       (function(sid,ii,btn){
-        // 꾹 누르기 → △ 직접 설정
-        btn.addEventListener('touchstart',function(){
-          longT=setTimeout(function(){_dvStatus(sid,ii,'△');},600);
-        },{passive:true});
+        btn.addEventListener('touchstart',function(){longT=setTimeout(function(){_dvStatus(sid,ii,'△');},600);},{passive:true});
         btn.addEventListener('touchend',function(){clearTimeout(longT);},{passive:true});
-        // 탭 → O→X→△→null 순환
         btn.onclick=function(e){
           e.stopPropagation();
           var cur=(todos[dk]&&todos[dk][sid]&&todos[dk][sid][ii])?todos[dk][sid][ii].status:null;
@@ -287,15 +286,12 @@ function renderSL(){
       })(sub.id,i,c3);
       row.appendChild(c3);
 
-      /* 꾹 누르고 드래그 → 순서 변경 */
+      /* 꾹+드래그 = 순서 변경 */
       (function(sid,fromI,rowEl){
         var lt=null,drag=false,toI=-1;
-        rowEl.addEventListener('touchstart',function(){
-          lt=setTimeout(function(){drag=true;rowEl.style.opacity='.4';},700);
-        },{passive:true});
+        rowEl.addEventListener('touchstart',function(){lt=setTimeout(function(){drag=true;rowEl.style.opacity='.4';},700);},{passive:true});
         rowEl.addEventListener('touchmove',function(e){
-          if(!drag)return;
-          var pt=e.touches[0];toI=-1;
+          if(!drag)return;var pt=e.touches[0];toI=-1;
           document.querySelectorAll('.dv-row[data-sid="'+sid+'"]').forEach(function(el,j){
             el.classList.remove('drag-over');
             var r=el.getBoundingClientRect();
@@ -315,11 +311,11 @@ function renderSL(){
       grp.appendChild(row);
     });
 
-    /* 새 할일 입력 행 (과목당 항상 맨 아래에 1개) */
+    /* 새 할일 입력 행 */
     var ar=document.createElement('div');ar.className='dv-addrow';
     var asc=document.createElement('div');asc.className='dv-addrow-subj';
-    var asbar=document.createElement('div');asbar.className='dv-addrow-subj-bar';asbar.style.background=sub.color;
-    asc.appendChild(asbar);ar.appendChild(asc);
+    var asbar=document.createElement('div');asbar.className='dv-addrow-bar';asbar.style.background=sub.color;asc.appendChild(asbar);ar.appendChild(asc);
+    var adel=document.createElement('div');adel.className='dv-addrow-del';ar.appendChild(adel);
     var ainp=document.createElement('input');ainp.className='dv-addrow-inp';ainp.placeholder='+ 할 일';
     (function(sid,grp2){
       ainp.onkeydown=function(e){
@@ -328,11 +324,10 @@ function renderSL(){
         var v=ainp.value.trim();
         if(v)_dvAdd(sid,v);
         renderSL();
-        /* 엔터 후 같은 과목 입력칸으로 커서 이동 */
         setTimeout(function(){
           var inputs=grp2.querySelectorAll('.dv-addrow-inp');
           if(inputs.length)inputs[inputs.length-1].focus();
-        },30);
+        },40);
       };
       ainp.onblur=function(){
         var v=ainp.value.trim();
@@ -342,15 +337,15 @@ function renderSL(){
     ar.appendChild(ainp);
     var ast=document.createElement('div');ast.className='dv-addrow-st';ar.appendChild(ast);
     grp.appendChild(ar);
-
     w.appendChild(grp);
   });
 
-  /* 정지 버튼 표시 여부 */
+  /* 정지 버튼 표시 */
   var sb=document.getElementById('dvStopBar');
   if(sb)sb.style.display=aId?'block':'none';
 }
 
+/* 버그1 수정: selSubj에서 tcBtn(삭제된 DOM) 참조 제거 */
 function selSubj(id){selId=id;renderSL();}
 var _lastSubjClick={id:null,time:0};
 function clickSubj(id){

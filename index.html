@@ -146,32 +146,31 @@
     <div class="atime" id="atime">00:00:00</div>
   </div>
   <div class="dv-wrap">
-    <!-- 왼쪽: 과목별 할일 테이블 -->
     <div class="dv-left">
-      <!-- 테이블 헤더 -->
       <div class="dv-thead">
         <div class="dv-th-subj">과목</div>
+        <div class="dv-th-del"></div>
         <div class="dv-th-todo">할 일</div>
         <div class="dv-th-st">상태</div>
       </div>
-      <!-- 행들 (JS 렌더) -->
       <div class="dv-tbody" id="dvTbody"></div>
-      <!-- 과목 추가 -->
       <div class="dv-addsubj" onclick="openAddSM()">+ 과목 추가</div>
+      <div class="dv-stopbar" id="dvStopBar">
+        <button onclick="stopSubjBtn()">■ 정지</button>
+      </div>
     </div>
-    <!-- 오른쪽: 시간 격자 -->
     <div class="dv-right">
       <div class="dv-ghdr">
         <div class="dv-gaxis"></div>
-        <div class="dv-gnums"><span>10</span><span>20</span><span>30</span><span>40</span><span>50</span><span>60</span></div>
+        <div class="dv-gnums">
+          <span>10</span><span>20</span><span>30</span><span>40</span><span>50</span><span>60</span>
+        </div>
       </div>
-      <div class="pgwrap" id="pScroll"><div class="pgrid" id="pGrid"></div></div>
+      <div class="pgwrap" id="pScroll">
+        <div class="pgrid" id="pGrid"></div>
+      </div>
       <div class="todo-panel" id="todoPanel"></div>
     </div>
-  </div>
-  <!-- 정지 버튼: 공부 중일때만 표시 -->
-  <div class="dv-stopbar" id="dvStopBar">
-    <button onclick="stopSubjBtn()">■ 정지</button>
   </div>
 </div>
 
