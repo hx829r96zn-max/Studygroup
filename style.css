@@ -151,64 +151,116 @@ textarea.inp{resize:vertical;min-height:70px;}
 .tsplit{flex:1;display:flex;overflow:hidden;min-height:0;}
 .tleft{width:140px;flex-shrink:0;display:flex;flex-direction:column;background:#1a1a1a;border-right:1px solid #2a2a2a;}
 .tright{flex:1;overflow:hidden;display:flex;background:#111;position:relative;}
-.sli{flex:1;overflow-y:auto;padding:4px 0;}
-.sli::-webkit-scrollbar{width:0;}
-.sr{display:flex;align-items:center;gap:7px;padding:10px 10px;cursor:pointer;border-bottom:1px solid #222;transition:.1s;}
-.sr.sel{background:#222;}
-.sdot{width:4px;height:24px;border-radius:2px;flex-shrink:0;}
+.sli{flex:1;overflow-y:auto;padding:4px 0;}.sli::-webkit-scrollbar{width:0;}
+.sr{display:flex;align-items:center;gap:7px;padding:10px;cursor:pointer;border-bottom:1px solid #222;transition:.1s;}
+.sr.sel{background:#222;}.sdot{width:4px;height:24px;border-radius:2px;flex-shrink:0;}
 .sname{font-size:.8rem;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff;}
 .stime{font-family:monospace;font-size:.68rem;color:rgba(255,255,255,.4);}
-.add-s{display:flex;align-items:center;gap:6px;padding:10px 10px;cursor:pointer;color:rgba(255,255,255,.4);font-size:.76rem;font-weight:600;border-top:1px solid #2a2a2a;}
-.tc-ctrl{padding:9px 9px;border-top:1px solid #2a2a2a;display:flex;gap:5px;flex-shrink:0;background:#1a1a1a;margin-bottom:calc(50px + env(safe-area-inset-bottom,0));}
+.add-s{display:flex;align-items:center;gap:6px;padding:10px;cursor:pointer;color:rgba(255,255,255,.4);font-size:.76rem;font-weight:600;border-top:1px solid #2a2a2a;}
+.tc-ctrl{padding:9px;border-top:1px solid #2a2a2a;display:flex;gap:5px;flex-shrink:0;background:#1a1a1a;margin-bottom:calc(50px + env(safe-area-inset-bottom,0));}
 .tc-go{flex:1;height:40px;border-radius:9px;border:none;font-family:'Noto Sans KR',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;background:rgba(255,255,255,.9);color:#111;}
 .tc-go:disabled{background:#2a2a2a;color:rgba(255,255,255,.3);}
 .tc-stop{width:40px;height:40px;border-radius:9px;border:none;background:#3a1a1a;color:#ff6b6b;cursor:pointer;display:none;font-size:.88rem;align-items:center;justify-content:center;}
-.tc-stop.vis{display:flex;}
-.pscroll{flex:1;display:flex;overflow:hidden;}
+.tc-stop.vis{display:flex;}.pscroll{flex:1;display:flex;overflow:hidden;}
 .pgwrap{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;-webkit-overflow-scrolling:touch;touch-action:pan-y;}
 .pgwrap::-webkit-scrollbar{width:0;}
 .pgrid{position:relative;width:100%;background:#111;touch-action:pan-y;will-change:transform;}
 #pg-timer.plan-mode .pgrid{cursor:crosshair;}
 
-/* ════ 새 다이어리 레이아웃 ════ */
-.diarysplit{flex:1;display:flex;overflow:hidden;min-height:0;}
-/* 왼쪽 2/3 */
-.diaryleft{flex:2;min-width:0;display:flex;flex-direction:column;background:#111;border-right:1px solid #1e1e1e;overflow:hidden;}
-.diaryScroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
-.diaryScroll::-webkit-scrollbar{width:0;}
-.diarystop{flex-shrink:0;border-top:1px solid #1e1e1e;background:#111;padding:5px 6px;padding-bottom:calc(5px + env(safe-area-inset-bottom,0));display:flex;gap:5px;align-items:center;}
-.diarystopbtn{flex:1;height:28px;border-radius:7px;border:none;background:#3a1a1a;color:#ff6b6b;font-size:.66rem;font-weight:700;font-family:'Noto Sans KR',sans-serif;cursor:pointer;display:none;}
-.diarystopbtn.vis{display:block;}
-.diaryaddsubj{font-size:.6rem;color:rgba(255,255,255,.22);cursor:pointer;padding:0 4px;}
-/* 과목 그룹 */
-.dsg{display:flex;flex-direction:column;}
-/* 각 할일 행 */
-.dtr{display:flex;align-items:stretch;border-bottom:1px solid rgba(255,255,255,.07);min-height:26px;}
-.dtr.drag-over{border-top:2px solid rgba(255,255,255,.4);}
-/* 칸1: 과목명+시간 */
-.dsc{width:54px;flex-shrink:0;border-right:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;justify-content:center;padding:2px 3px 2px 5px;overflow:hidden;cursor:pointer;}
-.dsc-name{font-size:.56rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;}
-.dsc-time{font-size:.46rem;font-family:monospace;color:rgba(255,255,255,.32);line-height:1.2;}
-.dsc.empty{cursor:default;}
-/* 칸2: ✕ 삭제 */
-.ddb{width:18px;flex-shrink:0;border-right:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,.18);font-size:.58rem;transition:.1s;}
-.ddb:active{color:#ef4444;}
-/* 칸3: 할일 텍스트 */
-.dtxt{flex:1;min-width:0;display:flex;align-items:center;padding:2px 5px;font-size:.64rem;color:rgba(255,255,255,.8);border-right:1px solid rgba(255,255,255,.06);word-break:break-all;line-height:1.4;cursor:text;}
-.dtxt.done{color:rgba(255,255,255,.28);text-decoration:line-through;}
-.dtxt input{background:transparent;border:none;outline:none;color:#fff;font-size:.64rem;font-family:'Noto Sans KR',sans-serif;width:100%;padding:0;}
-/* 칸4: O/X/△ */
-.dsb{width:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:700;cursor:pointer;user-select:none;}
-/* 새 할일 입력행 */
-.darow{display:flex;align-items:stretch;border-bottom:1px solid rgba(255,255,255,.05);min-height:24px;}
-.darow input{flex:1;background:transparent;border:none;outline:none;color:rgba(255,255,255,.45);font-size:.62rem;font-family:'Noto Sans KR',sans-serif;padding:3px 5px;}
-.darow input::placeholder{color:rgba(255,255,255,.15);}
-/* 오른쪽 1/3 */
-.diaryright{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;background:#0d0d0d;position:relative;}
-.drhdr{display:flex;align-items:center;flex-shrink:0;border-bottom:1px solid #181818;padding:2px 0;background:#0d0d0d;}
-.draxis{width:18px;flex-shrink:0;}
-.drcols{flex:1;display:flex;}
-.drcols span{flex:1;text-align:center;font-family:monospace;font-size:.4rem;color:rgba(255,255,255,.2);font-weight:600;}
+/* ════════════════════════════════
+   새 다이어리 레이아웃 (이미지 기반)
+   ════════════════════════════════ */
+
+/* 전체 좌우 분할 */
+.dv-wrap{flex:1;display:flex;overflow:hidden;min-height:0;}
+
+/* ── 왼쪽 노트 영역 (약 58%) ── */
+.dv-left{flex:1;display:flex;flex-direction:column;overflow:hidden;background:#111;border-right:2px solid rgba(255,255,255,.25);}
+
+/* 스크롤 가능한 내부 */
+.dv-left-scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
+.dv-left-scroll::-webkit-scrollbar{width:0;}
+
+/* date / d-day 헤더 */
+.dv-hdr-row{display:flex;align-items:center;gap:4px;padding:5px 8px 3px;flex-shrink:0;}
+.dv-italic{font-size:.5rem;color:rgba(255,255,255,.38);font-style:italic;font-family:Georgia,serif;white-space:nowrap;flex-shrink:0;}
+.dv-hline{flex:1;height:1px;background:rgba(255,255,255,.18);margin:0 2px;}
+
+/* 자유 필기 줄 */
+.dv-memo-lines{padding:2px 8px;}
+.dv-free-line{border-bottom:1px solid rgba(255,255,255,.15);margin-bottom:4px;}
+.dv-free-inp{width:100%;background:transparent;border:none;outline:none;color:rgba(255,255,255,.7);font-size:.6rem;font-family:'Noto Sans KR',sans-serif;padding:3px 0;box-sizing:border-box;}
+
+/* memo */
+.dv-memo-hdr{display:flex;align-items:center;gap:4px;padding:2px 8px 1px;}
+.dv-memo-body{padding:0 8px 4px;}
+.dv-memo-ta{width:100%;min-height:64px;background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,.1);outline:none;color:rgba(255,255,255,.65);font-size:.6rem;font-family:'Noto Sans KR',sans-serif;resize:none;line-height:1.75;padding:2px 0;box-sizing:border-box;}
+
+/* 구분선 */
+.dv-divider{height:1px;background:rgba(255,255,255,.25);margin:4px 0 0;}
+
+/* 테이블 헤더 */
+.dv-table-hdr{display:flex;align-items:center;border-bottom:1px solid rgba(255,255,255,.2);background:#0e0e0e;flex-shrink:0;}
+.dv-col-subj{width:56px;flex-shrink:0;font-size:.46rem;color:rgba(255,255,255,.3);text-align:center;padding:2px 0;border-right:1px solid rgba(255,255,255,.15);}
+.dv-col-todo{flex:1;font-size:.46rem;color:rgba(255,255,255,.3);padding:2px 4px;border-right:1px solid rgba(255,255,255,.15);}
+.dv-col-time{width:28px;flex-shrink:0;font-size:.46rem;color:rgba(255,255,255,.3);text-align:center;padding:2px 0;}
+
+/* 테이블 바디 */
+.dv-table-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.dv-table-body::-webkit-scrollbar{width:0;}
+
+/* 각 행 */
+.dv-row{display:flex;align-items:stretch;border-bottom:1px solid rgba(255,255,255,.08);min-height:26px;}
+.dv-row.drag-over{border-top:2px solid rgba(255,255,255,.4);}
+
+/* 칸1: 과목명+공부시간 */
+.dv-cell-subj{width:56px;flex-shrink:0;border-right:1px solid rgba(255,255,255,.12);display:flex;flex-direction:column;justify-content:center;padding:2px 3px 2px 4px;overflow:hidden;cursor:pointer;position:relative;}
+.dv-cell-subj::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
+.dv-cell-subj.empty{cursor:default;}
+.dv-sname{font-size:.56rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;}
+.dv-stime{font-size:.45rem;font-family:monospace;color:rgba(255,255,255,.32);line-height:1.2;}
+
+/* 칸2: ✕ 삭제 + 할일 텍스트 */
+.dv-cell-todo{flex:1;min-width:0;display:flex;align-items:center;border-right:1px solid rgba(255,255,255,.08);position:relative;}
+.dv-del{width:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,.15);font-size:.55rem;border-right:1px solid rgba(255,255,255,.06);}
+.dv-del:active{color:#ef4444;}
+.dv-txt{flex:1;padding:3px 4px;font-size:.63rem;color:rgba(255,255,255,.82);word-break:break-all;line-height:1.4;cursor:text;}
+.dv-txt.done{color:rgba(255,255,255,.25);text-decoration:line-through;}
+.dv-txt input{background:transparent;border:none;outline:none;color:#fff;font-size:.63rem;font-family:'Noto Sans KR',sans-serif;width:100%;padding:0;}
+
+/* 칸3: O/X/△ 상태 */
+.dv-cell-status{width:28px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;cursor:pointer;user-select:none;}
+
+/* 새 할일 입력 행 */
+.dv-add-row{display:flex;align-items:stretch;border-bottom:1px solid rgba(255,255,255,.05);min-height:24px;}
+.dv-add-subj-cell{width:56px;flex-shrink:0;border-right:1px solid rgba(255,255,255,.12);position:relative;}
+.dv-add-subj-cell::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
+.dv-add-inp-wrap{flex:1;display:flex;align-items:center;}
+.dv-add-inp{width:100%;background:transparent;border:none;outline:none;color:rgba(255,255,255,.4);font-size:.62rem;font-family:'Noto Sans KR',sans-serif;padding:3px 5px;}
+.dv-add-inp::placeholder{color:rgba(255,255,255,.13);}
+.dv-add-status-cell{width:28px;flex-shrink:0;}
+
+/* 과목 추가 버튼 */
+.dv-add-subj{padding:7px 8px;font-size:.58rem;color:rgba(255,255,255,.18);cursor:pointer;text-align:center;border-top:1px solid rgba(255,255,255,.05);}
+
+/* 정지 바 */
+.dv-stop-bar{position:absolute;bottom:calc(60px + env(safe-area-inset-bottom,0));left:0;right:0;padding:5px 10px;background:rgba(17,17,17,.95);border-top:1px solid #2a2a2a;z-index:20;}
+.dv-stop-bar button{width:100%;height:30px;border-radius:8px;border:none;background:#3a1a1a;color:#ff6b6b;font-size:.7rem;font-weight:700;font-family:'Noto Sans KR',sans-serif;cursor:pointer;}
+
+/* ── 오른쪽 격자 영역 (약 42%) ── */
+.dv-right{width:42%;flex-shrink:0;display:flex;flex-direction:column;overflow:hidden;background:#0d0d0d;position:relative;}
+
+/* 10~60 헤더 */
+.dv-grid-hdr{display:flex;align-items:center;flex-shrink:0;border-bottom:1px solid #1a1a1a;padding:2px 0;background:#0d0d0d;}
+.dv-grid-axis{width:20px;flex-shrink:0;}
+.dv-grid-nums{flex:1;display:flex;}
+.dv-grid-nums span{flex:1;text-align:center;font-family:monospace;font-size:.42rem;color:rgba(255,255,255,.22);font-weight:600;}
+
+/* 타임라인 (pgwrap/pgrid는 기존 유지) */
+.pgwrap{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;-webkit-overflow-scrolling:touch;touch-action:pan-y;}
+.pgwrap::-webkit-scrollbar{width:0;}
+.pgrid{position:relative;width:100%;background:#0d0d0d;touch-action:pan-y;will-change:transform;}
+#pg-timer.plan-mode .pgrid{cursor:crosshair;}
 
 /* ── TODO 패널 (플래너 - 과목별) ── */
 .todo-panel{position:absolute;top:0;right:0;bottom:calc(50px + env(safe-area-inset-bottom,0));width:85%;max-width:320px;background:rgba(15,15,15,.97);border-left:1px solid #2a2a2a;z-index:30;display:flex;flex-direction:column;padding:10px;overflow-y:auto;box-shadow:-4px 0 16px rgba(0,0,0,.4);transform:translateX(105%);visibility:hidden;pointer-events:none;transition:transform .28s cubic-bezier(.32,.72,0,1),visibility 0s .28s;touch-action:pan-y;will-change:transform;}

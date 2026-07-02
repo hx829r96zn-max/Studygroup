@@ -145,25 +145,76 @@
     <div id="aname" style="font-weight:700;font-size:.8rem;color:#fff;flex:1">-</div>
     <div class="atime" id="atime">00:00:00</div>
   </div>
-  <div class="diarysplit">
-    <!-- 왼쪽 2/3: 할일 테이블 -->
-    <div class="diaryleft">
-      <div class="diaryScroll" id="subjList"></div>
-      <div class="diarystop">
-        <button class="diarystopbtn" id="tcStop" onclick="stopSubjBtn()">■ 정지</button>
-        <div class="diaryaddsubj" onclick="openAddSM()">+ 과목 추가</div>
+  <!-- 좌우 2단 분할 -->
+  <div class="dv-wrap">
+
+    <!-- ── 왼쪽: 다이어리 노트 ── -->
+    <div class="dv-left">
+
+      <!-- date / d-day 헤더 -->
+      <div class="dv-hdr-row">
+        <span class="dv-italic">date</span>
+        <span class="dv-hline"></span>
+        <span class="dv-italic">d-day</span>
+        <span class="dv-hline"></span>
       </div>
+
+      <!-- 빈 줄 2개 (자유 필기) -->
+      <div class="dv-memo-lines">
+        <div class="dv-free-line"><input class="dv-free-inp" id="dvLine1" placeholder=""></div>
+        <div class="dv-free-line"><input class="dv-free-inp" id="dvLine2" placeholder=""></div>
+      </div>
+
+      <!-- memo 섹션 -->
+      <div class="dv-memo-hdr">
+        <span class="dv-italic">memo</span>
+        <span class="dv-hline"></span>
+      </div>
+      <div class="dv-memo-body">
+        <textarea class="dv-memo-ta" id="dvMemo" placeholder=""></textarea>
+      </div>
+
+      <!-- 구분선 -->
+      <div class="dv-divider"></div>
+
+      <!-- 과목+할일 테이블 -->
+      <!-- 헤더행 -->
+      <div class="dv-table-hdr">
+        <div class="dv-col-subj">과목</div>
+        <div class="dv-col-todo">할 일</div>
+        <div class="dv-col-time">상태</div>
+      </div>
+      <!-- 행들 (JS로 채워짐) -->
+      <div class="dv-table-body" id="dvTableBody"></div>
+
+      <!-- 과목 추가 -->
+      <div class="dv-add-subj" onclick="openAddSM()">+ 과목 추가</div>
+
     </div>
-    <!-- 오른쪽 1/3: 시간 격자 -->
-    <div class="diaryright">
-      <div class="drhdr">
-        <div class="draxis"></div>
-        <div class="drcols"><span>10</span><span>20</span><span>30</span><span>40</span><span>50</span><span>60</span></div>
+
+    <!-- ── 오른쪽: 시간 격자 ── -->
+    <div class="dv-right">
+      <!-- 10~60 헤더 -->
+      <div class="dv-grid-hdr">
+        <div class="dv-grid-axis"></div>
+        <div class="dv-grid-nums">
+          <span>10</span><span>20</span><span>30</span><span>40</span><span>50</span><span>60</span>
+        </div>
       </div>
-      <div class="pgwrap" id="pScroll"><div class="pgrid" id="pGrid"></div></div>
+      <!-- 타임라인 -->
+      <div class="pgwrap" id="pScroll">
+        <div class="pgrid" id="pGrid"></div>
+      </div>
       <div class="todo-panel" id="todoPanel"></div>
     </div>
+
+  </div><!-- /dv-wrap -->
+
+  <!-- 정지 버튼 (공부 중일 때만) -->
+  <div class="dv-stop-bar" id="dvStopBar" style="display:none">
+    <button onclick="stopSubjBtn()">■ 정지</button>
   </div>
+
 </div>
 
 <!-- ══════════ ROOM ══════════ -->
