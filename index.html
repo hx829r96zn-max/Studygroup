@@ -123,58 +123,51 @@
 
 <!-- ══════════ TIMER (플래너) ══════════ -->
 <div class="page" id="pg-timer">
-  <!-- ── 좌우 분할 ── -->
+  <!-- ── 상단 헤더 영역 ── -->
+  <div class="dv-top">
+    <!-- 총 공부시간 (크게, 위아래 여백 있게) -->
+    <div class="dv-total-wrap">
+      <div class="dv-total" id="dvLiveTime">0H 00M 00S</div>
+      <div class="dv-live-subj" id="dvLiveSubj"></div>
+    </div>
+    <!-- D- / 계획하기 / 목표·순공·달성 -->
+    <div class="dv-meta-row">
+      <div class="dv-dday-wrap">
+        <span class="dv-lbl-sm">D-</span>
+        <span class="dv-dday-val" id="dvDday">-</span>
+      </div>
+      <div class="dv-date-wrap">
+        <span class="dv-date-val" id="timerDay"></span>
+      </div>
+      <div class="dv-plan-btns">
+        <button class="dv-plan-btn" id="planToggle" onclick="togglePlanMode()">계획하기</button>
+        <button class="dv-plan-btn" id="planUndoBtn" onclick="undoPlan()" style="display:none">↩</button>
+        <button class="dv-plan-btn" id="planRedoBtn" onclick="redoPlan()" style="display:none">↪</button>
+        <button class="dv-plan-btn dv-plan-save" id="planSaveBtn" onclick="savePlan()" style="display:none">저장</button>
+      </div>
+      <div class="dv-stat-row">
+        <span class="ps-lbl">목표</span><span id="planTarget">0h 00m</span>
+        <span class="ps-lbl">순공</span><span id="planActual" style="color:#22c55e">0h 00m</span>
+        <span class="ps-lbl">달성</span><span id="planPct" style="color:#60a5fa">0%</span>
+      </div>
+    </div>
+    <!-- 구분선 -->
+    <div class="dv-divider"></div>
+  </div>
+
+  <!-- ── 본문: 할일 + TIME TABLE ── -->
   <div class="dv-wrap">
 
-    <!-- 왼쪽 2/3: 노트 영역 -->
+    <!-- 왼쪽 2/3: 할일 테이블 -->
     <div class="dv-left">
-
-      <!-- COMMENT + DATE/D- 헤더 -->
-      <div class="dv-hdr">
-        <div class="dv-hdr-top">
-          <div class="dv-hdr-comment">
-            <span class="dv-lbl-sm">COMMENT</span>
-            <!-- 실시간 공부시간 + 현재 과목 -->
-            <div class="dv-live">
-              <span class="dv-live-time" id="dvLiveTime">0H 00M 00S</span>
-              <span class="dv-live-subj" id="dvLiveSubj"></span>
-            </div>
-          </div>
-          <div class="dv-hdr-right">
-            <div class="dv-date-row">
-              <span class="dv-lbl-sm">DATE</span>
-              <span class="dv-date-val" id="timerDay"></span>
-            </div>
-            <div class="dv-ddayrow">
-              <span class="dv-lbl-sm">D-</span>
-              <span class="dv-dday-val" id="dvDday"></span>
-            </div>
-          </div>
-        </div>
-        <!-- 계획짜기/수정 버튼 -->
-        <div class="dv-plan-btns">
-          <button class="dv-plan-btn" id="planToggle" onclick="togglePlanMode()">계획하기</button>
-          <button class="dv-plan-btn" id="planUndoBtn" onclick="undoPlan()" style="display:none">↩</button>
-          <button class="dv-plan-btn" id="planRedoBtn" onclick="redoPlan()" style="display:none">↪</button>
-          <button class="dv-plan-btn dv-plan-save" id="planSaveBtn" onclick="savePlan()" style="display:none">저장</button>
-          <div class="dv-plan-stat">
-            <span class="ps-lbl">목표</span><span id="planTarget">0h 00m</span>
-            <span class="ps-lbl" style="margin-left:6px">순공</span><span id="planActual" style="color:#22c55e">0h 00m</span>
-            <span class="ps-lbl" style="margin-left:6px">달성</span><span id="planPct" style="color:#60a5fa">0%</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 할일 테이블 헤더 -->
+      <!-- 테이블 헤더 -->
       <div class="dv-thead">
-        <div class="dv-th-subj">⊕과목</div>
-        <div class="dv-th-todo">⊕할일</div>
-        <div class="dv-th-st"></div>
+        <div class="dv-th-subj" onclick="openSubjPicker()">과목 +</div>
+        <div class="dv-th-todo">할 일</div>
+        <div class="dv-th-st">상태</div>
       </div>
-
-      <!-- 할일 테이블 바디 -->
+      <!-- 할일 행들 -->
       <div class="dv-tbody" id="dvTbody"></div>
-
       <!-- 정지 버튼 -->
       <div class="dv-stopbar" id="dvStopBar">
         <button onclick="stopSubjBtn()">■ 정지</button>

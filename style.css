@@ -148,106 +148,113 @@ textarea.inp{resize:vertical;min-height:70px;}
 .adot{width:8px;height:8px;border-radius:50%;flex-shrink:0;animation:blink 1s infinite;}
 .atime{font-family:monospace;font-size:.88rem;font-weight:600;margin-left:auto;color:#fff;}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
-/* 기존 호환 클래스 */
+/* 기존 호환 */
 .tsplit{flex:1;display:flex;overflow:hidden;min-height:0;}
 .tleft{width:140px;flex-shrink:0;display:flex;flex-direction:column;background:#1a1a1a;}
-.tright{flex:1;overflow:hidden;display:flex;background:#111;position:relative;}
+.tright{flex:1;overflow:hidden;display:flex;position:relative;}
 .sli{flex:1;overflow-y:auto;padding:4px 0;}.sli::-webkit-scrollbar{width:0;}
 .sr{display:flex;align-items:center;gap:7px;padding:10px;cursor:pointer;border-bottom:1px solid #222;}
 .sdot{width:4px;height:24px;border-radius:2px;flex-shrink:0;}
 .sname{font-size:.8rem;font-weight:700;flex:1;color:#fff;}
 .stime{font-family:monospace;font-size:.68rem;color:rgba(255,255,255,.4);}
 .add-s{padding:10px;cursor:pointer;color:rgba(255,255,255,.4);font-size:.76rem;border-top:1px solid #2a2a2a;}
-.tc-ctrl{padding:9px;border-top:1px solid #2a2a2a;display:flex;gap:5px;flex-shrink:0;background:#1a1a1a;}
+.tc-ctrl{padding:9px;border-top:1px solid #2a2a2a;display:flex;gap:5px;flex-shrink:0;}
 .tc-go,.tc-stop{border:none;cursor:pointer;}
 .pscroll{flex:1;display:flex;overflow:hidden;}
 
-/* .page.on이 block으로 덮어쓰는 문제 방지 */
+/* .page.on 덮어쓰기 방지 */
 #pg-timer.on{display:flex !important;flex-direction:column;}
 
-/* ══════════════════════════════
-   다이어리 레이아웃 (사진 기반)
-══════════════════════════════ */
+/* ══ 상단 헤더 ══ */
+.dv-top{flex-shrink:0;background:#111;padding:0 0 0;}
+
+/* 총 공부시간 — 크게, 위아래 여백 */
+.dv-total-wrap{padding:18px 16px 10px;display:flex;flex-direction:column;gap:3px;}
+.dv-total{font-size:1.55rem;font-weight:800;color:#fff;font-family:monospace;letter-spacing:1px;line-height:1;}
+.dv-live-subj{font-size:.58rem;color:rgba(255,255,255,.4);font-weight:600;min-height:16px;padding-bottom:8px;}
+
+/* D- / 날짜 / 계획하기 / 통계 */
+.dv-meta-row{display:flex;align-items:center;gap:6px;padding:0 12px 8px;flex-wrap:wrap;}
+.dv-dday-wrap{display:flex;align-items:baseline;gap:2px;margin-right:4px;}
+.dv-lbl-sm{font-size:.48rem;color:rgba(255,255,255,.3);font-weight:700;letter-spacing:.5px;}
+.dv-dday-val{font-size:.88rem;font-weight:800;color:#fff;font-family:monospace;}
+.dv-date-wrap{flex:1;}
+.dv-date-val{font-size:.52rem;color:rgba(255,255,255,.35);font-family:monospace;}
+
+/* 계획 버튼들 */
+.dv-plan-btns{display:flex;gap:4px;}
+.dv-plan-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.65);border-radius:6px;font-size:.58rem;font-family:'Noto Sans KR',sans-serif;padding:4px 9px;cursor:pointer;font-weight:600;}
+.dv-plan-btn.active{background:rgba(255,255,255,.18);color:#fff;}
+.dv-plan-save{background:#22c55e !important;color:#000 !important;border-color:#22c55e !important;}
+
+/* 통계 */
+.dv-stat-row{display:flex;align-items:center;gap:5px;font-size:.5rem;color:rgba(255,255,255,.5);}
+.dv-stat-row .ps-lbl{color:rgba(255,255,255,.28);font-size:.46rem;margin-left:3px;}
+.dv-stat-row .ps-lbl:first-child{margin-left:0;}
+
+/* 구분선 */
+.dv-divider{height:1px;background:rgba(255,255,255,.2);margin:0;}
+
+/* ══ 본문 좌우 분할 ══ */
 .dv-wrap{flex:1;display:flex;overflow:hidden;min-height:0;}
 
 /* ── 왼쪽 2/3 ── */
-.dv-left{flex:2;min-width:0;display:flex;flex-direction:column;background:#111;border-right:1.5px solid rgba(255,255,255,.22);overflow:hidden;}
-
-/* 헤더 영역 */
-.dv-hdr{flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.15);background:#0d0d0d;}
-.dv-hdr-top{display:flex;align-items:stretch;border-bottom:1px solid rgba(255,255,255,.1);}
-.dv-hdr-comment{flex:1;padding:6px 8px;border-right:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;gap:3px;}
-.dv-lbl-sm{font-size:.42rem;color:rgba(255,255,255,.3);font-weight:700;letter-spacing:.5px;font-family:monospace;}
-/* 실시간 공부시간 */
-.dv-live{display:flex;flex-direction:column;gap:1px;}
-.dv-live-time{font-size:.82rem;font-weight:800;color:#fff;font-family:monospace;letter-spacing:.5px;line-height:1.2;}
-.dv-live-subj{font-size:.52rem;color:rgba(255,255,255,.45);font-weight:600;min-height:14px;}
-/* 날짜/D- */
-.dv-hdr-right{width:90px;flex-shrink:0;padding:5px 7px;display:flex;flex-direction:column;gap:3px;}
-.dv-date-row{display:flex;align-items:center;gap:4px;border-bottom:1px solid rgba(255,255,255,.1);padding-bottom:3px;margin-bottom:2px;}
-.dv-date-val{font-size:.55rem;color:rgba(255,255,255,.7);font-family:monospace;}
-.dv-ddayrow{display:flex;align-items:center;gap:3px;}
-.dv-dday-val{font-size:.7rem;font-weight:800;color:#fff;}
-/* 계획 버튼 */
-.dv-plan-btns{display:flex;align-items:center;gap:4px;padding:4px 6px;flex-wrap:wrap;}
-.dv-plan-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.7);border-radius:6px;font-size:.58rem;font-family:'Noto Sans KR',sans-serif;padding:3px 8px;cursor:pointer;font-weight:600;}
-.dv-plan-btn.active,.dv-plan-btn:active{background:rgba(255,255,255,.18);color:#fff;}
-.dv-plan-save{background:#22c55e !important;color:#000 !important;border-color:#22c55e !important;}
-.dv-plan-stat{display:flex;align-items:center;gap:3px;margin-left:auto;font-size:.5rem;color:rgba(255,255,255,.5);}
-.dv-plan-stat .ps-lbl{color:rgba(255,255,255,.3);font-size:.46rem;}
+.dv-left{flex:2;min-width:0;display:flex;flex-direction:column;background:#111;border-right:1.5px solid rgba(255,255,255,.18);overflow:hidden;}
 
 /* 테이블 헤더 */
-.dv-thead{display:flex;align-items:center;background:#0a0a0a;border-bottom:1px solid rgba(255,255,255,.18);flex-shrink:0;}
-.dv-th-subj{width:62px;flex-shrink:0;font-size:.48rem;color:rgba(255,255,255,.4);text-align:center;padding:4px 0;border-right:1px solid rgba(255,255,255,.12);font-weight:700;cursor:pointer;}
-.dv-th-todo{flex:1;font-size:.48rem;color:rgba(255,255,255,.4);padding:4px 6px;border-right:1px solid rgba(255,255,255,.12);font-weight:700;}
-.dv-th-st{width:28px;flex-shrink:0;font-size:.4rem;color:rgba(255,255,255,.25);text-align:center;}
+.dv-thead{display:flex;align-items:center;background:#0a0a0a;border-bottom:1px solid rgba(255,255,255,.15);flex-shrink:0;}
+.dv-th-subj{width:70px;flex-shrink:0;font-size:.5rem;color:rgba(255,255,255,.38);text-align:center;padding:5px 0;border-right:1px solid rgba(255,255,255,.12);font-weight:700;cursor:pointer;letter-spacing:.3px;}
+.dv-th-subj:active{background:rgba(255,255,255,.06);}
+.dv-th-todo{flex:1;font-size:.5rem;color:rgba(255,255,255,.38);padding:5px 7px;border-right:1px solid rgba(255,255,255,.12);font-weight:700;}
+.dv-th-st{width:30px;flex-shrink:0;font-size:.42rem;color:rgba(255,255,255,.22);text-align:center;}
 
 /* 테이블 바디 */
 .dv-tbody{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
 .dv-tbody::-webkit-scrollbar{width:0;}
 
-/* 각 행 */
-.dv-row{display:flex;align-items:stretch;border-bottom:1px solid rgba(255,255,255,.07);min-height:26px;position:relative;}
+/* 각 행 — 줄 높이 키움 */
+.dv-row{display:flex;align-items:stretch;border-bottom:1px solid rgba(255,255,255,.08);min-height:34px;position:relative;}
 .dv-row.drag-over{border-top:2px solid rgba(255,255,255,.4);}
 
-/* 칸1: 과목명+공부시간 */
-.dv-csubj{width:62px;flex-shrink:0;border-right:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;justify-content:center;padding:2px 4px 2px 7px;overflow:hidden;position:relative;cursor:pointer;}
-.dv-csubj.empty{cursor:default;}
-.dv-csubj-bar{position:absolute;left:0;top:0;bottom:0;width:3px;}
-.dv-csubj-name{font-size:.57rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35;}
-.dv-csubj-time{font-size:.44rem;font-family:monospace;color:rgba(255,255,255,.3);line-height:1.2;}
-.dv-csubj.running .dv-csubj-name::after{content:' ●';color:#ef4444;font-size:.38rem;}
+/* 칸1: 과목 점 + 이름 (첫행만, 나머진 점선) */
+.dv-csubj{width:70px;flex-shrink:0;border-right:1px solid rgba(255,255,255,.1);display:flex;align-items:center;padding:4px 6px 4px 8px;overflow:hidden;position:relative;cursor:pointer;gap:6px;}
+.dv-csubj.empty{cursor:default;padding-left:16px;}
+.dv-csubj-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.dv-csubj-info{display:flex;flex-direction:column;min-width:0;flex:1;}
+.dv-csubj-name{font-size:.6rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;}
+.dv-csubj-time{font-size:.46rem;font-family:monospace;color:rgba(255,255,255,.35);line-height:1.2;display:none;}
+.dv-csubj-time.show{display:block;}
+.dv-csubj.running .dv-csubj-dot{box-shadow:0 0 0 2px rgba(239,68,68,.5);}
 
 /* 칸2: ✕ + 텍스트 */
 .dv-ctodo{flex:1;min-width:0;display:flex;align-items:center;border-right:1px solid rgba(255,255,255,.07);}
-.dv-del{width:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,.12);font-size:.52rem;border-right:1px solid rgba(255,255,255,.06);align-self:stretch;}
+.dv-del{width:18px;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,.12);font-size:.54rem;border-right:1px solid rgba(255,255,255,.06);align-self:stretch;}
 .dv-del:active{color:#ef4444;}
-.dv-txt{flex:1;padding:3px 5px;font-size:.64rem;color:rgba(255,255,255,.82);word-break:break-all;line-height:1.4;cursor:text;}
-.dv-txt.st-O{color:rgba(255,255,255,.82);}
-.dv-txt.st-X{color:rgba(255,255,255,.3);text-decoration:line-through;}
-.dv-txt.st-tri{color:rgba(255,255,255,.6);}
-.dv-txt input{background:transparent;border:none;outline:none;color:#fff;font-size:.64rem;font-family:'Noto Sans KR',sans-serif;width:100%;padding:0;line-height:1.4;}
+.dv-txt{flex:1;padding:5px 6px;font-size:.68rem;color:rgba(255,255,255,.85);word-break:break-all;line-height:1.4;cursor:text;}
+.dv-txt.st-X{color:rgba(255,255,255,.28);text-decoration:line-through;}
+.dv-txt.st-tri{color:rgba(255,255,255,.55);}
+.dv-txt input{background:transparent;border:none;outline:none;color:#fff;font-size:.68rem;font-family:'Noto Sans KR',sans-serif;width:100%;padding:0;line-height:1.4;}
 
-/* 칸3: △/O/X 상태 */
-.dv-cst{width:28px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;cursor:pointer;user-select:none;}
+/* 칸3: 상태 */
+.dv-cst{width:30px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;cursor:pointer;user-select:none;}
 
 /* 입력 행 */
-.dv-addrow{display:flex;align-items:stretch;border-bottom:1px solid rgba(255,255,255,.05);min-height:24px;}
-.dv-addrow-subj{width:62px;flex-shrink:0;border-right:1px solid rgba(255,255,255,.1);position:relative;}
-.dv-addrow-bar{position:absolute;left:0;top:0;bottom:0;width:3px;}
-.dv-addrow-del{width:16px;flex-shrink:0;border-right:1px solid rgba(255,255,255,.06);}
-.dv-addrow-inp{flex:1;background:transparent;border:none;outline:none;color:rgba(255,255,255,.35);font-size:.63rem;font-family:'Noto Sans KR',sans-serif;padding:3px 5px;}
+.dv-addrow{display:flex;align-items:stretch;border-bottom:1px solid rgba(255,255,255,.05);min-height:30px;}
+.dv-addrow-subj{width:70px;flex-shrink:0;border-right:1px solid rgba(255,255,255,.1);display:flex;align-items:center;padding:0 8px;gap:6px;}
+.dv-addrow-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;opacity:.5;}
+.dv-addrow-del{width:18px;flex-shrink:0;border-right:1px solid rgba(255,255,255,.06);}
+.dv-addrow-inp{flex:1;background:transparent;border:none;outline:none;color:rgba(255,255,255,.35);font-size:.67rem;font-family:'Noto Sans KR',sans-serif;padding:5px 6px;}
 .dv-addrow-inp::placeholder{color:rgba(255,255,255,.12);}
-.dv-addrow-inp:focus{color:rgba(255,255,255,.7);}
-.dv-addrow-st{width:28px;flex-shrink:0;}
+.dv-addrow-inp:focus{color:rgba(255,255,255,.75);}
+.dv-addrow-st{width:30px;flex-shrink:0;}
 
 /* 정지 버튼 */
-.dv-stopbar{display:none;flex-shrink:0;padding:5px 7px;background:#111;border-top:1px solid #1e1e1e;padding-bottom:calc(5px + env(safe-area-inset-bottom,0));}
-.dv-stopbar button{width:100%;height:28px;border-radius:7px;border:none;background:#3a1a1a;color:#ff6b6b;font-size:.68rem;font-weight:700;font-family:'Noto Sans KR',sans-serif;cursor:pointer;}
+.dv-stopbar{display:none;flex-shrink:0;padding:6px 8px;background:#111;border-top:1px solid #1e1e1e;padding-bottom:calc(6px + env(safe-area-inset-bottom,0));}
+.dv-stopbar button{width:100%;height:30px;border-radius:8px;border:none;background:#3a1a1a;color:#ff6b6b;font-size:.7rem;font-weight:700;font-family:'Noto Sans KR',sans-serif;cursor:pointer;}
 
 /* ── 오른쪽 1/3: TIME TABLE ── */
 .dv-right{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;background:#0d0d0d;position:relative;}
-.dv-tt-hdr{flex-shrink:0;text-align:center;font-size:.48rem;font-weight:700;color:rgba(255,255,255,.3);letter-spacing:1px;padding:4px 0 3px;border-bottom:1px solid #1a1a1a;background:#0a0a0a;font-family:monospace;}
+.dv-tt-hdr{flex-shrink:0;text-align:center;font-size:.46rem;font-weight:700;color:rgba(255,255,255,.28);letter-spacing:1.5px;padding:5px 0 4px;border-bottom:1px solid #1a1a1a;background:#0a0a0a;font-family:monospace;}
 
 /* 타임라인 */
 .pgwrap{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;-webkit-overflow-scrolling:touch;touch-action:pan-y;}
