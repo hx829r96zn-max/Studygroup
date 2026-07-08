@@ -68,7 +68,7 @@ function svPomoState(){localStorage.setItem('sg_pomo_state',JSON.stringify({pFoc
 function clearPomoState(){localStorage.removeItem('sg_pomo_state');}
 var ncRules=[],pickedC=COLORS[0];
 var calY=new Date().getFullYear(),calM=new Date().getMonth(),_pickY=new Date().getFullYear();
-var ROW_H=22,NCOLS=6,COL_MINS=10,AXIS_W=20,GRID_START_HOUR=5;
+var ROW_H=20,NCOLS=6,COL_MINS=10,AXIS_W=20,GRID_START_HOUR=5;
 function hourToRow(h){return(h-GRID_START_HOUR+24)%24;}
 function rowToHour(r){return(r+GRID_START_HOUR)%24;}
 var PCIRC=848.2;
@@ -148,11 +148,38 @@ function updateHome(){var t=getTSecs(),h=Math.floor(t/3600),m=Math.floor((t%3600
 function renderHBet(){var el=document.getElementById('homeBetContent');if(!el)return;var act=bets.filter(function(b){return b.status!=='done';});if(!act.length){el.innerHTML='<div style="font-size:.76rem;color:var(--ink3);padding:7px 0;text-align:center">진행 중인 내기 없음</div>';return;}el.innerHTML='';act.forEach(function(b){var row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:7px;padding:8px 0;border-bottom:1px solid var(--line)';row.innerHTML='<div style="flex:1"><div style="font-size:.83rem;font-weight:700">vs '+b.opp+'</div><div style="font-size:.68rem;color:var(--ink2);margin-top:1px">'+b.cl+' · '+b.s+'~'+b.e+'</div></div><div style="text-align:right"><div style="font-family:monospace;font-size:.88rem;color:var(--green)">'+Number(b.amt).toLocaleString()+'원</div></div>';el.appendChild(row);});}
 
 // TIMER
-function renderTH(){var now=new Date(),days=['일','월','화','수','목','금','토'];var td=document.getElementById('timerDay');if(td)td.textContent=now.getFullYear()+'. '+(now.getMonth()+1)+'. '+now.getDate()+' ('+days[now.getDay()]+')';var tt=document.getElementById('timerTotal');if(tt)tt.textContent=fmtHM(getTSecs());}
+function renderTH(){
+  var now=new Date(),days=['일','월','화','수','목','금','토'];
+  var td=document.getElementById('timerDay');
+  if(td)td.textContent=(now.getMonth()+1)+'. '+now.getDate()+'. ('+days[now.getDay()]+')';
+  // 실시간 공부시간
+  var lt=document.getElementById('dvLiveTime');
+  if(lt)lt.textContent=fmtHMS(getTSecs());
+  // 현재 공부 과목
+  var ls=document.getElementById('dvLiveSubj');
+  if(ls){
+    if(aId&&aStart){
+      var sub=subjs.find(function(s){return s.id===aId;});
+      var elapsed=Math.floor((Date.now()-aStart)/1000);
+      ls.textContent=(sub?sub.name:'')+' '+f3(elapsed);
+      ls.style.color=(sub?sub.color:'rgba(255,255,255,.45)');
+    }else{ls.textContent='';}
+  }
+  // D-day (첫 번째 dday 사용)
+  var dd=document.getElementById('dvDday');
+  if(dd){
+    var ddays=JSON.parse(localStorage.getItem('sg_dday')||'[]');
+    if(ddays.length){
+      var diff=Math.ceil((new Date(ddays[0].date)-new Date(today()))/86400000);
+      dd.textContent=diff>=0?diff:'D+'+Math.abs(diff);
+    }else{dd.textContent='-';}
+  }
+}
+function fmtHMS(s){var h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sc=s%60;return h+'H '+String(m).padStart(2,'0')+'M '+String(sc).padStart(2,'0')+'S';}
 
 /* ── 상태 유틸 ── */
-function _stLbl(s){return s==='O'?'O':s==='X'?'X':s==='△'?'△':'·';}
-function _stClr(s){return s==='O'?'#22c55e':s==='X'?'#ef4444':s==='△'?'#eab308':'rgba(255,255,255,.18)';}
+function _stLbl(s){return s==='O'?'○':s==='X'?'✕':s==='△'?'△':'□';}
+function _stClr(s){return s==='O'?'#22c55e':s==='X'?'#ef4444':s==='△'?'#eab308':'rgba(255,255,255,.2)';}
 function _stNext(s){return s===null?'O':s==='O'?'X':s==='X'?'△':null;}
 
 /* ── 할일 CRUD ── */
@@ -193,7 +220,41 @@ function _dvMove(sid,from,to){
   svTodos();renderSL();saveUserDataToFirebase();
 }
 
-/* ── renderSL: dvTbody 기반, 과목별 복수 할일 ── */
+/* ── 과목 선택 모달 (⊕과목 칸 탭) ── */
+function openSubjPicker(afterSid){
+  // 간단한 바텀시트: 과목 목록 + 추가 버튼
+  var old=document.getElementById('_subjPicker');if(old)old.remove();
+  var over=document.createElement('div');
+  over.id='_subjPicker';
+  over.style.cssText='position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;';
+  var sheet=document.createElement('div');
+  sheet.style.cssText='width:100%;background:#1a1a1a;border-radius:18px 18px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom,0));max-height:60vh;overflow-y:auto;';
+  var title=document.createElement('div');
+  title.style.cssText='font-size:.78rem;font-weight:800;color:#fff;margin-bottom:10px;';
+  title.textContent='과목 선택';
+  sheet.appendChild(title);
+  subjs.forEach(function(sub){
+    var btn=document.createElement('div');
+    btn.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 8px;border-radius:9px;cursor:pointer;margin-bottom:4px;';
+    btn.innerHTML='<div style="width:10px;height:10px;border-radius:50%;background:'+sub.color+';flex-shrink:0"></div><div style="font-size:.8rem;font-weight:600;color:#fff;flex:1">'+escapeHtml(sub.name)+'</div><div style="font-size:.7rem;font-family:monospace;color:rgba(255,255,255,.4)">'+fmtSh(getSecs(sub.id))+'</div>';
+    btn.onclick=function(){
+      over.remove();
+      // 해당 과목 공부 시작/정지
+      clickSubj(sub.id);
+    };
+    sheet.appendChild(btn);
+  });
+  var addBtn=document.createElement('div');
+  addBtn.style.cssText='padding:10px 8px;font-size:.76rem;color:rgba(255,255,255,.4);cursor:pointer;border-top:1px solid #2a2a2a;margin-top:4px;';
+  addBtn.textContent='+ 새 과목 추가';
+  addBtn.onclick=function(){over.remove();openAddSM();};
+  sheet.appendChild(addBtn);
+  over.appendChild(sheet);
+  over.onclick=function(e){if(e.target===over)over.remove();};
+  document.body.appendChild(over);
+}
+
+/* ── 메인 renderSL ── */
 function renderSL(){
   var w=document.getElementById('dvTbody');
   if(!w)return;
@@ -206,51 +267,35 @@ function renderSL(){
     var list=getTodoList(dk,sub.id);
     var grp=document.createElement('div');
 
+    /* 기존 할일 행들 */
     list.forEach(function(t,i){
       var row=document.createElement('div');
       row.className='dv-row';
       row.setAttribute('data-sid',sub.id);
       row.setAttribute('data-i',String(i));
 
-      /* 칸1: 과목명+시간 — 첫행만 표시, 나머지는 색선만
-         탭 = 공부 시작/정지
-         더블탭 = 과목 추가/수정 모달 */
+      /* 칸1: 과목명+시간 */
       var c1=document.createElement('div');
       c1.className='dv-csubj'+(i>0?' empty':'')+(i===0&&isRunning?' running':'');
-      var cbar=document.createElement('div');
-      cbar.className='dv-csubj-bar';
-      cbar.style.background=sub.color;
-      c1.appendChild(cbar);
+      var cbar=document.createElement('div');cbar.className='dv-csubj-bar';cbar.style.background=sub.color;c1.appendChild(cbar);
       if(i===0){
         var nm=document.createElement('div');nm.className='dv-csubj-name';nm.style.color=sub.color;nm.textContent=sub.name;c1.appendChild(nm);
         var tm=document.createElement('div');tm.className='dv-csubj-time';tm.textContent=sc>0?fmtSh(sc):'';c1.appendChild(tm);
-        // 탭=시작/정지, 더블탭=과목 모달
-        var subjDblT=null;
-        c1.addEventListener('click',function(e){
-          e.stopPropagation();
-          if(subjDblT){
-            // 더블탭: 과목 관리 모달 열기
-            clearTimeout(subjDblT);subjDblT=null;
-            openAddSM();
-          }else{
-            subjDblT=setTimeout(function(){
-              subjDblT=null;
-              // 탭: 공부 시작/정지
-              clickSubj(sub.id);
-            },280);
-          }
-        });
+        // 탭=공부시작/정지
+        c1.onclick=function(e){e.stopPropagation();clickSubj(sub.id);};
       }
       row.appendChild(c1);
 
-      /* 칸2: ✕ 삭제 */
+      /* 칸2: ✕ + 텍스트 */
+      var c2=document.createElement('div');c2.className='dv-ctodo';
       var del=document.createElement('div');del.className='dv-del';del.textContent='✕';
       (function(sid,ii){del.onclick=function(e){e.stopPropagation();_dvDel(sid,ii);};})(sub.id,i);
-      row.appendChild(del);
-
-      /* 칸3: 텍스트 (더블탭=편집) */
-      var txt=document.createElement('div');txt.className='dv-txt'+(t.done?' done':'');
+      var st=t.status||null;
+      var txt=document.createElement('div');
+      txt.className='dv-txt'+(st==='X'?' st-X':st==='△'?' st-tri':st==='O'?' st-O':'');
       var sp=document.createElement('span');sp.textContent=t.text;txt.appendChild(sp);
+
+      /* 더블탭 = 인라인 편집 */
       var dblT=null;
       (function(sid,ii,tc,sp2){
         tc.addEventListener('click',function(e){
@@ -259,20 +304,17 @@ function renderSL(){
             clearTimeout(dblT);dblT=null;
             var inp=document.createElement('input');
             inp.value=sp2.textContent;
-            inp.style.cssText='background:transparent;border:none;outline:none;color:#fff;font-size:.65rem;font-family:\'Noto Sans KR\',sans-serif;width:100%;padding:0;';
+            inp.style.cssText='background:transparent;border:none;outline:none;color:#fff;font-size:.64rem;font-family:\'Noto Sans KR\',sans-serif;width:100%;padding:0;';
             tc.innerHTML='';tc.appendChild(inp);inp.focus();inp.select();
             inp.onblur=function(){_dvSave(sid,ii,inp.value);};
             inp.onkeydown=function(ev){if(ev.key==='Enter')inp.blur();if(ev.key==='Escape')renderSL();};
-          }else{
-            dblT=setTimeout(function(){dblT=null;},320);
-          }
+          }else{dblT=setTimeout(function(){dblT=null;},320);}
         });
       })(sub.id,i,txt,sp);
-      row.appendChild(txt);
+      c2.appendChild(del);c2.appendChild(txt);row.appendChild(c2);
 
-      /* 칸4: O/X/△ */
+      /* 칸3: △/O/X 상태 */
       var c3=document.createElement('div');c3.className='dv-cst';
-      var st=t.status||null;
       c3.textContent=_stLbl(st);c3.style.color=_stClr(st);
       var longT=null;
       (function(sid,ii,btn){
@@ -293,12 +335,10 @@ function renderSL(){
         rowEl.addEventListener('touchmove',function(e){
           if(!drag)return;var pt=e.touches[0];toI=-1;
           document.querySelectorAll('.dv-row[data-sid="'+sid+'"]').forEach(function(el,j){
-            el.classList.remove('drag-over');
-            var r=el.getBoundingClientRect();
+            el.classList.remove('drag-over');var r=el.getBoundingClientRect();
             if(pt.clientY>=r.top&&pt.clientY<r.bottom)toI=j;
           });
-          if(toI>=0&&toI!==fromI)
-            document.querySelectorAll('.dv-row[data-sid="'+sid+'"]')[toI].classList.add('drag-over');
+          if(toI>=0&&toI!==fromI)document.querySelectorAll('.dv-row[data-sid="'+sid+'"]')[toI].classList.add('drag-over');
         },{passive:true});
         rowEl.addEventListener('touchend',function(){
           clearTimeout(lt);rowEl.style.opacity='';
@@ -307,32 +347,38 @@ function renderSL(){
           drag=false;toI=-1;
         },{passive:true});
       })(sub.id,i,row);
-
       grp.appendChild(row);
     });
 
-    /* 새 할일 입력 행 */
+    /* 새 할일 입력 행 — 엔터: 다음 칸 열기, 더블엔터: 입력 종료 */
     var ar=document.createElement('div');ar.className='dv-addrow';
     var asc=document.createElement('div');asc.className='dv-addrow-subj';
     var asbar=document.createElement('div');asbar.className='dv-addrow-bar';asbar.style.background=sub.color;asc.appendChild(asbar);ar.appendChild(asc);
     var adel=document.createElement('div');adel.className='dv-addrow-del';ar.appendChild(adel);
     var ainp=document.createElement('input');ainp.className='dv-addrow-inp';ainp.placeholder='+ 할 일';
+    var _lastEnterEmpty=false; // 연속 빈 엔터 감지
     (function(sid,grp2){
       ainp.onkeydown=function(e){
         if(e.key!=='Enter')return;
         e.preventDefault();
         var v=ainp.value.trim();
-        if(v)_dvAdd(sid,v);
+        if(!v){
+          // 빈 엔터 두 번 = 입력 종료
+          if(_lastEnterEmpty){ainp.blur();_lastEnterEmpty=false;return;}
+          _lastEnterEmpty=true;
+          return;
+        }
+        _lastEnterEmpty=false;
+        _dvAdd(sid,v);
         renderSL();
+        // 새로 렌더된 같은 과목 입력칸으로 커서 이동
         setTimeout(function(){
           var inputs=grp2.querySelectorAll('.dv-addrow-inp');
           if(inputs.length)inputs[inputs.length-1].focus();
         },40);
       };
-      ainp.onblur=function(){
-        var v=ainp.value.trim();
-        if(v){_dvAdd(sid,v);renderSL();}
-      };
+      ainp.oninput=function(){_lastEnterEmpty=false;};
+      ainp.onblur=function(){var v=ainp.value.trim();if(v){_dvAdd(sid,v);renderSL();}};
     })(sub.id,grp);
     ar.appendChild(ainp);
     var ast=document.createElement('div');ast.className='dv-addrow-st';ar.appendChild(ast);
@@ -340,30 +386,25 @@ function renderSL(){
     w.appendChild(grp);
   });
 
-  /* 정지 버튼 표시 */
+  /* 정지 버튼 */
   var sb=document.getElementById('dvStopBar');
   if(sb)sb.style.display=aId?'block':'none';
 }
 
-/* 버그1 수정: selSubj에서 tcBtn(삭제된 DOM) 참조 제거 */
+/* selSubj: tcBtn 참조 제거 (버그1 수정) */
 function selSubj(id){selId=id;renderSL();}
 var _lastSubjClick={id:null,time:0};
 function clickSubj(id){
   if(planMode){selId=id;renderSL();return;}
   selId=id;
-  if(aId===id){
-    stopSubj();
-    if(cfg.linkPomoStop!==false&&pRun&&pomoSubjId===id)pomoPause();
-  }else{
-    startSubj(id);
-    if(cfg.linkPomoStart===true&&!pRun&&pomoSubjId===id)pomoResume();
-  }
+  if(aId===id){stopSubj();if(cfg.linkPomoStop!==false&&pRun&&pomoSubjId===id)pomoPause();}
+  else{startSubj(id);if(cfg.linkPomoStart===true&&!pRun&&pomoSubjId===id)pomoResume();}
 }
 function toggleSubj(){if(!selId)return;if(aId===selId){var sid=selId;stopSubj();if(cfg.linkPomoStop!==false&&pRun&&pomoSubjId===sid)pomoPause();}else{startSubj(selId);if(cfg.linkPomoStart===true&&!pRun&&pomoSubjId===selId)pomoResume();}}
 function stopSubjBtn(){var sid=aId;stopSubj();if(cfg.linkPomoStop!==false&&pRun&&pomoSubjId===sid)pomoPause();}
 function updatePomoSubjBadge(){var el=document.getElementById('pomoSubjBadge');if(!el)return;if(aId){var sub=subjs.find(function(s){return s.id===aId;});if(sub){el.textContent=sub.name;el.style.background=sub.color;el.style.display='block';return;}}el.style.display='none';}
-function startSubj(id){if(aId)_stopSil(aId);aId=id;aStart=Date.now();var sub=subjs.find(function(s){return s.id===id;});var bar=document.getElementById('activeBar');if(bar)bar.classList.add('on');var ad=document.getElementById('adot');if(ad)ad.style.background=sub.color;var an=document.getElementById('aname');if(an)an.textContent=sub.name;restartFbSync();clearInterval(aInt);aInt=setInterval(function(){var at=document.getElementById('atime');if(at)at.textContent=f3(Math.floor((Date.now()-aStart)/1000));syncAllScreens();},500);var sb=document.getElementById('dvStopBar');if(sb)sb.style.display='block';selSubj(id);renderTL();updatePomoSubjBadge();}
-function stopSubj(){if(!aId)return;sess.push({subjectId:aId,color:subjs.find(function(s){return s.id===aId;}).color,start:aStart,end:Date.now()});sv();var sid=aId;aId=null;aStart=null;clearInterval(aInt);var bar=document.getElementById('activeBar');if(bar)bar.classList.remove('on');var sb=document.getElementById('dvStopBar');if(sb)sb.style.display='none';var at=document.getElementById('atime');if(at)at.textContent='00:00:00';selSubj(sid);renderTL();renderTH();updateHome();fbPushMyData();saveUserDataToFirebase();restartFbSync();updatePomoSubjBadge();toast('⏱ '+fmtHM(getSecs(sid)));}
+function startSubj(id){if(aId)_stopSil(aId);aId=id;aStart=Date.now();var sub=subjs.find(function(s){return s.id===id;});var bar=document.getElementById('activeBar');if(bar)bar.classList.add('on');var ad=document.getElementById('adot');if(ad)ad.style.background=sub.color;var an=document.getElementById('aname');if(an)an.textContent=sub.name;restartFbSync();clearInterval(aInt);aInt=setInterval(function(){var at=document.getElementById('atime');if(at)at.textContent=f3(Math.floor((Date.now()-aStart)/1000));renderTH();syncAllScreens();},500);var sb=document.getElementById('dvStopBar');if(sb)sb.style.display='block';selSubj(id);renderTL();updatePomoSubjBadge();}
+function stopSubj(){if(!aId)return;sess.push({subjectId:aId,color:subjs.find(function(s){return s.id===aId;}).color,start:aStart,end:Date.now()});sv();var sid=aId;aId=null;aStart=null;clearInterval(aInt);var bar=document.getElementById('activeBar');if(bar)bar.classList.remove('on');var sb=document.getElementById('dvStopBar');if(sb)sb.style.display='none';var at=document.getElementById('atime');if(at)at.textContent='00:00:00';renderTH();selSubj(sid);renderTL();updateHome();fbPushMyData();saveUserDataToFirebase();restartFbSync();updatePomoSubjBadge();toast('⏱ '+fmtHM(getSecs(sid)));}
 function _stopSil(id){sess.push({subjectId:id,color:(subjs.find(function(s){return s.id===id;})||{}).color||'#888',start:aStart,end:Date.now()});sv();}
 
 // PLANNER
@@ -391,7 +432,10 @@ function paintQuickState(grid,idx,filled,color){var cell=grid.querySelector('[da
 function bindPlanDrag(grid){if(grid._planDragBound)return;grid._planDragBound=true;var sx=0,sy=0,startIdx=-1,dir=null,paintErase=false,histDone=false,active=false;function start(e){if(!planMode)return;var pt=e.touches&&e.touches[0]?e.touches[0]:e;startIdx=cellIdxFromEvent(grid,e);sx=pt.clientX;sy=pt.clientY;dir=null;histDone=false;active=true;paintErase=startIdx>=0?!!planCells[startIdx]:false;}function move(e){if(!planMode||!active)return;var pt=e.touches&&e.touches[0]?e.touches[0]:e;var dx=pt.clientX-sx,dy=pt.clientY-sy;if(dir===null){if(Math.abs(dx)<8&&Math.abs(dy)<8)return;dir=Math.abs(dx)>Math.abs(dy)?'h':'v';if(dir==='v'){active=false;return;}if(!histDone){pushPlanHistory();histDone=true;}if(startIdx>=0){var pc=currentPlanColor();if(paintErase)delete planCells[startIdx];else planCells[startIdx]=pc;paintQuickState(grid,startIdx,!paintErase,pc);}}if(dir==='h'){e.preventDefault();var idx=cellIdxFromEvent(grid,e);if(idx>=0){var pc2=currentPlanColor();if(paintErase)delete planCells[idx];else planCells[idx]=pc2;paintQuickState(grid,idx,!paintErase,pc2);}}}function end(e){if(!planMode){active=false;return;}if(active&&dir==='h'){svPlan();renderTL();}else if(active&&dir===null&&startIdx>=0){if(!histDone)pushPlanHistory();var nowFill=!planCells[startIdx];var pc3=currentPlanColor();if(nowFill)planCells[startIdx]=pc3;else delete planCells[startIdx];paintQuickState(grid,startIdx,nowFill,pc3);svPlan();updatePlanStat();}active=false;dir=null;startIdx=-1;}grid.addEventListener('mousedown',start);grid.addEventListener('mousemove',move);window.addEventListener('mouseup',end);grid.addEventListener('touchstart',start,{passive:true});grid.addEventListener('touchmove',move,{passive:false});window.addEventListener('touchend',end);window.addEventListener('touchcancel',end);}
 function planTargetMins(){return Object.keys(planCells).length*COL_MINS;}
 function updatePlanStat(){var tgt=planTargetMins(),th=Math.floor(tgt/60),tm=tgt%60;var te=document.getElementById('planTarget');if(te)te.textContent=th+'h '+String(tm).padStart(2,'0')+'m';var actSec=getTSecs(),ah=Math.floor(actSec/3600),am=Math.floor((actSec%3600)/60);var ae=document.getElementById('planActual');if(ae)ae.textContent=ah+'h '+String(am).padStart(2,'0')+'m';var pct=tgt>0?Math.round(actSec/60/tgt*100):0;var pe=document.getElementById('planPct');if(pe)pe.textContent=pct+'%';}
-function renderTL(){var grid=document.getElementById('pGrid');if(!grid)return;var gr=grid.getBoundingClientRect();var wrap=document.getElementById('pScroll');var gridW=gr.width||grid.clientWidth||grid.offsetWidth||(wrap?wrap.clientWidth:220);if(gridW<20)gridW=220;window._planGridW=gridW;var colW=Math.floor((gridW-AXIS_W)/NCOLS);if(colW<4)colW=4;var totalH=24*ROW_H;grid.style.height=totalH+'px';grid.innerHTML='';for(var i=0;i<24;i++){var rowY=i*ROW_H;var hline=document.createElement('div');hline.style.cssText='position:absolute;left:'+AXIS_W+'px;right:0;top:'+rowY+'px;height:1px;background:#2c2c2c;z-index:1;pointer-events:none;';grid.appendChild(hline);var lbl=document.createElement('div');lbl.style.cssText='position:absolute;left:0;width:'+AXIS_W+'px;top:'+(rowY+1)+'px;height:10px;display:flex;align-items:center;justify-content:center;font-family:monospace;font-size:.58rem;font-weight:600;color:rgba(255,255,255,.5);z-index:3;pointer-events:none;';lbl.textContent=rowToHour(i);grid.appendChild(lbl);}var bot=document.createElement('div');bot.style.cssText='position:absolute;left:'+AXIS_W+'px;right:0;top:'+(24*ROW_H)+'px;height:1px;background:#2c2c2c;';grid.appendChild(bot);for(var c2=0;c2<=NCOLS;c2++){var vl=document.createElement('div');vl.style.cssText='position:absolute;top:0;bottom:0;left:'+(AXIS_W+c2*colW)+'px;width:1px;background:#2c2c2c;z-index:1;pointer-events:none;';grid.appendChild(vl);}var tSess=sess.filter(function(s){return studyDayOf(new Date(s.start))===today();});function drawCont(startMs,endMs,color){var st=new Date(startMs),en=new Date(endMs);var stMin=st.getHours()*60+st.getMinutes()+st.getSeconds()/60;var enMin=en.getHours()*60+en.getMinutes()+en.getSeconds()/60;if(enMin<=stMin)return;for(var h=Math.floor(stMin/60);h<=Math.min(23,Math.floor(enMin/60));h++){var rowMin=h*60;var segS=Math.max(stMin,rowMin),segE=Math.min(enMin,rowMin+60);if(segE<=segS)continue;var x1=Math.round((segS-rowMin)*(gridW-AXIS_W)/60),x2=Math.round((segE-rowMin)*(gridW-AXIS_W)/60);var blk=document.createElement('div');blk.style.cssText='position:absolute;top:'+(hourToRow(h)*ROW_H+1)+'px;height:'+(ROW_H-2)+'px;left:'+(AXIS_W+x1)+'px;width:'+Math.max(1,x2-x1)+'px;background:'+color+';z-index:2;';grid.appendChild(blk);}}var cellW2=(gridW-AXIS_W)/NCOLS;for(var h2=0;h2<24;h2++){var dRow=hourToRow(h2);for(var c3=0;c3<NCOLS;c3++){var idx=h2*NCOLS+c3;var cv=planCells[idx];var filled=!!cv;if(!filled&&!planMode)continue;var cell=document.createElement('div');var baseStyle='position:absolute;top:'+(dRow*ROW_H+1)+'px;height:'+(ROW_H-2)+'px;left:'+(AXIS_W+c3*cellW2)+'px;width:'+cellW2+'px;box-sizing:border-box;';if(filled){var col=cellColor(cv);cell.style.cssText=baseStyle+'background:'+hexToRGBA(col,.30)+';border:1px solid '+hexToRGBA(col,.6)+';'}else{cell.style.cssText=baseStyle+'background:transparent;border:1px dashed rgba(255,255,255,.12);'}if(planMode){cell.style.cursor='pointer';cell.style.zIndex='6';cell.setAttribute('data-cell',idx);cell.className='plan-cell';}else{cell.style.zIndex=filled?'1':'4';cell.style.pointerEvents='none';}grid.appendChild(cell);}}tSess.forEach(function(s){drawCont(s.start,s.end||Date.now(),s.color);});if(aId&&aStart){var ac=(subjs.find(function(x){return x.id===aId;})||{}).color||'#a78bfa';drawCont(aStart,Date.now(),ac);}bindPlanDrag(grid);updatePlanStat();}
+function renderTL(){var grid=document.getElementById('pGrid');if(!grid)return;var gr=grid.getBoundingClientRect();var wrap=document.getElementById('pScroll');var gridW=gr.width||grid.clientWidth||grid.offsetWidth||(wrap?wrap.clientWidth:220);if(gridW<20)gridW=220;window._planGridW=gridW;var colW=Math.floor((gridW-AXIS_W)/NCOLS);if(colW<4)colW=4;var totalH=24*ROW_H;grid.style.height=totalH+'px';grid.innerHTML='';for(var i=0;i<24;i++){var rowY=i*ROW_H;var hline=document.createElement('div');hline.style.cssText='position:absolute;left:'+AXIS_W+'px;right:0;top:'+rowY+'px;height:1px;background:#2c2c2c;z-index:1;pointer-events:none;';grid.appendChild(hline);var lbl=document.createElement('div');lbl.style.cssText='position:absolute;left:0;width:'+AXIS_W+'px;top:'+(rowY+1)+'px;height:10px;display:flex;align-items:center;justify-content:center;font-family:monospace;font-size:.58rem;font-weight:600;color:rgba(255,255,255,.5);z-index:3;pointer-events:none;';lbl.textContent=rowToHour(i);grid.appendChild(lbl);}var bot=document.createElement('div');bot.style.cssText='position:absolute;left:'+AXIS_W+'px;right:0;top:'+(24*ROW_H)+'px;height:1px;background:#2c2c2c;';grid.appendChild(bot);for(var c2=0;c2<=NCOLS;c2++){var vl=document.createElement('div');vl.style.cssText='position:absolute;top:0;bottom:0;left:'+(AXIS_W+c2*colW)+'px;width:1px;background:#2c2c2c;z-index:1;pointer-events:none;';grid.appendChild(vl);}var tSess=sess.filter(function(s){return studyDayOf(new Date(s.start))===today();});function drawCont(startMs,endMs,color){var st=new Date(startMs),en=new Date(endMs);var stMin=st.getHours()*60+st.getMinutes()+st.getSeconds()/60;var enMin=en.getHours()*60+en.getMinutes()+en.getSeconds()/60;if(enMin<=stMin)return;for(var h=Math.floor(stMin/60);h<=Math.min(23,Math.floor(enMin/60));h++){var rowMin=h*60;var segS=Math.max(stMin,rowMin),segE=Math.min(enMin,rowMin+60);if(segE<=segS)continue;var x1=Math.round((segS-rowMin)*(gridW-AXIS_W)/60),x2=Math.round((segE-rowMin)*(gridW-AXIS_W)/60);var blk=document.createElement('div');blk.style.cssText='position:absolute;top:'+(hourToRow(h)*ROW_H+1)+'px;height:'+(ROW_H-2)+'px;left:'+(AXIS_W+x1)+'px;width:'+Math.max(1,x2-x1)+'px;background:'+color+';z-index:2;';grid.appendChild(blk);}}var cellW2=(gridW-AXIS_W)/NCOLS;for(var h2=0;h2<24;h2++){var dRow=hourToRow(h2);for(var c3=0;c3<NCOLS;c3++){var idx=h2*NCOLS+c3;var cv=planCells[idx];var filled=!!cv;if(!filled&&!planMode)continue;var cell=document.createElement('div');var baseStyle='position:absolute;top:'+(dRow*ROW_H+1)+'px;height:'+(ROW_H-2)+'px;left:'+(AXIS_W+c3*cellW2)+'px;width:'+cellW2+'px;box-sizing:border-box;';if(filled){var col=cellColor(cv);cell.style.cssText=baseStyle+'background:'+hexToRGBA(col,.30)+';border:1px solid '+hexToRGBA(col,.6)+';'}else{cell.style.cssText=baseStyle+'background:transparent;border:1px dashed rgba(255,255,255,.12);'}if(planMode){cell.style.cursor='pointer';cell.style.zIndex='6';cell.setAttribute('data-cell',idx);cell.className='plan-cell';}else{cell.style.zIndex=filled?'1':'4';cell.style.pointerEvents='none';}grid.appendChild(cell);}}tSess.forEach(function(s){drawCont(s.start,s.end||Date.now(),s.color);});if(aId&&aStart){var ac=(subjs.find(function(x){return x.id===aId;})||{}).color||'#a78bfa';drawCont(aStart,Date.now(),ac);}
+  // 현재 시각 가로선
+  var now2=new Date();var nowRow=hourToRow(now2.getHours());var nowFrac=now2.getMinutes()/60+now2.getSeconds()/3600;var nowY=(nowRow+nowFrac)*ROW_H;var nl=document.createElement('div');nl.className='dv-nowline';nl.style.top=nowY+'px';grid.appendChild(nl);
+  bindPlanDrag(grid);updatePlanStat();}
 function scrollNow(){var sc=document.getElementById('pScroll');if(!sc)return;var now=new Date();sc.scrollTop=Math.max(0,(hourToRow(now.getHours())+now.getMinutes()/60)*ROW_H-160);}
 
 // TODO 패널 (플래너 - 과목별)
