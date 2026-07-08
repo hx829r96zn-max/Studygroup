@@ -123,14 +123,12 @@
 
 <!-- ══════════ TIMER (플래너) ══════════ -->
 <div class="page" id="pg-timer">
-  <!-- ── 상단 헤더 영역 ── -->
+  <!-- ── 상단 헤더 ── -->
   <div class="dv-top">
-    <!-- 총 공부시간 (크게, 위아래 여백 있게) -->
     <div class="dv-total-wrap">
       <div class="dv-total" id="dvLiveTime">0H 00M 00S</div>
       <div class="dv-live-subj" id="dvLiveSubj"></div>
     </div>
-    <!-- D- / 계획하기 / 목표·순공·달성 -->
     <div class="dv-meta-row">
       <div class="dv-dday-wrap">
         <span class="dv-lbl-sm">D-</span>
@@ -139,19 +137,7 @@
       <div class="dv-date-wrap">
         <span class="dv-date-val" id="timerDay"></span>
       </div>
-      <div class="dv-plan-btns">
-        <button class="dv-plan-btn" id="planToggle" onclick="togglePlanMode()">계획하기</button>
-        <button class="dv-plan-btn" id="planUndoBtn" onclick="undoPlan()" style="display:none">↩</button>
-        <button class="dv-plan-btn" id="planRedoBtn" onclick="redoPlan()" style="display:none">↪</button>
-        <button class="dv-plan-btn dv-plan-save" id="planSaveBtn" onclick="savePlan()" style="display:none">저장</button>
-      </div>
-      <div class="dv-stat-row">
-        <span class="ps-lbl">목표</span><span id="planTarget">0h 00m</span>
-        <span class="ps-lbl">순공</span><span id="planActual" style="color:#22c55e">0h 00m</span>
-        <span class="ps-lbl">달성</span><span id="planPct" style="color:#60a5fa">0%</span>
-      </div>
     </div>
-    <!-- 구분선 -->
     <div class="dv-divider"></div>
   </div>
 
@@ -162,21 +148,34 @@
     <div class="dv-left">
       <!-- 테이블 헤더 -->
       <div class="dv-thead">
-        <div class="dv-th-subj" onclick="openSubjPicker()">과목 +</div>
+        <div class="dv-th-subj">과목</div>
         <div class="dv-th-todo">할 일</div>
         <div class="dv-th-st">상태</div>
       </div>
       <!-- 할일 행들 -->
       <div class="dv-tbody" id="dvTbody"></div>
-      <!-- 정지 버튼 -->
-      <div class="dv-stopbar" id="dvStopBar">
-        <button onclick="stopSubjBtn()">■ 정지</button>
+      <!-- 시작 버튼 (고정 하단) -->
+      <div class="dv-bottom-bar">
+        <div class="dv-sel-subj-label" id="dvSelSubjLabel">과목을 선택하세요</div>
+        <button class="dv-start-btn" id="dvStartBtn" onclick="dvToggleSubj()">▶ 시작</button>
       </div>
     </div>
 
     <!-- 오른쪽 1/3: TIME TABLE -->
     <div class="dv-right">
-      <div class="dv-tt-hdr">TIME TABLE</div>
+      <!-- 세로: 목표/순공/달성/계획하기 -->
+      <div class="dv-right-top">
+        <div class="dv-stat-vert">
+          <div class="dv-stat-item"><div class="dv-stat-lbl">목표</div><div class="dv-stat-val" id="planTarget">0h</div></div>
+          <div class="dv-stat-item"><div class="dv-stat-lbl">순공</div><div class="dv-stat-val" style="color:#16734a" id="planActual">0h</div></div>
+          <div class="dv-stat-item"><div class="dv-stat-lbl">달성</div><div class="dv-stat-val" style="color:#4f46e5" id="planPct">0%</div></div>
+          <button class="dv-plan-btn" id="planToggle" onclick="togglePlanMode()">계획하기</button>
+          <button class="dv-plan-btn" id="planUndoBtn" onclick="undoPlan()" style="display:none">↩</button>
+          <button class="dv-plan-btn" id="planRedoBtn" onclick="redoPlan()" style="display:none">↪</button>
+          <button class="dv-plan-btn dv-plan-save" id="planSaveBtn" onclick="savePlan()" style="display:none">저장</button>
+        </div>
+        <div class="dv-tt-hdr-label">TIME TABLE</div>
+      </div>
       <div class="pgwrap" id="pScroll">
         <div class="pgrid" id="pGrid"></div>
       </div>
@@ -231,13 +230,6 @@
       <div class="lbl">규칙 목록</div>
       <div id="contractRulesList"></div>
     </div>
-    <div class="card">
-      <div class="row" style="margin-bottom:9px">
-        <div class="lbl" style="margin-bottom:0">벌점 현황</div>
-        <button class="btn btn-ol btn-sm" onclick="openPenM()">신고</button>
-      </div>
-      <div id="penPanel"><div style="font-size:.78rem;color:var(--ink3)">계약서를 먼저 작성해주세요</div></div>
-    </div>
   </div>
 
   <!-- 내기 -->
@@ -290,7 +282,7 @@
 
   <div class="stg">
     <div class="stc"><div class="stn" style="color:var(--green)" id="stTotal">0h</div><div class="stl">오늘</div></div>
-    <div class="stc"><div class="stn" id="stAvg">0h</div><div class="stl">일평균</div></div>
+    <div class="stc"><div class="stn" id="stAvg">0h</div><div class="stl">월평균</div></div>
     <div class="stc"><div class="stn" style="color:var(--acc)" id="stStrk">0일</div><div class="stl">스트릭</div></div>
   </div>
 
@@ -325,17 +317,8 @@
     <textarea id="dailyEvalInput" class="inp" rows="3" style="resize:none;line-height:1.6;font-size:.85rem;margin-bottom:0" placeholder="오늘 하루를 기록해보세요..." oninput="saveDailyEval()"></textarea>
   </div>
 
-  <!-- 랭킹 -->
-  <div class="card" style="margin-bottom:11px"><div class="lbl">순공시간 랭킹</div><div id="rankPanel"></div></div>
 
-  <!-- 또래 비교 -->
-  <div class="card">
-    <div class="row" style="margin-bottom:10px">
-      <div class="lbl" style="margin-bottom:0">또래 비교</div>
-      <div style="font-size:.7rem;color:var(--ink3)" id="ageCompareLabel">나이 설정 필요</div>
-    </div>
-    <div id="ageCompareContent"><div style="font-size:.78rem;color:var(--ink3);text-align:center;padding:10px 0">설정에서 나이를 입력하면<br>같은 나이 학생들과 비교할 수 있어요</div></div>
-  </div>
+
 </div>
 
 <!-- ══════════ MOCK 성적 ══════════ -->
@@ -445,17 +428,8 @@
     <div id="fbStatus" style="font-size:.7rem;margin-top:8px;padding:6px 10px;background:var(--bg);border-radius:8px;font-weight:600">Firebase 연결 중...</div>
   </div>
 
-  <!-- 알림 -->
-  <div class="card" style="margin-bottom:10px">
-    <div class="lbl">공부 재촉 알림</div>
-    <div class="trow" style="margin-bottom:6px"><span class="tlbl">알림 켜기</span><label class="toggle"><input type="checkbox" id="alertOn" onchange="saveAlertSet()"><span class="tsl"></span></label></div>
-    <div id="alertTimeList" style="margin-bottom:8px"></div>
-    <button class="btn btn-ol btn-sm" style="width:100%;margin-bottom:10px" onclick="addAlertTime()">+ 시간 추가</button>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px" id="alertMsgPresets"></div>
-    <input class="inp" id="alertMsgCustom" placeholder="직접 입력..." style="margin-bottom:6px">
-    <button class="btn btn-dk btn-sm" style="width:100%" onclick="saveAlertSet()">저장</button>
-    <div id="pushStatus" style="margin-top:10px"></div>
-  </div>
+
+
 
   <!-- 내기 -->
   <div class="card" style="margin-bottom:10px">
