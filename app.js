@@ -228,39 +228,86 @@ function renderSL(){
   var w=document.getElementById('ptTbody');if(!w)return;
   w.innerHTML='';
   var rows=_ptGetRows();
-  var lastSubjId='__none__'; // 연속된 같은 과목 추적
+  var lastSubjId='__none__';
 
   rows.forEach(function(row,i){
     var sub=row.subjId?subjs.find(function(s){return s.id===row.subjId;}):null;
     var hasText=!!(row.text&&row.text.trim());
+    var isSubjRow=!!(sub&&sub.id!==lastSubjId); // 과목 첫 등장 행 = 과목행
     var isActiveSub=(sub&&_ptSelId&&_ptSelId===sub.id);
-    var tr=document.createElement('div');
-    tr.className='pt-row'+(isActiveSub?' active-subj':'');
+    // fromPrev: 이전 행과 같은 과목 (엔터로 이어진 행)
+    var fromPrev=(sub&&sub.id===lastSubjId);
 
-    /* 과목 칸 — 연속 같은 과목이면 dot+이름 숨김 */
+    var tr=document.createElement('div');
+    tr.className='pt-row'+(isActiveSub?' active-subj':'')+(isSubjRow?' subj-header-row':'');
+
+    /* 과목 칸 */
     var subjCell=document.createElement('div');subjCell.className='pt-row-subj';
-    var showSubj=(sub&&sub.id!==lastSubjId);
-    if(showSubj){
+
+    if(isSubjRow){
+      // 과목 첫 행: dot + 이름 표시, 탭 가능
       var dot=document.createElement('div');dot.className='pt-row-dot';dot.style.background=sub.color;subjCell.appendChild(dot);
       var nm=document.createElement('div');nm.className='pt-row-subj-name';nm.style.color=sub.color;nm.textContent=sub.name;subjCell.appendChild(nm);
+      (function(idx){
+        subjCell.onclick=function(e){
+          e.stopPropagation();
+          _ptPickSubj(function(sid){
+            var rs=_ptGetRows();
+            // 과목 변경 시 기존 할일이 있으면 한 칸 아래로 삽입
+            if(rs[idx].text&&rs[idx].text.trim()){
+              rs.splice(idx,0,{subjId:sid,text:'',status:null});
+            } else {
+              rs[idx].subjId=sid;
+            }
+            _ptSave(rs);
+            if(sid){_ptSelId=sid;_ptUpdateBar();}
+            renderSL();
+          });
+        };
+      })(i);
+    } else if(fromPrev){
+      // 같은 과목 이어지는 행: 과목칸 잠금 (탭 불가, 빈 칸)
+      subjCell.style.background='rgba(0,0,0,.02)';
+    } else {
+      // 과목 없는 빈 행: 탭하면 과목 선택
+      (function(idx){
+        subjCell.onclick=function(e){
+          e.stopPropagation();
+          _ptPickSubj(function(sid){
+            var rs=_ptGetRows();
+            if(rs[idx].text&&rs[idx].text.trim()){
+              rs.splice(idx,0,{subjId:sid,text:'',status:null});
+            } else {
+              rs[idx].subjId=sid;
+            }
+            _ptSave(rs);
+            if(sid){_ptSelId=sid;_ptUpdateBar();}
+            renderSL();
+          });
+        };
+      })(i);
     }
-    /* 과목 칸 탭 → 바텀시트 + 하단 바에 과목명 즉시 표시 */
-    (function(idx){
-      subjCell.onclick=function(e){
-        e.stopPropagation();
-        _ptPickSubj(function(sid){
-          var rs=_ptGetRows();
-          rs[idx].subjId=sid;
-          _ptSave(rs);
-          if(sid){_ptSelId=sid;_ptUpdateBar();}
-          renderSL();
-        });
-      };
-    })(i);
     tr.appendChild(subjCell);
-    if(sub)lastSubjId=sub.id; // 추적 갱신 (null이면 유지 안 함)
+    if(sub)lastSubjId=sub.id;
 
-    /* 삭제 버튼 */
+    /* 과목 첫 행(isSubjRow)은 할일 칸에 과목 공부시간만 표시, 입력 불가 */
+    if(isSubjRow){
+      var sc=getSecs(sub.id);
+      // 삭제 버튼 (빈 칸)
+      var delEmpty=document.createElement('div');delEmpty.className='pt-row-del empty';delEmpty.textContent='✕';tr.appendChild(delEmpty);
+      // 시간 표시 칸
+      var timeTxt=document.createElement('div');
+      timeTxt.className='pt-row-txt';
+      timeTxt.style.cssText='color:#888;font-family:monospace;font-size:.56rem;pointer-events:none;';
+      timeTxt.textContent=sc>0?fmtSh(sc):'';
+      tr.appendChild(timeTxt);
+      // 상태 칸 (빈)
+      var stEmpty=document.createElement('div');stEmpty.className='pt-row-st';tr.appendChild(stEmpty);
+      w.appendChild(tr);
+      return; // 과목행은 여기서 끝
+    }
+
+    /* 일반 할일 행 */
     var del=document.createElement('div');del.className='pt-row-del'+(hasText?'':' empty');del.textContent='✕';
     (function(idx){
       del.onclick=function(e){
@@ -270,7 +317,6 @@ function renderSL(){
     })(i);
     tr.appendChild(del);
 
-    /* 텍스트 칸 */
     var st=row.status||null;
     var txt=document.createElement('div');
     txt.className='pt-row-txt'+(hasText?'':' placeholder')+(st==='X'?' done':'');
@@ -280,16 +326,12 @@ function renderSL(){
     })(i,txt);
     tr.appendChild(txt);
 
-    /* 상태 버튼 */
     var stBtn=document.createElement('div');stBtn.className='pt-row-st';stBtn.textContent=_stLbl(st);stBtn.style.color=_stClr(st);
     var longT=null;
     (function(idx,btn){
       btn.addEventListener('touchstart',function(){longT=setTimeout(function(){var rs=_ptGetRows();rs[idx].status='△';_ptSave(rs);renderSL();},600);},{passive:true});
       btn.addEventListener('touchend',function(){clearTimeout(longT);},{passive:true});
-      btn.onclick=function(e){
-        e.stopPropagation();
-        var rs=_ptGetRows();var nx=_stNext(rs[idx].status||null);rs[idx].status=nx;rs[idx].done=(nx==='O');_ptSave(rs);renderSL();
-      };
+      btn.onclick=function(e){e.stopPropagation();var rs=_ptGetRows();var nx=_stNext(rs[idx].status||null);rs[idx].status=nx;rs[idx].done=(nx==='O');_ptSave(rs);renderSL();};
     })(i,stBtn);
     tr.appendChild(stBtn);
     w.appendChild(tr);
@@ -299,6 +341,12 @@ function renderSL(){
 
 function _ptStartEdit(idx,tc){
   var rs=_ptGetRows();
+  // 과목 첫 행(subjId 있고 이전 행과 다른 subjId)이면 편집 불가
+  var sub=rs[idx]?subjs.find(function(s){return s.id===rs[idx].subjId;}):null;
+  var prevSub=idx>0&&rs[idx-1]?subjs.find(function(s){return s.id===rs[idx-1].subjId;}):null;
+  var isSubjRow=(sub&&(!prevSub||prevSub.id!==sub.id));
+  if(isSubjRow)return; // 과목행은 편집 불가
+
   var inp=document.createElement('input');
   inp.value=rs[idx].text||'';
   inp.style.cssText='background:transparent;border:none;outline:none;color:#1a1a1a;font-size:.62rem;font-family:\'Noto Sans KR\',sans-serif;width:100%;padding:0;';
@@ -314,11 +362,14 @@ function _ptStartEdit(idx,tc){
     var v=inp.value.trim();
     var rs2=_ptGetRows();
     rs2[idx].text=v;
-    // 다음 칸 없으면 추가 (같은 과목 유지)
-    if(idx+1>=rs2.length)rs2.push({subjId:rs2[idx].subjId,text:'',status:null});
-    _ptSave(rs2);
-    renderSL();
-    // 다음 칸 즉시 편집 시작
+    // 다음 칸: 같은 과목으로, 과목칸은 null (엔터로 이어진 행은 과목칸 잠금)
+    var nextSubjId=rs2[idx].subjId; // 같은 과목 유지
+    if(idx+1>=rs2.length){
+      rs2.push({subjId:nextSubjId,text:'',status:null});
+    } else if(!rs2[idx+1].subjId){
+      rs2[idx+1].subjId=nextSubjId; // 빈 칸이면 같은 과목으로
+    }
+    _ptSave(rs2);renderSL();
     setTimeout(function(){
       var allRows=document.querySelectorAll('#ptTbody .pt-row');
       if(allRows[idx+1]){

@@ -190,7 +190,7 @@ textarea.inp{resize:vertical;min-height:70px;}
 /* 각 행 26px → 20개 = 520px */
 .pt-row{display:flex;align-items:stretch;border-bottom:1px solid rgba(0,0,0,.08);height:26px;background:#f5f0e8;position:relative;}
 .pt-row.active-subj{background:rgba(0,0,0,.06);}
-.pt-row-subj{width:62px;flex-shrink:0;border-right:1px solid rgba(0,0,0,.09);display:flex;align-items:center;gap:4px;padding:0 5px 0 6px;cursor:pointer;overflow:hidden;}
+.pt-row.subj-header-row{background:#ede8de;}.pt-row-subj{width:62px;flex-shrink:0;border-right:1px solid rgba(0,0,0,.09);display:flex;align-items:center;gap:4px;padding:0 5px 0 6px;cursor:pointer;overflow:hidden;}
 .pt-row-subj:active{background:rgba(0,0,0,.05);}
 .pt-row-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .pt-row-subj-name{font-size:.58rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1;}
@@ -206,31 +206,22 @@ textarea.inp{resize:vertical;min-height:70px;}
 .pt-add-more:active{background:#e5e0d4;}
 
 /* 오른쪽: 타임테이블 */
-.pt-tt-panel{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;background:#f0ebe0;position:relative;}
-.pt-tt-hdr{display:flex;align-items:center;flex-shrink:0;border-bottom:1px solid rgba(0,0,0,.12);padding:2px 0;background:#e8e3d8;}
+.pt-tt-panel{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;background:#fff;position:relative;}
+.pt-tt-hdr{display:flex;align-items:center;flex-shrink:0;border-bottom:1px solid rgba(0,0,0,.1);padding:2px 0;background:#f8f8f8;}
 .pt-tt-ax{width:20px;flex-shrink:0;}
 .pt-tt-nums{flex:1;display:flex;}
-.pt-tt-nums span{flex:1;text-align:center;font-family:monospace;font-size:.4rem;color:rgba(0,0,0,.3);font-weight:600;}
+.pt-tt-nums span{flex:1;text-align:center;font-family:monospace;font-size:.4rem;color:rgba(0,0,0,.28);font-weight:600;}
 
-/* pgwrap: 탭바(50px)+시작버튼(46px)+safe-area 안 겹침 */
 .pgwrap{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;-webkit-overflow-scrolling:touch;touch-action:pan-y;}
 .pgwrap::-webkit-scrollbar{width:0;}
-.pgrid{position:relative;width:100%;background:#f0ebe0;touch-action:pan-y;will-change:transform;}
+.pgrid{position:relative;width:100%;background:#fff;touch-action:pan-y;will-change:transform;}
 #pg-timer.plan-mode .pgrid{cursor:crosshair;}
-.pt-nowline{position:absolute;top:0;bottom:0;width:1.5px;background:rgba(220,38,38,.65);z-index:10;pointer-events:none;}
+.pt-nowline{position:absolute;top:0;bottom:0;width:1.5px;background:rgba(220,38,38,.45);z-index:10;pointer-events:none;}
 
-/* 하단 시작버튼: 탭바(50px) + safe-area 위에 고정 */
-.pt-bar{
-  flex-shrink:0;display:flex;align-items:center;gap:8px;
-  padding:8px 12px;
-  background:#ede8de;border-top:1px solid rgba(0,0,0,.12);
-  margin-bottom:calc(50px + env(safe-area-inset-bottom,0));
-}.pt-bar-lbl{flex:1;font-size:.64rem;color:#888;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.pt-bar-lbl.sel{font-weight:800;color:#1a1a1a;}
-.pt-bar-btn{flex-shrink:0;height:32px;padding:0 18px;border-radius:9px;border:none;background:#1a1a1a;color:#fff;font-size:.7rem;font-weight:800;font-family:'Noto Sans KR',sans-serif;cursor:pointer;}
-.pt-bar-btn.running{background:#b91c1c;}
-.pgrid{position:relative;width:100%;background:#111;touch-action:pan-y;will-change:transform;}
-#pg-timer.plan-mode .pgrid{cursor:crosshair;}
+/* 홈 D-day 최상단 */
+.home-dday-wrap{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+#ddayCard{flex:1;background:#111;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:8px 12px;}
+.home-dday-btn{flex-shrink:0;background:none;border:1px dashed rgba(255,255,255,.2);border-radius:10px;color:rgba(255,255,255,.35);font-size:.62rem;padding:7px 10px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;}
 
 /* ── TODO 패널 (플래너 - 과목별) ── */
 .todo-panel{position:absolute;top:0;right:0;bottom:calc(50px + env(safe-area-inset-bottom,0));width:85%;max-width:320px;background:rgba(15,15,15,.97);border-left:1px solid #2a2a2a;z-index:30;display:flex;flex-direction:column;padding:10px;overflow-y:auto;box-shadow:-4px 0 16px rgba(0,0,0,.4);transform:translateX(105%);visibility:hidden;pointer-events:none;transition:transform .28s cubic-bezier(.32,.72,0,1),visibility 0s .28s;touch-action:pan-y;will-change:transform;}

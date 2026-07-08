@@ -62,7 +62,13 @@
 <!-- ══════════ HOME ══════════ -->
 <div class="page on" id="pg-home">
 
-  <!-- ① 순공시간 카드 (맨 위) -->
+  <!-- ① D-day (맨 위) -->
+  <div class="home-dday-wrap">
+    <div id="ddayCard" style="display:none;"></div>
+    <button onclick="openDdayModal()" class="home-dday-btn">＋ D-day</button>
+  </div>
+
+  <!-- ② 순공시간 카드 -->
   <div class="hs-card">
     <div class="hs-top-row">
       <div class="hs-label">오늘 순공</div>
@@ -151,10 +157,6 @@
       <div class="pgwrap" id="pScroll"><div class="pgrid" id="pGrid"></div></div>
       <div class="todo-panel" id="todoPanel"></div>
     </div>
-  </div>
-  <div class="pt-bar">
-    <div class="pt-bar-lbl" id="ptBarLbl">과목 선택</div>
-    <button class="pt-bar-btn" id="ptBarBtn" onclick="ptToggleSubj()">▶ 시작</button>
   </div>
 </div>
 
