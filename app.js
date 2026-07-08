@@ -334,6 +334,97 @@ function renderSL(){
       btn.onclick=function(e){e.stopPropagation();var rs=_ptGetRows();var nx=_stNext(rs[idx].status||null);rs[idx].status=nx;rs[idx].done=(nx==='O');_ptSave(rs);renderSL();};
     })(i,stBtn);
     tr.appendChild(stBtn);
+
+    /* ── 꾹 누르기 → 드래그로 행 이동 ── */
+    (function(fromIdx,rowEl){
+      var dragTimer=null,dragging=false,dragClone=null,startY=0,toIdx=-1;
+
+      function startDrag(clientY){
+        dragging=true;
+        startY=clientY;
+        rowEl.style.opacity='0.4';
+        // 드래그 인디케이터 (현재 위치 표시선)
+        dragClone=document.createElement('div');
+        dragClone.style.cssText='position:fixed;left:0;right:0;height:2px;background:#4f46e5;z-index:999;pointer-events:none;transition:top .05s;';
+        document.body.appendChild(dragClone);
+      }
+
+      function moveDrag(clientY){
+        if(!dragging)return;
+        // 드롭 위치 계산
+        var allRows=document.querySelectorAll('#ptTbody .pt-row');
+        toIdx=-1;
+        var bestDist=9999;
+        allRows.forEach(function(el,j){
+          var r=el.getBoundingClientRect();
+          var mid=r.top+r.height/2;
+          var dist=Math.abs(clientY-mid);
+          if(dist<bestDist){bestDist=dist;toIdx=j;}
+          el.classList.remove('drag-over');
+        });
+        if(toIdx>=0&&toIdx!==fromIdx){
+          allRows[toIdx].classList.add('drag-over');
+          var r2=allRows[toIdx].getBoundingClientRect();
+          if(dragClone)dragClone.style.top=(clientY<r2.top+r2.height/2?r2.top:r2.bottom)+'px';
+        }
+      }
+
+      function endDrag(){
+        if(!dragging)return;
+        dragging=false;
+        rowEl.style.opacity='';
+        if(dragClone){dragClone.remove();dragClone=null;}
+        document.querySelectorAll('#ptTbody .pt-row').forEach(function(el){el.classList.remove('drag-over');});
+
+        if(toIdx<0||toIdx===fromIdx){return;}
+
+        var rs=_ptGetRows();
+        var item=rs.splice(fromIdx,1)[0];
+        var insertAt=toIdx>fromIdx?toIdx-1:toIdx;
+        rs.splice(insertAt,0,item);
+
+        // 이동 후 같은 과목 영역에 속하면 과목칸 자동 비움
+        // "같은 과목 영역" = 위 행이 같은 subjId를 가진 경우
+        var above=insertAt>0?rs[insertAt-1]:null;
+        var below=insertAt+1<rs.length?rs[insertAt+1]:null;
+        var aboveSubj=above?above.subjId:null;
+        var belowSubj=below?below.subjId:null;
+
+        // 위 행이 같은 과목의 연속이면 → 현재 행 과목칸 비움
+        if(aboveSubj&&aboveSubj===item.subjId){
+          rs[insertAt].subjId=null; // 같은 과목 영역 내부라 표시 불필요
+        }
+        // 현재 행 아래가 다른 과목인데, 현재 행이 그 과목의 시작이었다면 아래 행에 과목 이름 올려줌
+        if(belowSubj&&belowSubj===item.subjId&&!rs[insertAt].subjId){
+          // 이미 비웠으면 아래 행이 계속 같은 과목으로 표시되므로 OK
+        }
+
+        _ptSave(rs);
+        renderSL();
+      }
+
+      // 터치 이벤트
+      rowEl.addEventListener('touchstart',function(e){
+        var t=e.touches[0];startY=t.clientY;
+        dragTimer=setTimeout(function(){startDrag(t.clientY);},500);
+      },{passive:true});
+      rowEl.addEventListener('touchmove',function(e){
+        if(!dragging){clearTimeout(dragTimer);dragTimer=null;return;}
+        e.preventDefault();
+        moveDrag(e.touches[0].clientY);
+      },{passive:false});
+      rowEl.addEventListener('touchend',function(){
+        clearTimeout(dragTimer);dragTimer=null;
+        endDrag();
+      },{passive:true});
+      rowEl.addEventListener('touchcancel',function(){
+        clearTimeout(dragTimer);dragTimer=null;
+        dragging=false;rowEl.style.opacity='';
+        if(dragClone){dragClone.remove();dragClone=null;}
+        document.querySelectorAll('#ptTbody .pt-row').forEach(function(el){el.classList.remove('drag-over');});
+      },{passive:true});
+    })(i,tr);
+
     w.appendChild(tr);
   });
   _ptUpdateBar();
@@ -421,13 +512,23 @@ function reloadPlanForToday(){try{planCells=JSON.parse(localStorage.getItem(plan
 function togglePlanMode(){planMode=!planMode;var btn=document.getElementById('planToggle'),sbtn=document.getElementById('planSaveBtn'),ubtn=document.getElementById('planUndoBtn'),pg=document.getElementById('pg-timer');if(btn){btn.classList.toggle('active',planMode);btn.textContent=planMode?'계획 수정 중':'계획짜기';}if(sbtn)sbtn.style.display=planMode?'inline-block':'none';if(ubtn)ubtn.style.display=planMode?'inline-block':'none';var rbtn=document.getElementById('planRedoBtn');if(rbtn)rbtn.style.display=planMode?'inline-block':'none';if(pg)pg.classList.toggle('plan-mode',planMode);if(planMode){_planHistory=[];_planRedo=[];updateUndoBtn();todoOpenSubjId=null;renderTodoPanel();}renderTL();toast(planMode?'계획 모드: 왼쪽 과목을 고르면 그 색으로 칠해집니다':'계획 모드 종료');}
 function savePlan(){svPlan();planMode=false;var btn=document.getElementById('planToggle'),sbtn=document.getElementById('planSaveBtn'),pg=document.getElementById('pg-timer');if(btn){btn.classList.remove('active');btn.textContent='계획짜기';}if(sbtn)sbtn.style.display='none';var ub=document.getElementById('planUndoBtn');if(ub)ub.style.display='none';var rb=document.getElementById('planRedoBtn');if(rb)rb.style.display='none';if(pg)pg.classList.remove('plan-mode');renderTL();toast('계획이 저장되었습니다');}
 function cellIdxFromEvent(grid,e){var pt=e.touches&&e.touches[0]?e.touches[0]:(e.changedTouches&&e.changedTouches[0]?e.changedTouches[0]:e);if(!pt)return-1;var rect=grid.getBoundingClientRect();var x=pt.clientX-rect.left,y=pt.clientY-rect.top;var gw=rect.width||window._planGridW||grid.offsetWidth||220;if(x<AXIS_W)return-1;var cellW=(gw-AXIS_W)/NCOLS;var col=Math.floor((x-AXIS_W)/cellW);var dispRow=Math.floor(y/ROW_H);if(col<0)col=0;if(col>=NCOLS)col=NCOLS-1;if(dispRow<0||dispRow>=24)return-1;return rowToHour(dispRow)*NCOLS+col;}
-function paintQuickState(grid,idx,filled,color){var cell=grid.querySelector('[data-cell="'+idx+'"]');if(!cell)return;if(filled){var col=color||currentPlanColor();cell.style.background=hexToRGBA(col,.30);cell.style.border='1px solid '+hexToRGBA(col,.6);}else{cell.style.background='transparent';cell.style.border='1px dashed rgba(255,255,255,.12)';}}
+function paintQuickState(grid,idx,filled,color){var cell=grid.querySelector('[data-cell="'+idx+'"]');if(!cell)return;if(filled){var col=color||currentPlanColor();cell.style.background=hexToRGBA(col,.35);cell.style.border='1px solid '+hexToRGBA(col,.6);}else{cell.style.background='transparent';cell.style.border='1px dashed rgba(0,0,0,.12)';}}
 function bindPlanDrag(grid){if(grid._planDragBound)return;grid._planDragBound=true;var sx=0,sy=0,startIdx=-1,dir=null,paintErase=false,histDone=false,active=false;function start(e){if(!planMode)return;var pt=e.touches&&e.touches[0]?e.touches[0]:e;startIdx=cellIdxFromEvent(grid,e);sx=pt.clientX;sy=pt.clientY;dir=null;histDone=false;active=true;paintErase=startIdx>=0?!!planCells[startIdx]:false;}function move(e){if(!planMode||!active)return;var pt=e.touches&&e.touches[0]?e.touches[0]:e;var dx=pt.clientX-sx,dy=pt.clientY-sy;if(dir===null){if(Math.abs(dx)<8&&Math.abs(dy)<8)return;dir=Math.abs(dx)>Math.abs(dy)?'h':'v';if(dir==='v'){active=false;return;}if(!histDone){pushPlanHistory();histDone=true;}if(startIdx>=0){var pc=currentPlanColor();if(paintErase)delete planCells[startIdx];else planCells[startIdx]=pc;paintQuickState(grid,startIdx,!paintErase,pc);}}if(dir==='h'){e.preventDefault();var idx=cellIdxFromEvent(grid,e);if(idx>=0){var pc2=currentPlanColor();if(paintErase)delete planCells[idx];else planCells[idx]=pc2;paintQuickState(grid,idx,!paintErase,pc2);}}}function end(e){if(!planMode){active=false;return;}if(active&&dir==='h'){svPlan();renderTL();}else if(active&&dir===null&&startIdx>=0){if(!histDone)pushPlanHistory();var nowFill=!planCells[startIdx];var pc3=currentPlanColor();if(nowFill)planCells[startIdx]=pc3;else delete planCells[startIdx];paintQuickState(grid,startIdx,nowFill,pc3);svPlan();updatePlanStat();}active=false;dir=null;startIdx=-1;}grid.addEventListener('mousedown',start);grid.addEventListener('mousemove',move);window.addEventListener('mouseup',end);grid.addEventListener('touchstart',start,{passive:true});grid.addEventListener('touchmove',move,{passive:false});window.addEventListener('touchend',end);window.addEventListener('touchcancel',end);}
 function planTargetMins(){return Object.keys(planCells).length*COL_MINS;}
 function updatePlanStat(){var tgt=planTargetMins(),th=Math.floor(tgt/60),tm=tgt%60;var te=document.getElementById('planTarget');if(te)te.textContent=th+'h '+String(tm).padStart(2,'0')+'m';var actSec=getTSecs(),ah=Math.floor(actSec/3600),am=Math.floor((actSec%3600)/60);var ae=document.getElementById('planActual');if(ae)ae.textContent=ah+'h '+String(am).padStart(2,'0')+'m';var pct=tgt>0?Math.round(actSec/60/tgt*100):0;var pe=document.getElementById('planPct');if(pe)pe.textContent=pct+'%';}
-function renderTL(){var grid=document.getElementById('pGrid');if(!grid)return;var gr=grid.getBoundingClientRect();var wrap=document.getElementById('pScroll');var gridW=gr.width||grid.clientWidth||grid.offsetWidth||(wrap?wrap.clientWidth:220);if(gridW<20)gridW=220;window._planGridW=gridW;var colW=Math.floor((gridW-AXIS_W)/NCOLS);if(colW<4)colW=4;var totalH=24*ROW_H;grid.style.height=totalH+'px';grid.innerHTML='';for(var i=0;i<24;i++){var rowY=i*ROW_H;var hline=document.createElement('div');hline.style.cssText='position:absolute;left:'+AXIS_W+'px;right:0;top:'+rowY+'px;height:1px;background:#2c2c2c;z-index:1;pointer-events:none;';grid.appendChild(hline);var lbl=document.createElement('div');lbl.style.cssText='position:absolute;left:0;width:'+AXIS_W+'px;top:'+(rowY+1)+'px;height:10px;display:flex;align-items:center;justify-content:center;font-family:monospace;font-size:.58rem;font-weight:600;color:rgba(255,255,255,.5);z-index:3;pointer-events:none;';lbl.textContent=rowToHour(i);grid.appendChild(lbl);}var bot=document.createElement('div');bot.style.cssText='position:absolute;left:'+AXIS_W+'px;right:0;top:'+(24*ROW_H)+'px;height:1px;background:#2c2c2c;';grid.appendChild(bot);for(var c2=0;c2<=NCOLS;c2++){var vl=document.createElement('div');vl.style.cssText='position:absolute;top:0;bottom:0;left:'+(AXIS_W+c2*colW)+'px;width:1px;background:#2c2c2c;z-index:1;pointer-events:none;';grid.appendChild(vl);}var tSess=sess.filter(function(s){return studyDayOf(new Date(s.start))===today();});function drawCont(startMs,endMs,color){var st=new Date(startMs),en=new Date(endMs);var stMin=st.getHours()*60+st.getMinutes()+st.getSeconds()/60;var enMin=en.getHours()*60+en.getMinutes()+en.getSeconds()/60;if(enMin<=stMin)return;for(var h=Math.floor(stMin/60);h<=Math.min(23,Math.floor(enMin/60));h++){var rowMin=h*60;var segS=Math.max(stMin,rowMin),segE=Math.min(enMin,rowMin+60);if(segE<=segS)continue;var x1=Math.round((segS-rowMin)*(gridW-AXIS_W)/60),x2=Math.round((segE-rowMin)*(gridW-AXIS_W)/60);var blk=document.createElement('div');blk.style.cssText='position:absolute;top:'+(hourToRow(h)*ROW_H+1)+'px;height:'+(ROW_H-2)+'px;left:'+(AXIS_W+x1)+'px;width:'+Math.max(1,x2-x1)+'px;background:'+color+';z-index:2;';grid.appendChild(blk);}}var cellW2=(gridW-AXIS_W)/NCOLS;for(var h2=0;h2<24;h2++){var dRow=hourToRow(h2);for(var c3=0;c3<NCOLS;c3++){var idx=h2*NCOLS+c3;var cv=planCells[idx];var filled=!!cv;if(!filled&&!planMode)continue;var cell=document.createElement('div');var baseStyle='position:absolute;top:'+(dRow*ROW_H+1)+'px;height:'+(ROW_H-2)+'px;left:'+(AXIS_W+c3*cellW2)+'px;width:'+cellW2+'px;box-sizing:border-box;';if(filled){var col=cellColor(cv);cell.style.cssText=baseStyle+'background:'+hexToRGBA(col,.30)+';border:1px solid '+hexToRGBA(col,.6)+';'}else{cell.style.cssText=baseStyle+'background:transparent;border:1px dashed rgba(255,255,255,.12);'}if(planMode){cell.style.cursor='pointer';cell.style.zIndex='6';cell.setAttribute('data-cell',idx);cell.className='plan-cell';}else{cell.style.zIndex=filled?'1':'4';cell.style.pointerEvents='none';}grid.appendChild(cell);}}tSess.forEach(function(s){drawCont(s.start,s.end||Date.now(),s.color);});if(aId&&aStart){var ac=(subjs.find(function(x){return x.id===aId;})||{}).color||'#a78bfa';drawCont(aStart,Date.now(),ac);}
-  var now2=new Date();var nowFrac=(now2.getMinutes()*60+now2.getSeconds())/3600;var nowX=Math.round(AXIS_W+nowFrac*(gridW-AXIS_W));var nl=document.createElement('div');nl.className='pt-nowline';nl.style.left=nowX+'px';grid.appendChild(nl);
-  bindPlanDrag(grid);updatePlanStat();}
+function renderTL(){var grid=document.getElementById('pGrid');if(!grid)return;var gr=grid.getBoundingClientRect();var wrap=document.getElementById('pScroll');var gridW=gr.width||grid.clientWidth||grid.offsetWidth||(wrap?wrap.clientWidth:220);if(gridW<20)gridW=220;window._planGridW=gridW;var colW=Math.floor((gridW-AXIS_W)/NCOLS);if(colW<4)colW=4;var totalH=24*ROW_H;grid.style.height=totalH+'px';grid.innerHTML='';
+for(var i=0;i<24;i++){var rowY=i*ROW_H;var hline=document.createElement('div');hline.style.cssText='position:absolute;left:'+AXIS_W+'px;right:0;top:'+rowY+'px;height:1px;background:rgba(0,0,0,.1);z-index:1;pointer-events:none;';grid.appendChild(hline);var lbl=document.createElement('div');lbl.style.cssText='position:absolute;left:0;width:'+AXIS_W+'px;top:'+(rowY+1)+'px;height:10px;display:flex;align-items:center;justify-content:center;font-family:monospace;font-size:.52rem;font-weight:600;color:rgba(0,0,0,.35);z-index:3;pointer-events:none;';lbl.textContent=rowToHour(i);grid.appendChild(lbl);}
+var bot=document.createElement('div');bot.style.cssText='position:absolute;left:'+AXIS_W+'px;right:0;top:'+(24*ROW_H)+'px;height:1px;background:rgba(0,0,0,.1);';grid.appendChild(bot);
+for(var c2=0;c2<=NCOLS;c2++){var vl=document.createElement('div');vl.style.cssText='position:absolute;top:0;bottom:0;left:'+(AXIS_W+c2*colW)+'px;width:1px;background:rgba(0,0,0,.08);z-index:1;pointer-events:none;';grid.appendChild(vl);}
+var tSess=sess.filter(function(s){return studyDayOf(new Date(s.start))===today();});
+function drawCont(startMs,endMs,color){var st=new Date(startMs),en=new Date(endMs);var stMin=st.getHours()*60+st.getMinutes()+st.getSeconds()/60;var enMin=en.getHours()*60+en.getMinutes()+en.getSeconds()/60;if(enMin<=stMin)return;for(var h=Math.floor(stMin/60);h<=Math.min(23,Math.floor(enMin/60));h++){var rowMin=h*60;var segS=Math.max(stMin,rowMin),segE=Math.min(enMin,rowMin+60);if(segE<=segS)continue;var x1=Math.round((segS-rowMin)*(gridW-AXIS_W)/60),x2=Math.round((segE-rowMin)*(gridW-AXIS_W)/60);var blk=document.createElement('div');blk.style.cssText='position:absolute;top:'+(hourToRow(h)*ROW_H+1)+'px;height:'+(ROW_H-2)+'px;left:'+(AXIS_W+x1)+'px;width:'+Math.max(1,x2-x1)+'px;background:'+color+';opacity:.75;z-index:2;border-radius:1px;';grid.appendChild(blk);}}
+var cellW2=(gridW-AXIS_W)/NCOLS;
+for(var h2=0;h2<24;h2++){var dRow=hourToRow(h2);for(var c3=0;c3<NCOLS;c3++){var idx=h2*NCOLS+c3;var cv=planCells[idx];var filled=!!cv;if(!filled&&!planMode)continue;var cell=document.createElement('div');var baseStyle='position:absolute;top:'+(dRow*ROW_H+1)+'px;height:'+(ROW_H-2)+'px;left:'+(AXIS_W+c3*cellW2)+'px;width:'+cellW2+'px;box-sizing:border-box;';if(filled){var col=cellColor(cv);cell.style.cssText=baseStyle+'background:'+hexToRGBA(col,.35)+';border:1px solid '+hexToRGBA(col,.6)+';border-radius:1px;'}else{cell.style.cssText=baseStyle+'background:transparent;border:1px dashed rgba(0,0,0,.12);'}if(planMode){cell.style.cursor='pointer';cell.style.zIndex='6';cell.setAttribute('data-cell',idx);cell.className='plan-cell';}else{cell.style.zIndex=filled?'2':'4';cell.style.pointerEvents='none';}grid.appendChild(cell);}}
+tSess.forEach(function(s){drawCont(s.start,s.end||Date.now(),s.color);});
+if(aId&&aStart){var ac=(subjs.find(function(x){return x.id===aId;})||{}).color||'#a78bfa';drawCont(aStart,Date.now(),ac);}
+// 현재 시각 세로선
+var now2=new Date();var nowFrac=(now2.getMinutes()*60+now2.getSeconds())/3600;var nowX=Math.round(AXIS_W+nowFrac*(gridW-AXIS_W));var nl=document.createElement('div');nl.className='pt-nowline';nl.style.left=nowX+'px';grid.appendChild(nl);
+bindPlanDrag(grid);updatePlanStat();}
 function scrollNow(){var sc=document.getElementById('pScroll');if(!sc)return;var now=new Date();sc.scrollTop=Math.max(0,(hourToRow(now.getHours())+now.getMinutes()/60)*ROW_H-160);}
 
 // TODO 패널 (플래너 - 과목별)

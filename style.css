@@ -190,7 +190,8 @@ textarea.inp{resize:vertical;min-height:70px;}
 /* 각 행 26px → 20개 = 520px */
 .pt-row{display:flex;align-items:stretch;border-bottom:1px solid rgba(0,0,0,.08);height:26px;background:#f5f0e8;position:relative;}
 .pt-row.active-subj{background:rgba(0,0,0,.06);}
-.pt-row.subj-header-row{background:#ede8de;}.pt-row-subj{width:62px;flex-shrink:0;border-right:1px solid rgba(0,0,0,.09);display:flex;align-items:center;gap:4px;padding:0 5px 0 6px;cursor:pointer;overflow:hidden;}
+.pt-row.subj-header-row{background:#ede8de;}
+.pt-row.drag-over{box-shadow:0 -2px 0 #4f46e5;}.pt-row-subj{width:62px;flex-shrink:0;border-right:1px solid rgba(0,0,0,.09);display:flex;align-items:center;gap:4px;padding:0 5px 0 6px;cursor:pointer;overflow:hidden;}
 .pt-row-subj:active{background:rgba(0,0,0,.05);}
 .pt-row-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .pt-row-subj-name{font-size:.58rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1;}
