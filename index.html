@@ -114,42 +114,47 @@
 
 <!-- ══════════ TIMER (플래너) ══════════ -->
 <div class="page" id="pg-timer">
-  <div class="t-hd">
-    <div>
-      <div class="t-date" id="timerDay"></div>
-      <div class="t-total" id="timerTotal">0H 00M 00S</div>
+  <div class="pt-top">
+    <div class="pt-left">
+      <div class="pt-date" id="timerDay"></div>
+      <div class="pt-total" id="timerTotal">0H 00M 00S</div>
+      <div class="pt-live-subj" id="dvLiveSubj"></div>
     </div>
-    <div style="text-align:right">
-      <button class="plan-toggle" id="planToggle" onclick="togglePlanMode()">계획짜기</button>
-      <button class="plan-toggle" id="planUndoBtn" onclick="undoPlan()" style="display:none;margin-left:4px;padding:7px 9px">↩</button>
-      <button class="plan-toggle" id="planRedoBtn" onclick="redoPlan()" style="display:none;margin-left:3px;padding:7px 9px">↪</button>
-      <button class="plan-toggle" id="planSaveBtn" onclick="savePlan()" style="display:none;margin-left:4px;background:#22c55e;color:#000;border-color:#22c55e">저장</button>
-      <div class="plan-stat">
-        <div><span class="ps-lbl">목표</span> <span id="planTarget">0h 00m</span></div>
-        <div><span class="ps-lbl">순공</span> <span id="planActual" style="color:#22c55e">0h 00m</span></div>
-        <div><span class="ps-lbl">달성</span> <span id="planPct" style="color:#60a5fa">0%</span></div>
+    <div class="pt-right">
+      <div class="pt-sr"><span class="pt-sl">목표</span><span class="pt-sv" id="planTarget">0h</span></div>
+      <div class="pt-sr"><span class="pt-sl">순공</span><span class="pt-sv g" id="planActual">0h</span></div>
+      <div class="pt-sr"><span class="pt-sl">달성</span><span class="pt-sv b" id="planPct">0%</span></div>
+      <div class="pt-plan-btns">
+        <button class="pt-pb" id="planToggle" onclick="togglePlanMode()">계획</button>
+        <button class="pt-pb" id="planUndoBtn" onclick="undoPlan()" style="display:none">↩</button>
+        <button class="pt-pb" id="planRedoBtn" onclick="redoPlan()" style="display:none">↪</button>
+        <button class="pt-pb pt-save" id="planSaveBtn" onclick="savePlan()" style="display:none">저장</button>
       </div>
     </div>
   </div>
-  <div class="abar" id="activeBar">
-    <div class="adot" id="adot" style="width:8px;height:8px;border-radius:50%;flex-shrink:0"></div>
-    <div id="aname" style="font-weight:700;font-size:.8rem;color:#fff;flex:1">-</div>
-    <div class="atime" id="atime">00:00:00</div>
-  </div>
-  <div class="tsplit">
-    <div class="tleft">
-      <div class="sli" id="subjList"></div>
-      <div class="tc-ctrl">
-        <button class="tc-go" id="tcBtn" onclick="toggleSubj()" disabled>선택</button>
-        <button class="tc-stop" id="tcStop" onclick="stopSubjBtn()">■</button>
+  <div class="pt-div"></div>
+  <div class="pt-body">
+    <div class="pt-todo-panel">
+      <div class="pt-thead">
+        <div class="pt-th-subj">과목</div>
+        <div class="pt-th-todo">할 일</div>
+        <div class="pt-th-st">·</div>
       </div>
+      <div class="pt-tbody" id="ptTbody"></div>
+      <button class="pt-add-more" onclick="ptAddRows(5)">+ 칸 추가</button>
     </div>
-    <div class="tright">
-      <div class="pscroll">
-        <div class="pgwrap" id="pScroll"><div class="pgrid" id="pGrid"></div></div>
+    <div class="pt-tt-panel">
+      <div class="pt-tt-hdr">
+        <div class="pt-tt-ax"></div>
+        <div class="pt-tt-nums"><span>10</span><span>20</span><span>30</span><span>40</span><span>50</span><span>60</span></div>
       </div>
+      <div class="pgwrap" id="pScroll"><div class="pgrid" id="pGrid"></div></div>
       <div class="todo-panel" id="todoPanel"></div>
     </div>
+  </div>
+  <div class="pt-bar">
+    <div class="pt-bar-lbl" id="ptBarLbl">과목 선택</div>
+    <button class="pt-bar-btn" id="ptBarBtn" onclick="ptToggleSubj()">▶ 시작</button>
   </div>
 </div>
 
