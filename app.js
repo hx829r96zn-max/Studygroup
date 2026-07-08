@@ -68,7 +68,7 @@ function svPomoState(){localStorage.setItem('sg_pomo_state',JSON.stringify({pFoc
 function clearPomoState(){localStorage.removeItem('sg_pomo_state');}
 var ncRules=[],pickedC=COLORS[0];
 var calY=new Date().getFullYear(),calM=new Date().getMonth(),_pickY=new Date().getFullYear();
-var ROW_H=36,NCOLS=6,COL_MINS=10,AXIS_W=28,GRID_START_HOUR=5;
+var ROW_H=20,NCOLS=6,COL_MINS=10,AXIS_W=22,GRID_START_HOUR=5;
 function hourToRow(h){return(h-GRID_START_HOUR+24)%24;}
 function rowToHour(r){return(r+GRID_START_HOUR)%24;}
 var PCIRC=848.2;
@@ -195,7 +195,7 @@ function ptToggleSubj(){if(!_ptSelId){toast('과목 칸을 탭하세요');return
 function _ptKey(){return 'sg_ptrows_'+today();}
 function _ptLoad(){try{return JSON.parse(localStorage.getItem(_ptKey())||'null');}catch(e){return null;}}
 function _ptSave(rows){localStorage.setItem(_ptKey(),JSON.stringify(rows));}
-function _ptGetRows(){var saved=_ptLoad();if(saved&&saved.length)return saved;var rows=[];for(var i=0;i<20;i++)rows.push({subjId:null,text:'',status:null});return rows;}
+function _ptGetRows(){var saved=_ptLoad();if(saved&&saved.length)return saved;var rows=[];for(var i=0;i<16;i++)rows.push({subjId:null,text:'',status:null});return rows;}
 
 function _ptPickSubj(onSelect){
   var old=document.getElementById('_ptPicker');if(old)old.remove();
@@ -228,40 +228,68 @@ function renderSL(){
   var w=document.getElementById('ptTbody');if(!w)return;
   w.innerHTML='';
   var rows=_ptGetRows();
-  var lastSubjId='__none__';
+  var lastSubjId='__none__'; // 연속된 같은 과목 추적
+
   rows.forEach(function(row,i){
     var sub=row.subjId?subjs.find(function(s){return s.id===row.subjId;}):null;
     var hasText=!!(row.text&&row.text.trim());
-    var isActiveSub=(sub&&_ptSelId===sub.id);
-    var tr=document.createElement('div');tr.className='pt-row'+(isActiveSub?' active-subj':'');
-    // 과목 칸
+    var isActiveSub=(sub&&_ptSelId&&_ptSelId===sub.id);
+    var tr=document.createElement('div');
+    tr.className='pt-row'+(isActiveSub?' active-subj':'');
+
+    /* 과목 칸 — 연속 같은 과목이면 dot+이름 숨김 */
     var subjCell=document.createElement('div');subjCell.className='pt-row-subj';
     var showSubj=(sub&&sub.id!==lastSubjId);
     if(showSubj){
       var dot=document.createElement('div');dot.className='pt-row-dot';dot.style.background=sub.color;subjCell.appendChild(dot);
       var nm=document.createElement('div');nm.className='pt-row-subj-name';nm.style.color=sub.color;nm.textContent=sub.name;subjCell.appendChild(nm);
     }
+    /* 과목 칸 탭 → 바텀시트 + 하단 바에 과목명 즉시 표시 */
     (function(idx){
-      subjCell.onclick=function(e){e.stopPropagation();_ptPickSubj(function(sid){var rs=_ptGetRows();rs[idx].subjId=sid;_ptSave(rs);if(sid){_ptSelId=sid;_ptUpdateBar();}renderSL();});};
+      subjCell.onclick=function(e){
+        e.stopPropagation();
+        _ptPickSubj(function(sid){
+          var rs=_ptGetRows();
+          rs[idx].subjId=sid;
+          _ptSave(rs);
+          if(sid){_ptSelId=sid;_ptUpdateBar();}
+          renderSL();
+        });
+      };
     })(i);
     tr.appendChild(subjCell);
-    if(sub)lastSubjId=sub.id;
-    // 삭제
+    if(sub)lastSubjId=sub.id; // 추적 갱신 (null이면 유지 안 함)
+
+    /* 삭제 버튼 */
     var del=document.createElement('div');del.className='pt-row-del'+(hasText?'':' empty');del.textContent='✕';
-    (function(idx){del.onclick=function(e){e.stopPropagation();var rs=_ptGetRows();rs[idx]={subjId:rs[idx].subjId,text:'',status:null};_ptSave(rs);renderSL();};})(i);
+    (function(idx){
+      del.onclick=function(e){
+        e.stopPropagation();
+        var rs=_ptGetRows();rs[idx]={subjId:rs[idx].subjId,text:'',status:null};_ptSave(rs);renderSL();
+      };
+    })(i);
     tr.appendChild(del);
-    // 텍스트
+
+    /* 텍스트 칸 */
     var st=row.status||null;
-    var txt=document.createElement('div');txt.className='pt-row-txt'+(hasText?'':' placeholder')+(st==='X'?' done':'');txt.textContent=hasText?row.text:'';
-    (function(idx,tc){tc.addEventListener('click',function(e){e.stopPropagation();_ptStartEdit(idx,tc);});})(i,txt);
+    var txt=document.createElement('div');
+    txt.className='pt-row-txt'+(hasText?'':' placeholder')+(st==='X'?' done':'');
+    txt.textContent=hasText?row.text:'';
+    (function(idx,tc){
+      tc.addEventListener('click',function(e){e.stopPropagation();_ptStartEdit(idx,tc);});
+    })(i,txt);
     tr.appendChild(txt);
-    // 상태
+
+    /* 상태 버튼 */
     var stBtn=document.createElement('div');stBtn.className='pt-row-st';stBtn.textContent=_stLbl(st);stBtn.style.color=_stClr(st);
     var longT=null;
     (function(idx,btn){
       btn.addEventListener('touchstart',function(){longT=setTimeout(function(){var rs=_ptGetRows();rs[idx].status='△';_ptSave(rs);renderSL();},600);},{passive:true});
       btn.addEventListener('touchend',function(){clearTimeout(longT);},{passive:true});
-      btn.onclick=function(e){e.stopPropagation();var rs=_ptGetRows();var nx=_stNext(rs[idx].status||null);rs[idx].status=nx;rs[idx].done=(nx==='O');_ptSave(rs);renderSL();};
+      btn.onclick=function(e){
+        e.stopPropagation();
+        var rs=_ptGetRows();var nx=_stNext(rs[idx].status||null);rs[idx].status=nx;rs[idx].done=(nx==='O');_ptSave(rs);renderSL();
+      };
     })(i,stBtn);
     tr.appendChild(stBtn);
     w.appendChild(tr);
@@ -271,21 +299,39 @@ function renderSL(){
 
 function _ptStartEdit(idx,tc){
   var rs=_ptGetRows();
-  var inp=document.createElement('input');inp.value=rs[idx].text||'';
+  var inp=document.createElement('input');
+  inp.value=rs[idx].text||'';
   inp.style.cssText='background:transparent;border:none;outline:none;color:#1a1a1a;font-size:.62rem;font-family:\'Noto Sans KR\',sans-serif;width:100%;padding:0;';
-  tc.textContent='';tc.className='pt-row-txt';tc.appendChild(inp);inp.focus();
-  if(inp.value)inp.select();
+  tc.textContent='';tc.className='pt-row-txt';tc.appendChild(inp);
+  inp.focus();if(inp.value)inp.select();
   var saved=false;
-  function save(){if(saved)return;saved=true;var v=inp.value.trim();var rs2=_ptGetRows();rs2[idx].text=v;_ptSave(rs2);renderSL();}
+  function save(){
+    if(saved)return;saved=true;
+    var v=inp.value.trim();var rs2=_ptGetRows();rs2[idx].text=v;_ptSave(rs2);renderSL();
+  }
   function saveAndNext(){
     if(saved)return;saved=true;
-    var v=inp.value.trim();var rs2=_ptGetRows();rs2[idx].text=v;
+    var v=inp.value.trim();
+    var rs2=_ptGetRows();
+    rs2[idx].text=v;
+    // 다음 칸 없으면 추가 (같은 과목 유지)
     if(idx+1>=rs2.length)rs2.push({subjId:rs2[idx].subjId,text:'',status:null});
-    _ptSave(rs2);renderSL();
-    setTimeout(function(){var rows2=document.querySelectorAll('#ptTbody .pt-row');if(rows2[idx+1]){var nextTxt=rows2[idx+1].querySelector('.pt-row-txt');if(nextTxt)_ptStartEdit(idx+1,nextTxt);}},30);
+    _ptSave(rs2);
+    renderSL();
+    // 다음 칸 즉시 편집 시작
+    setTimeout(function(){
+      var allRows=document.querySelectorAll('#ptTbody .pt-row');
+      if(allRows[idx+1]){
+        var nextTxt=allRows[idx+1].querySelector('.pt-row-txt');
+        if(nextTxt)_ptStartEdit(idx+1,nextTxt);
+      }
+    },20);
   }
   inp.onblur=save;
-  inp.onkeydown=function(ev){if(ev.key==='Enter'){ev.preventDefault();saveAndNext();}if(ev.key==='Escape'){saved=true;renderSL();}};
+  inp.onkeydown=function(ev){
+    if(ev.key==='Enter'){ev.preventDefault();saveAndNext();}
+    if(ev.key==='Escape'){saved=true;renderSL();}
+  };
 }
 
 function selSubj(id){selId=id;renderSL();}

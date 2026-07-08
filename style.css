@@ -189,7 +189,7 @@ textarea.inp{resize:vertical;min-height:70px;}
 
 /* 각 행 26px → 20개 = 520px */
 .pt-row{display:flex;align-items:stretch;border-bottom:1px solid rgba(0,0,0,.08);height:26px;background:#f5f0e8;position:relative;}
-.pt-row.active-subj{background:rgba(0,0,0,.04);}
+.pt-row.active-subj{background:rgba(0,0,0,.06);}
 .pt-row-subj{width:62px;flex-shrink:0;border-right:1px solid rgba(0,0,0,.09);display:flex;align-items:center;gap:4px;padding:0 5px 0 6px;cursor:pointer;overflow:hidden;}
 .pt-row-subj:active{background:rgba(0,0,0,.05);}
 .pt-row-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
@@ -225,8 +225,7 @@ textarea.inp{resize:vertical;min-height:70px;}
   padding:8px 12px;
   background:#ede8de;border-top:1px solid rgba(0,0,0,.12);
   margin-bottom:calc(50px + env(safe-area-inset-bottom,0));
-}
-.pt-bar-lbl{flex:1;font-size:.64rem;color:#888;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+}.pt-bar-lbl{flex:1;font-size:.64rem;color:#888;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .pt-bar-lbl.sel{font-weight:800;color:#1a1a1a;}
 .pt-bar-btn{flex-shrink:0;height:32px;padding:0 18px;border-radius:9px;border:none;background:#1a1a1a;color:#fff;font-size:.7rem;font-weight:800;font-family:'Noto Sans KR',sans-serif;cursor:pointer;}
 .pt-bar-btn.running{background:#b91c1c;}
