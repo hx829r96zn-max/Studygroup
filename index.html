@@ -62,26 +62,16 @@
 <!-- ══════════ HOME ══════════ -->
 <div class="page on" id="pg-home">
 
-  <!-- 순공시간 카드 (최상단) -->
-  <div class="home-suntime">
-    <div class="hs-row">
-      <div class="hs-left">
-        <div class="hs-lbl">오늘 순공</div>
-        <div class="hs-total" id="homeTotal">0<span>h</span>00<span>m</span>00<span>s</span></div>
-        <div class="hs-goal" id="goalLbl">목표 6h</div>
-      </div>
-      <div class="hs-right" id="homePct">0%</div>
-    </div>
-    <div class="hs-bar"><div id="homeBar"></div></div>
-    <div class="hs-subj-bars" id="homeSubjBars"></div>
-  </div>
+  <!-- D-DAY -->
+  <div id="ddayCard" style="display:none;"></div>
+  <button onclick="openDdayModal()" style="background:none;border:none;color:rgba(255,255,255,.3);font-size:.7rem;cursor:pointer;margin-bottom:10px;padding:0;display:flex;align-items:center;gap:4px;">＋ D-day 추가</button>
 
-  <!-- 현재 공부 과목 배지 -->
+  <!-- 현재 공부 과목 배지 (오른쪽 위) -->
   <div class="pomo-top">
     <div id="pomoSubjBadge"></div>
   </div>
 
-  <!-- 뽀모도로 링 -->
+  <!-- 뽀모도로 대형 링 -->
   <div class="pomo-wrap">
     <div class="p-ring-big">
       <svg class="p-svg-big" viewBox="0 0 300 300">
@@ -100,21 +90,40 @@
         </div>
       </div>
     </div>
+
+    <div class="p-dots" id="pDots">
+      <div class="p-dot"></div><div class="p-dot"></div>
+      <div class="p-dot"></div><div class="p-dot"></div>
+    </div>
     <div class="p-ctrl">
       <button class="p-start" id="pBtn" onclick="togglePomo()">▶ 시작</button>
       <button class="p-reset" onclick="resetPomo()">↺</button>
     </div>
+    <!-- 과목 선택 버튼 -->
     <div style="margin-top:12px;text-align:center;">
       <button onclick="openModal('pomoSubjM')" style="background:none;border:1px solid rgba(255,255,255,.2);border-radius:20px;color:rgba(255,255,255,.6);font-size:.72rem;padding:5px 14px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;" id="pomoSubjLabel">과목 미선택</button>
     </div>
     <div class="subj-grid" id="homeSubjGrid"></div>
   </div>
 
+  <!-- 오늘 순공시간 (다크) -->
+  <div class="card home-suntime">
+    <div class="row" style="margin-bottom:7px">
+      <div class="lbl" style="margin-bottom:0">오늘 순공시간</div>
+      <div style="font-size:.68rem;color:rgba(255,255,255,.4)" id="goalLbl">목표 6h 30m</div>
+    </div>
+    <div style="display:flex;align-items:flex-end;gap:7px;margin-bottom:7px">
+      <div style="font-family:monospace;font-size:1.9rem;font-weight:500;line-height:1;color:#fff" id="homeTotal">0<span style="font-size:.85rem;color:rgba(255,255,255,.4)">h</span>00<span style="font-size:.85rem;color:rgba(255,255,255,.4)">m</span>00<span style="font-size:.85rem;color:rgba(255,255,255,.4)">s</span></div>
+      <div style="font-size:.7rem;color:rgba(255,255,255,.5);margin-bottom:2px" id="homePct">0%</div>
+    </div>
+    <div style="height:5px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;margin-bottom:9px"><div id="homeBar" style="height:100%;border-radius:3px;background:var(--green);width:0%"></div></div>
+    <div id="homeSubjBars"></div>
+  </div>
 </div>
 
 <!-- ══════════ TIMER (플래너) ══════════ -->
 <div class="page" id="pg-timer">
-  <!-- ── 전체 순공시간 + 목표/순공/달성/계획하기 ── -->
+  <!-- 상단: 순공시간 + 목표/순공/달성/계획 -->
   <div class="pt-top">
     <div class="pt-left">
       <div class="pt-date" id="timerDay"></div>
@@ -122,50 +131,46 @@
       <div class="pt-live-subj" id="dvLiveSubj"></div>
     </div>
     <div class="pt-right">
-      <div class="pt-stat-row"><span class="pt-stat-lbl">목표</span><span class="pt-stat-val" id="planTarget">0h</span></div>
-      <div class="pt-stat-row"><span class="pt-stat-lbl">순공</span><span class="pt-stat-val green" id="planActual">0h</span></div>
-      <div class="pt-stat-row"><span class="pt-stat-lbl">달성</span><span class="pt-stat-val blue" id="planPct">0%</span></div>
+      <div class="pt-stat-row"><span class="pt-sl">목표</span><span class="pt-sv" id="planTarget">0h</span></div>
+      <div class="pt-stat-row"><span class="pt-sl">순공</span><span class="pt-sv g" id="planActual">0h</span></div>
+      <div class="pt-stat-row"><span class="pt-sl">달성</span><span class="pt-sv b" id="planPct">0%</span></div>
       <div class="pt-plan-btns">
-        <button class="pt-plan-btn" id="planToggle" onclick="togglePlanMode()">계획</button>
-        <button class="pt-plan-btn" id="planUndoBtn" onclick="undoPlan()" style="display:none">↩</button>
-        <button class="pt-plan-btn" id="planRedoBtn" onclick="redoPlan()" style="display:none">↪</button>
-        <button class="pt-plan-btn pt-save" id="planSaveBtn" onclick="savePlan()" style="display:none">저장</button>
+        <button class="pt-pb" id="planToggle" onclick="togglePlanMode()">계획</button>
+        <button class="pt-pb" id="planUndoBtn" onclick="undoPlan()" style="display:none">↩</button>
+        <button class="pt-pb" id="planRedoBtn" onclick="redoPlan()" style="display:none">↪</button>
+        <button class="pt-pb pt-save" id="planSaveBtn" onclick="savePlan()" style="display:none">저장</button>
       </div>
     </div>
   </div>
-  <div class="pt-divider"></div>
+  <div class="pt-div"></div>
 
-  <!-- ── 할일 + 타임테이블 ── -->
+  <!-- 본문: 할일 + 타임테이블 -->
   <div class="pt-body">
-    <!-- 왼쪽: 할일 테이블 -->
+    <!-- 왼쪽 2/3: 할일 테이블 -->
     <div class="pt-todo-panel">
-      <!-- 고정 헤더 -->
-      <div class="pt-todo-hdr">
-        <div class="pt-hdr-subj">과목</div>
-        <div class="pt-hdr-todo">할 일</div>
-        <div class="pt-hdr-st">·</div>
+      <div class="pt-thead">
+        <div class="pt-th-subj">과목</div>
+        <div class="pt-th-todo">할 일</div>
+        <div class="pt-th-st">·</div>
       </div>
-      <!-- 빈 칸 그리드 (모든 과목 × N행) -->
-      <div class="pt-todo-grid" id="ptTodoGrid"></div>
+      <div class="pt-tbody" id="ptTbody"></div>
+      <button class="pt-add-more" onclick="ptAddRows(5)">+ 칸 추가</button>
     </div>
-
-    <!-- 오른쪽: 타임테이블 -->
+    <!-- 오른쪽 1/3: 타임테이블 -->
     <div class="pt-tt-panel">
-      <div class="pt-tt-hdr-row">
-        <div class="pt-tt-axis"></div>
-        <div class="pt-tt-mins"><span>10</span><span>20</span><span>30</span><span>40</span><span>50</span><span>60</span></div>
+      <div class="pt-tt-hdr">
+        <div class="pt-tt-ax"></div>
+        <div class="pt-tt-nums"><span>10</span><span>20</span><span>30</span><span>40</span><span>50</span><span>60</span></div>
       </div>
-      <div class="pgwrap" id="pScroll">
-        <div class="pgrid" id="pGrid"></div>
-      </div>
+      <div class="pgwrap" id="pScroll"><div class="pgrid" id="pGrid"></div></div>
       <div class="todo-panel" id="todoPanel"></div>
     </div>
   </div>
 
-  <!-- ── 하단: 과목 선택 + 시작 버튼 ── -->
-  <div class="pt-bottom-bar">
-    <div class="pt-sel-label" id="dvSelSubjLabel">과목 선택</div>
-    <button class="pt-start-btn" id="dvStartBtn" onclick="dvToggleSubj()">▶ 시작</button>
+  <!-- 하단: 선택 과목 + 시작 버튼 -->
+  <div class="pt-bar">
+    <div class="pt-bar-lbl" id="ptBarLbl">과목 선택</div>
+    <button class="pt-bar-btn" id="ptBarBtn" onclick="ptToggleSubj()">▶ 시작</button>
   </div>
 </div>
 
