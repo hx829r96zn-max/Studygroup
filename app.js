@@ -335,78 +335,76 @@ function renderSL(){
     })(i,stBtn);
     tr.appendChild(stBtn);
 
-    /* ── 꾹 누르기 → 드래그로 행 이동 ── */
+    /* ── 꾹 누르기 → 드래그 이동 ── */
     (function(fromIdx,rowEl){
-      var dragTimer=null,dragging=false,dragClone=null,startY=0,toIdx=-1;
+      var dragTimer=null,dragging=false,startY=0,toIdx=-1,insertLine=null;
 
       function startDrag(clientY){
         dragging=true;
-        startY=clientY;
-        rowEl.style.opacity='0.4';
-        // 드래그 인디케이터 (현재 위치 표시선)
-        dragClone=document.createElement('div');
-        dragClone.style.cssText='position:fixed;left:0;right:0;height:2px;background:#4f46e5;z-index:999;pointer-events:none;transition:top .05s;';
-        document.body.appendChild(dragClone);
+        // 뽑히는 느낌: 살짝 위로 올라오고 그림자
+        rowEl.style.cssText+='opacity:.85;transform:translateY(-3px) scale(1.01);box-shadow:0 6px 18px rgba(0,0,0,.15);z-index:50;position:relative;transition:transform .12s,box-shadow .12s;background:#fff;';
+        // 삽입 위치 표시선 생성
+        insertLine=document.createElement('div');
+        insertLine.id='_ptInsertLine';
+        insertLine.style.cssText='position:absolute;left:0;right:0;height:2.5px;background:#4f46e5;border-radius:2px;z-index:100;pointer-events:none;display:none;';
+        var tbody=document.getElementById('ptTbody');
+        if(tbody)tbody.style.position='relative',tbody.appendChild(insertLine);
+      }
+
+      function updateInsertLine(targetRow,insertBefore){
+        if(!insertLine||!targetRow)return;
+        var tbodyRect=document.getElementById('ptTbody').getBoundingClientRect();
+        var rowRect=targetRow.getBoundingClientRect();
+        var lineY=insertBefore
+          ?(rowRect.top-tbodyRect.top)
+          :(rowRect.bottom-tbodyRect.top);
+        insertLine.style.display='block';
+        insertLine.style.top=(lineY-1)+'px';
       }
 
       function moveDrag(clientY){
         if(!dragging)return;
-        // 드롭 위치 계산
-        var allRows=document.querySelectorAll('#ptTbody .pt-row');
+        var allRows=Array.prototype.slice.call(document.querySelectorAll('#ptTbody .pt-row'));
         toIdx=-1;
-        var bestDist=9999;
+        var bestRow=null,insertBefore=true;
         allRows.forEach(function(el,j){
+          if(el===rowEl)return;
           var r=el.getBoundingClientRect();
           var mid=r.top+r.height/2;
-          var dist=Math.abs(clientY-mid);
-          if(dist<bestDist){bestDist=dist;toIdx=j;}
-          el.classList.remove('drag-over');
+          if(toIdx<0||Math.abs(clientY-mid)<Math.abs(clientY-(bestRow?bestRow.getBoundingClientRect().top+bestRow.getBoundingClientRect().height/2:99999))){
+            toIdx=j;bestRow=el;insertBefore=(clientY<mid);
+          }
         });
-        if(toIdx>=0&&toIdx!==fromIdx){
-          allRows[toIdx].classList.add('drag-over');
-          var r2=allRows[toIdx].getBoundingClientRect();
-          if(dragClone)dragClone.style.top=(clientY<r2.top+r2.height/2?r2.top:r2.bottom)+'px';
-        }
+        if(bestRow)updateInsertLine(bestRow,insertBefore);
       }
 
       function endDrag(){
         if(!dragging)return;
         dragging=false;
-        rowEl.style.opacity='';
-        if(dragClone){dragClone.remove();dragClone=null;}
-        document.querySelectorAll('#ptTbody .pt-row').forEach(function(el){el.classList.remove('drag-over');});
+        rowEl.style.cssText=rowEl.style.cssText.replace(/opacity[^;]*;/,'').replace(/transform[^;]*;/,'').replace(/box-shadow[^;]*;/,'').replace(/z-index[^;]*;/,'').replace(/position[^;]*;/,'').replace(/transition[^;]*;/,'').replace(/background:[^;]*;/,'');
+        rowEl.style.opacity='';rowEl.style.transform='';rowEl.style.boxShadow='';
+        if(insertLine){insertLine.remove();insertLine=null;}
+        var tbody=document.getElementById('ptTbody');if(tbody)tbody.style.position='';
 
-        if(toIdx<0||toIdx===fromIdx){return;}
+        if(toIdx<0||toIdx===fromIdx)return;
 
         var rs=_ptGetRows();
         var item=rs.splice(fromIdx,1)[0];
         var insertAt=toIdx>fromIdx?toIdx-1:toIdx;
         rs.splice(insertAt,0,item);
 
-        // 이동 후 같은 과목 영역에 속하면 과목칸 자동 비움
-        // "같은 과목 영역" = 위 행이 같은 subjId를 가진 경우
+        // 같은 과목 영역에 놓이면 과목칸 자동 비움
         var above=insertAt>0?rs[insertAt-1]:null;
-        var below=insertAt+1<rs.length?rs[insertAt+1]:null;
-        var aboveSubj=above?above.subjId:null;
-        var belowSubj=below?below.subjId:null;
-
-        // 위 행이 같은 과목의 연속이면 → 현재 행 과목칸 비움
-        if(aboveSubj&&aboveSubj===item.subjId){
-          rs[insertAt].subjId=null; // 같은 과목 영역 내부라 표시 불필요
-        }
-        // 현재 행 아래가 다른 과목인데, 현재 행이 그 과목의 시작이었다면 아래 행에 과목 이름 올려줌
-        if(belowSubj&&belowSubj===item.subjId&&!rs[insertAt].subjId){
-          // 이미 비웠으면 아래 행이 계속 같은 과목으로 표시되므로 OK
+        if(above&&above.subjId&&above.subjId===item.subjId){
+          rs[insertAt].subjId=null;
         }
 
-        _ptSave(rs);
-        renderSL();
+        _ptSave(rs);renderSL();
       }
 
-      // 터치 이벤트
       rowEl.addEventListener('touchstart',function(e){
         var t=e.touches[0];startY=t.clientY;
-        dragTimer=setTimeout(function(){startDrag(t.clientY);},500);
+        dragTimer=setTimeout(function(){startDrag(t.clientY);},450);
       },{passive:true});
       rowEl.addEventListener('touchmove',function(e){
         if(!dragging){clearTimeout(dragTimer);dragTimer=null;return;}
@@ -414,14 +412,12 @@ function renderSL(){
         moveDrag(e.touches[0].clientY);
       },{passive:false});
       rowEl.addEventListener('touchend',function(){
-        clearTimeout(dragTimer);dragTimer=null;
-        endDrag();
+        clearTimeout(dragTimer);dragTimer=null;endDrag();
       },{passive:true});
       rowEl.addEventListener('touchcancel',function(){
         clearTimeout(dragTimer);dragTimer=null;
-        dragging=false;rowEl.style.opacity='';
-        if(dragClone){dragClone.remove();dragClone=null;}
-        document.querySelectorAll('#ptTbody .pt-row').forEach(function(el){el.classList.remove('drag-over');});
+        dragging=false;rowEl.style.opacity='';rowEl.style.transform='';rowEl.style.boxShadow='';
+        if(insertLine){insertLine.remove();insertLine=null;}
       },{passive:true});
     })(i,tr);
 
@@ -527,7 +523,12 @@ for(var h2=0;h2<24;h2++){var dRow=hourToRow(h2);for(var c3=0;c3<NCOLS;c3++){var 
 tSess.forEach(function(s){drawCont(s.start,s.end||Date.now(),s.color);});
 if(aId&&aStart){var ac=(subjs.find(function(x){return x.id===aId;})||{}).color||'#a78bfa';drawCont(aStart,Date.now(),ac);}
 // 현재 시각 세로선
-var now2=new Date();var nowFrac=(now2.getMinutes()*60+now2.getSeconds())/3600;var nowX=Math.round(AXIS_W+nowFrac*(gridW-AXIS_W));var nl=document.createElement('div');nl.className='pt-nowline';nl.style.left=nowX+'px';grid.appendChild(nl);
+var now2=new Date();
+var nowTotalMins=now2.getHours()*60+now2.getMinutes()+now2.getSeconds()/60;
+var nowDispRow=hourToRow(now2.getHours());
+var nowMinFrac=now2.getMinutes()/60+now2.getSeconds()/3600;
+var nowY=Math.round((nowDispRow+nowMinFrac)*ROW_H);
+var nl=document.createElement('div');nl.className='pt-nowline';nl.style.top=nowY+'px';grid.appendChild(nl);
 bindPlanDrag(grid);updatePlanStat();}
 function scrollNow(){var sc=document.getElementById('pScroll');if(!sc)return;var now=new Date();sc.scrollTop=Math.max(0,(hourToRow(now.getHours())+now.getMinutes()/60)*ROW_H-160);}
 

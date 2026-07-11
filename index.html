@@ -62,32 +62,18 @@
 <!-- ══════════ HOME ══════════ -->
 <div class="page on" id="pg-home">
 
-  <!-- ① D-day (맨 위) -->
+  <!-- D-day -->
   <div class="home-dday-wrap">
     <div id="ddayCard" style="display:none;"></div>
     <button onclick="openDdayModal()" class="home-dday-btn">＋ D-day</button>
   </div>
 
-  <!-- ② 순공시간 카드 -->
-  <div class="hs-card">
-    <div class="hs-top-row">
-      <div class="hs-label">오늘 순공</div>
-      <div class="hs-goal" id="goalLbl">목표 6h</div>
-    </div>
-    <div class="hs-total-row">
-      <div class="hs-total" id="homeTotal">0<span>h</span>00<span>m</span>00<span>s</span></div>
-      <div class="hs-pct" id="homePct">0%</div>
-    </div>
-    <div class="hs-bar"><div id="homeBar"></div></div>
-    <div class="hs-subj-bars" id="homeSubjBars"></div>
-  </div>
-
-  <!-- ② 현재 공부 과목 배지 -->
+  <!-- 현재 공부 과목 배지 -->
   <div class="pomo-top">
     <div id="pomoSubjBadge"></div>
   </div>
 
-  <!-- ③ 뽀모도로 링 -->
+  <!-- 뽀모도로 링 -->
   <div class="pomo-wrap">
     <div class="p-ring-big">
       <svg class="p-svg-big" viewBox="0 0 300 300">
@@ -114,6 +100,20 @@
       <button onclick="openModal('pomoSubjM')" style="background:none;border:1px solid rgba(255,255,255,.2);border-radius:20px;color:rgba(255,255,255,.6);font-size:.72rem;padding:5px 14px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;" id="pomoSubjLabel">과목 미선택</button>
     </div>
     <div class="subj-grid" id="homeSubjGrid"></div>
+  </div>
+
+  <!-- 순공시간 카드 (아래) -->
+  <div class="hs-card">
+    <div class="hs-top-row">
+      <div class="hs-label">오늘 순공</div>
+      <div class="hs-goal" id="goalLbl">목표 6h</div>
+    </div>
+    <div class="hs-total-row">
+      <div class="hs-total" id="homeTotal">0<span>h</span>00<span>m</span>00<span>s</span></div>
+      <div class="hs-pct" id="homePct">0%</div>
+    </div>
+    <div class="hs-bar"><div id="homeBar"></div></div>
+    <div class="hs-subj-bars" id="homeSubjBars"></div>
   </div>
 
 </div>
