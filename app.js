@@ -251,9 +251,9 @@ function renderSL(){
       (function(idx){
         subjCell.onclick=function(e){
           e.stopPropagation();
+          if(planMode)return;
           _ptPickSubj(function(sid){
             var rs=_ptGetRows();
-            // 과목 변경 시 기존 할일이 있으면 한 칸 아래로 삽입
             if(rs[idx].text&&rs[idx].text.trim()){
               rs.splice(idx,0,{subjId:sid,text:'',status:null});
             } else {
@@ -266,13 +266,12 @@ function renderSL(){
         };
       })(i);
     } else if(fromPrev){
-      // 같은 과목 이어지는 행: 과목칸 잠금 (탭 불가, 빈 칸)
       subjCell.style.background='rgba(0,0,0,.02)';
     } else {
-      // 과목 없는 빈 행: 탭하면 과목 선택
       (function(idx){
         subjCell.onclick=function(e){
           e.stopPropagation();
+          if(planMode)return;
           _ptPickSubj(function(sid){
             var rs=_ptGetRows();
             if(rs[idx].text&&rs[idx].text.trim()){
@@ -312,6 +311,7 @@ function renderSL(){
     (function(idx){
       del.onclick=function(e){
         e.stopPropagation();
+        if(planMode)return;
         var rs=_ptGetRows();rs[idx]={subjId:rs[idx].subjId,text:'',status:null};_ptSave(rs);renderSL();
       };
     })(i);
@@ -322,7 +322,11 @@ function renderSL(){
     txt.className='pt-row-txt'+(hasText?'':' placeholder')+(st==='X'?' done':'');
     txt.textContent=hasText?row.text:'';
     (function(idx,tc){
-      tc.addEventListener('click',function(e){e.stopPropagation();_ptStartEdit(idx,tc);});
+      tc.addEventListener('click',function(e){
+        e.stopPropagation();
+        if(planMode)return; // 계획 모드 중 할일칸 클릭 차단
+        _ptStartEdit(idx,tc);
+      });
     })(i,txt);
     tr.appendChild(txt);
 
@@ -366,34 +370,49 @@ function renderSL(){
         if(!dragging)return;
         var allRows=Array.prototype.slice.call(document.querySelectorAll('#ptTbody .pt-row'));
         toIdx=-1;
-        var bestRow=null,insertBefore=true;
+        var insertBefore=true;
+        var minDist=9999;
         allRows.forEach(function(el,j){
           if(el===rowEl)return;
           var r=el.getBoundingClientRect();
           var mid=r.top+r.height/2;
-          if(toIdx<0||Math.abs(clientY-mid)<Math.abs(clientY-(bestRow?bestRow.getBoundingClientRect().top+bestRow.getBoundingClientRect().height/2:99999))){
-            toIdx=j;bestRow=el;insertBefore=(clientY<mid);
-          }
+          var dist=Math.abs(clientY-mid);
+          if(dist<minDist){minDist=dist;toIdx=j;insertBefore=(clientY<mid);}
         });
-        if(bestRow)updateInsertLine(bestRow,insertBefore);
+        if(toIdx>=0){
+          var targetRow=allRows[toIdx];
+          updateInsertLine(targetRow,insertBefore);
+          // insertBefore 정보 저장
+          rowEl._insertBefore=insertBefore;
+          rowEl._toIdx=toIdx;
+        }
       }
 
       function endDrag(){
         if(!dragging)return;
         dragging=false;
-        rowEl.style.cssText=rowEl.style.cssText.replace(/opacity[^;]*;/,'').replace(/transform[^;]*;/,'').replace(/box-shadow[^;]*;/,'').replace(/z-index[^;]*;/,'').replace(/position[^;]*;/,'').replace(/transition[^;]*;/,'').replace(/background:[^;]*;/,'');
-        rowEl.style.opacity='';rowEl.style.transform='';rowEl.style.boxShadow='';
+        rowEl.style.opacity='';rowEl.style.transform='';rowEl.style.boxShadow='';rowEl.style.zIndex='';rowEl.style.position='';
         if(insertLine){insertLine.remove();insertLine=null;}
         var tbody=document.getElementById('ptTbody');if(tbody)tbody.style.position='';
 
-        if(toIdx<0||toIdx===fromIdx)return;
+        var finalToIdx=rowEl._toIdx!=null?rowEl._toIdx:-1;
+        var finalBefore=rowEl._insertBefore!=null?rowEl._insertBefore:true;
+        delete rowEl._toIdx;delete rowEl._insertBefore;
+
+        if(finalToIdx<0||finalToIdx===fromIdx)return;
 
         var rs=_ptGetRows();
+        var allRows=Array.prototype.slice.call(document.querySelectorAll('#ptTbody .pt-row'));
+
+        // 실제 인덱스 계산: 선이 가리키는 위치
         var item=rs.splice(fromIdx,1)[0];
-        var insertAt=toIdx>fromIdx?toIdx-1:toIdx;
+        // toIdx는 DOM 행 인덱스 — fromIdx 제거 후 보정
+        var adjTo=finalToIdx>fromIdx?finalToIdx-1:finalToIdx;
+        var insertAt=finalBefore?adjTo:adjTo+1;
+        insertAt=Math.max(0,Math.min(rs.length,insertAt));
         rs.splice(insertAt,0,item);
 
-        // 같은 과목 영역에 놓이면 과목칸 자동 비움
+        // 같은 과목 영역 → 과목칸 자동 비움
         var above=insertAt>0?rs[insertAt-1]:null;
         if(above&&above.subjId&&above.subjId===item.subjId){
           rs[insertAt].subjId=null;
@@ -490,7 +509,12 @@ function _stopSil(id){sess.push({subjectId:id,color:(subjs.find(function(s){retu
 // PLANNER
 function planHex(){return(cfg&&cfg.themeC&&cfg.themeC['--plan'])||'#60a5fa';}
 function hexToRGBA(hex,a){hex=(hex||'#60a5fa').replace('#','');if(hex.length===3)hex=hex.split('').map(function(x){return x+x;}).join('');var r=parseInt(hex.substr(0,2),16),g=parseInt(hex.substr(2,2),16),b=parseInt(hex.substr(4,2),16);return'rgba('+r+','+g+','+b+','+a+')';}
-function currentPlanColor(){if(selId){var s=subjs.find(function(x){return x.id===selId;});if(s)return s.color;}return planHex();}
+function currentPlanColor(){
+  // 할일 칸에서 선택한 과목(_ptSelId) 우선, 없으면 selId, 없으면 기본 색
+  var useId=_ptSelId||selId;
+  if(useId){var s=subjs.find(function(x){return x.id===useId;});if(s)return s.color;}
+  return planHex();
+}
 function cellColor(v){return(v&&typeof v==='string')?v:planHex();}
 var planMode=false;
 function planKey(){return'sg_plancells_'+today();}
@@ -523,12 +547,23 @@ for(var h2=0;h2<24;h2++){var dRow=hourToRow(h2);for(var c3=0;c3<NCOLS;c3++){var 
 tSess.forEach(function(s){drawCont(s.start,s.end||Date.now(),s.color);});
 if(aId&&aStart){var ac=(subjs.find(function(x){return x.id===aId;})||{}).color||'#a78bfa';drawCont(aStart,Date.now(),ac);}
 // 현재 시각 세로선
-var now2=new Date();
-var nowTotalMins=now2.getHours()*60+now2.getMinutes()+now2.getSeconds()/60;
-var nowDispRow=hourToRow(now2.getHours());
-var nowMinFrac=now2.getMinutes()/60+now2.getSeconds()/3600;
-var nowY=Math.round((nowDispRow+nowMinFrac)*ROW_H);
-var nl=document.createElement('div');nl.className='pt-nowline';nl.style.top=nowY+'px';grid.appendChild(nl);
+// 현재 시각 빨간선 — 현재 시간 행에만 딱 한 칸
+var nowH=new Date().getHours();
+var nowDispRow=hourToRow(nowH);
+var nl=document.createElement('div');
+nl.id='ptNowLine';nl.className='pt-nowline';
+nl.style.top=(nowDispRow*ROW_H)+'px';
+nl.style.height=ROW_H+'px';
+grid.appendChild(nl);
+// 1초마다 위치 갱신
+clearInterval(window._nowLineTimer);
+window._nowLineTimer=setInterval(function(){
+  var el=document.getElementById('ptNowLine');
+  if(!el)return clearInterval(window._nowLineTimer);
+  var h=new Date().getHours();
+  var r=hourToRow(h);
+  el.style.top=(r*ROW_H)+'px';
+},1000);
 bindPlanDrag(grid);updatePlanStat();}
 function scrollNow(){var sc=document.getElementById('pScroll');if(!sc)return;var now=new Date();sc.scrollTop=Math.max(0,(hourToRow(now.getHours())+now.getMinutes()/60)*ROW_H-160);}
 
