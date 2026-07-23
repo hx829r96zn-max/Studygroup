@@ -22,7 +22,11 @@ function loadUserDataFromFirebase(uid){if(!window._fbReady)return;window._fbGet(
   if(data.todaySess&&data.todaySess.length&&mergeSessArray(data.todaySess))changed=true;
   if(changed){svSess();renderTL();updateHome();}
   renderProfUI();updateHome();renderHBet();buildStreak();buildHm('hmHome');if(data.prof&&data.prof.name)toast('🔄 기록 복원됨!');}).catch(function(e){console.warn('복원 실패:',e);});}
-function saveUserDataToFirebase(){if(!window._fbReady||!window._fbUser)return;var uid=window._fbUser.uid;if(uid.indexOf('offline_')===0)return;var todaySess=sess.filter(function(s){return studyDayOf(new Date(s.start))===today();});var cutoff=Date.now()-90*24*3600*1000;var sessBackup=sess.filter(function(s){return s.start>=cutoff;});return window._fbSet('userdata/'+uid,{prof:prof,subjs:subjs,ctr:ctr,frds:frds,bets:bets,cfg:cfg,todaySess:todaySess,todayDate:today(),planCells:{date:today(),cells:planCells},todos:todos,sessBackup:sessBackup,lastSaved:Date.now()});}
+function saveUserDataToFirebase(){if(!window._fbReady||!window._fbUser)return;var uid=window._fbUser.uid;if(uid.indexOf('offline_')===0)return;var todaySess=sess.filter(function(s){return studyDayOf(new Date(s.start))===today();});var cutoff=Date.now()-90*24*3600*1000;var sessBackup=sess.filter(function(s){return s.start>=cutoff;});
+// 전체 랭킹용 totalSeconds도 함께 업데이트
+var total=getTSecs();
+if(total>0&&prof&&prof.name){window._fbUpdate('ranking/'+uid,{name:prof.name||'익명',school:prof.school||'',totalSeconds:total,updatedAt:Date.now()});}
+return window._fbSet('userdata/'+uid,{prof:prof,subjs:subjs,ctr:ctr,frds:frds,bets:bets,cfg:cfg,todaySess:todaySess,todayDate:today(),planCells:{date:today(),cells:planCells},todos:todos,sessBackup:sessBackup,lastSaved:Date.now()});}
 function updateAccountUI(user){var nE=document.getElementById('accountName'),eE=document.getElementById('accountEmail'),aE=document.getElementById('accountAvatar'),lB=document.getElementById('loginBtn'),oB=document.getElementById('logoutBtn');if(user&&user.email){if(nE)nE.textContent=user.displayName||prof.name||'사용자';if(eE)eE.textContent=user.email;if(aE)aE.textContent=(user.displayName||'?')[0].toUpperCase();if(lB)lB.style.display='none';if(oB)oB.style.display='flex';}else{if(nE)nE.textContent='오프라인 모드';if(eE)eE.textContent='로그인하면 기기간 동기화 가능';if(aE)aE.textContent='?';if(lB)lB.style.display='flex';if(oB)oB.style.display='none';}}
 window.addEventListener('load',function(){setTimeout(_loadFirebase,100);});
 
@@ -100,6 +104,9 @@ function getSecsDate(y,mo,d){return sess.filter(function(s){var dt=new Date(s.st
 // NAV
 function go(id){
   localStorage.setItem('sg_lasttab',id);
+  // 통계 탭 벗어나면 랭킹 리스너 해제
+  var prevPg=document.querySelector('.page.on');
+  if(prevPg&&prevPg.id==='pg-stats'&&id!=='stats')stopRankingListener();
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('on');});
   document.querySelectorAll('.ntab,.tbtab').forEach(function(t){t.classList.remove('on');});
   var pg=document.getElementById('pg-'+id);if(pg)pg.classList.add('on');
@@ -107,7 +114,7 @@ function go(id){
   if(map[id]!==undefined){var tabs=document.querySelectorAll('.ntab');if(tabs[map[id]])tabs[map[id]].classList.add('on');var tbs=document.querySelectorAll('.tbtab');if(tbs[map[id]])tbs[map[id]].classList.add('on');}
   if(id==='timer'){renderTH();renderSL();setTimeout(function(){renderTL();scrollNow();renderTodoPanel();},80);}
   if(id==='home'){updateHome();renderHBet();renderDdayCard();renderHomeSubjGrid();if(pCur<=0)pCur=pSec;updatePUI();}
-  if(id==='stats'){renderCal();updateStats();}
+  if(id==='stats'){renderCal();updateStats();startRankingListener();}
   if(id==='settings')renderSet();
   if(id==='mock')renderMockPage();
   if(id==='room')renderRoom();
@@ -503,7 +510,10 @@ function toggleSubj(){if(!selId)return;if(aId===selId){var sid=selId;stopSubj();
 function stopSubjBtn(){var sid=aId;stopSubj();if(cfg.linkPomoStop!==false&&pRun&&pomoSubjId===sid)pomoPause();}
 function updatePomoSubjBadge(){var el=document.getElementById('pomoSubjBadge');if(!el)return;if(aId){var sub=subjs.find(function(s){return s.id===aId;});if(sub){el.textContent=sub.name;el.style.background=sub.color;el.style.display='block';return;}}el.style.display='none';}
 function startSubj(id){if(aId)_stopSil(aId);aId=id;aStart=Date.now();var sub=subjs.find(function(s){return s.id===id;});var bar=document.getElementById('activeBar');if(bar)bar.classList.add('on');var ad=document.getElementById('adot');if(ad)ad.style.background=sub.color;var an=document.getElementById('aname');if(an)an.textContent=sub.name;restartFbSync();clearInterval(aInt);aInt=setInterval(function(){var at=document.getElementById('atime');if(at)at.textContent=f3(Math.floor((Date.now()-aStart)/1000));renderTH();syncAllScreens();},500);selSubj(id);renderTL();updatePomoSubjBadge();_ptUpdateBar();}
-function stopSubj(){if(!aId)return;sess.push({subjectId:aId,color:subjs.find(function(s){return s.id===aId;}).color,start:aStart,end:Date.now()});sv();var sid=aId;aId=null;aStart=null;clearInterval(aInt);var bar=document.getElementById('activeBar');if(bar)bar.classList.remove('on');var at=document.getElementById('atime');if(at)at.textContent='00:00:00';renderTH();selSubj(sid);renderTL();updateHome();fbPushMyData();saveUserDataToFirebase();restartFbSync();updatePomoSubjBadge();_ptUpdateBar();toast('⏱ '+fmtHM(getSecs(sid)));}
+function stopSubj(){if(!aId)return;sess.push({subjectId:aId,color:subjs.find(function(s){return s.id===aId;}).color,start:aStart,end:Date.now()});sv();var sid=aId;aId=null;aStart=null;clearInterval(aInt);var bar=document.getElementById('activeBar');if(bar)bar.classList.remove('on');var at=document.getElementById('atime');if(at)at.textContent='00:00:00';renderTH();selSubj(sid);renderTL();updateHome();fbPushMyData();saveUserDataToFirebase();restartFbSync();updatePomoSubjBadge();_ptUpdateBar();
+// 랭킹 즉시 업데이트
+if(window._fbReady&&window._fbUser&&!window._fbUser.uid.startsWith('offline_')){var total=getTSecs();if(total>0&&prof&&prof.name){window._fbUpdate('ranking/'+window._fbUser.uid,{name:prof.name||'익명',school:prof.school||'',totalSeconds:total,updatedAt:Date.now()});}}
+toast('⏱ '+fmtHM(getSecs(sid)));}
 function _stopSil(id){sess.push({subjectId:id,color:(subjs.find(function(s){return s.id===id;})||{}).color||'#888',start:aStart,end:Date.now()});sv();}
 
 // PLANNER
@@ -682,6 +692,60 @@ function calPickYear(dir){_pickY+=dir;renderCalPicker();}
 function renderCalPicker(){var lbl=document.getElementById('calPickYearLbl');if(lbl)lbl.textContent=_pickY+'년';var grid=document.getElementById('calPickMonths');if(!grid)return;var mn=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];grid.innerHTML='';mn.forEach(function(m,i){var btn=document.createElement('button');btn.style.cssText='padding:10px 4px;border-radius:9px;border:1.5px solid var(--line);background:'+(calY===_pickY&&calM===i?'var(--acc)':'var(--bg)')+';color:'+(calY===_pickY&&calM===i?'#fff':'var(--ink)')+';font-size:.82rem;font-weight:700;cursor:pointer;';btn.textContent=m;(function(yr,mo){btn.onclick=function(){calY=yr;calM=mo;renderCal();closeModal('calPickM');};}(_pickY,i));grid.appendChild(btn);});}
 function renderCal(){var grid=document.getElementById('calGrid'),title=document.getElementById('calTitle');if(!grid||!title)return;var mn=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];title.textContent=calY+'년 '+mn[calM];var now=new Date(),fd=new Date(calY,calM,1).getDay(),dim=new Date(calY,calM+1,0).getDate();grid.innerHTML='';for(var i=0;i<fd;i++){var c=document.createElement('div');c.className='cal-c empty';grid.appendChild(c);}for(var d=1;d<=dim;d++){var sc=getSecsDate(calY,calM,d),hrs=sc/3600,isT=calY===now.getFullYear()&&calM===now.getMonth()&&d===now.getDate(),isF=new Date(calY,calM,d)>now&&!isT;var lv='lv0';if(!isF&&sc>0){if(hrs>=7)lv='lv4';else if(hrs>=5)lv='lv3';else if(hrs>=3)lv='lv2';else lv='lv1';}if(isF)lv='future';var c2=document.createElement('div');c2.className='cal-c '+lv+(isT?' today':'');var hd=Math.floor(hrs),md=Math.floor((hrs%1)*60);c2.innerHTML='<div class="cal-d">'+d+'</div>'+(!isF&&sc>0?'<div class="cal-h">'+hd+'h'+(md>0?String(md).padStart(2,'0')+'m':'')+'</div>':'');(function(cy,cm,cd){c2.onclick=function(){openDayDetail(cy,cm,cd);};})(calY,calM,d);grid.appendChild(c2);}}
 function updateStats(){var t=getTSecs(),h=Math.floor(t/3600),m=Math.floor((t%3600)/60);var el=document.getElementById('stTotal');if(el)el.textContent=h+'h'+(m>0?' '+m+'m':'');var el3=document.getElementById('stAvg');if(el3)el3.textContent=(Math.floor(t/3600*10)/10)+'h';buildHm('hmHome');buildStreak();updateStreakBanner();renderAgeCompare();pushAgeData();loadDailyEval();}
+
+/* ── 실시간 전체 랭킹 ── */
+var _rankingUnsubscribe=null;
+
+function startRankingListener(){
+  if(!window._fbReady||!window._fbDB)return;
+  // 기존 리스너 해제 (메모리 누수 방지)
+  if(_rankingUnsubscribe){_rankingUnsubscribe();_rankingUnsubscribe=null;}
+  var ref=window._fbDB.ref('ranking');
+  function onData(snap){
+    var data=snap.val();
+    renderRanking(data);
+  }
+  ref.on('value',onData);
+  // 해제 함수 저장
+  _rankingUnsubscribe=function(){ref.off('value',onData);};
+}
+
+function stopRankingListener(){
+  if(_rankingUnsubscribe){_rankingUnsubscribe();_rankingUnsubscribe=null;}
+}
+
+function renderRanking(data){
+  var panel=document.getElementById('rankPanel');if(!panel)return;
+  if(!data){panel.innerHTML='<div style="font-size:.76rem;color:var(--ink3);text-align:center;padding:12px 0">아직 기록이 없습니다</div>';return;}
+  // 배열 변환 + 정렬
+  var list=Object.keys(data).map(function(uid){return Object.assign({uid:uid},data[uid]);});
+  list.sort(function(a,b){return (b.totalSeconds||0)-(a.totalSeconds||0);});
+  list=list.slice(0,100);
+  // 현재 유저 uid
+  var myUid=window._fbUser?window._fbUser.uid:'';
+  var html='<div style="display:flex;flex-direction:column;gap:6px;">';
+  list.forEach(function(u,i){
+    var rank=i+1;
+    var h=Math.floor((u.totalSeconds||0)/3600);
+    var m=Math.floor(((u.totalSeconds||0)%3600)/60);
+    var s=(u.totalSeconds||0)%60;
+    var timeStr=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+    var isMe=(u.uid===myUid);
+    var medal=rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':'';
+    html+='<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:'+(isMe?'rgba(79,70,229,.08)':'transparent')+';border:'+(isMe?'1px solid rgba(79,70,229,.2)':'1px solid transparent')+';">';
+    html+='<div style="width:24px;text-align:center;font-size:.7rem;font-weight:700;color:'+(rank<=3?'#f59e0b':'var(--ink3)')+';">'+(medal||rank)+'</div>';
+    html+='<div style="flex:1;min-width:0;">';
+    html+='<div style="font-size:.78rem;font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(u.name||'익명')+(isMe?' <span style="font-size:.62rem;color:#4f46e5">(나)</span>':'')+'</div>';
+    if(u.school)html+='<div style="font-size:.64rem;color:var(--ink3);">'+u.school+'</div>';
+    html+='</div>';
+    html+='<div style="font-family:monospace;font-size:.76rem;font-weight:600;color:var(--ink2);">'+timeStr+'</div>';
+    html+='</div>';
+  });
+  html+='</div>';
+  panel.innerHTML=html;
+}
+
+// 통계 탭 진입 시 랭킹 리스너 시작 — 나갈 때 해제 (go 함수에서 처리)
 
 // ROOM
 // ROOM (그룹)
