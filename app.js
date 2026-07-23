@@ -533,7 +533,21 @@ function togglePlanMode(){planMode=!planMode;var btn=document.getElementById('pl
 function savePlan(){svPlan();planMode=false;var btn=document.getElementById('planToggle'),sbtn=document.getElementById('planSaveBtn'),pg=document.getElementById('pg-timer');if(btn){btn.classList.remove('active');btn.textContent='계획짜기';}if(sbtn)sbtn.style.display='none';var ub=document.getElementById('planUndoBtn');if(ub)ub.style.display='none';var rb=document.getElementById('planRedoBtn');if(rb)rb.style.display='none';if(pg)pg.classList.remove('plan-mode');renderTL();toast('계획이 저장되었습니다');}
 function cellIdxFromEvent(grid,e){var pt=e.touches&&e.touches[0]?e.touches[0]:(e.changedTouches&&e.changedTouches[0]?e.changedTouches[0]:e);if(!pt)return-1;var rect=grid.getBoundingClientRect();var x=pt.clientX-rect.left,y=pt.clientY-rect.top;var gw=rect.width||window._planGridW||grid.offsetWidth||220;if(x<AXIS_W)return-1;var cellW=(gw-AXIS_W)/NCOLS;var col=Math.floor((x-AXIS_W)/cellW);var dispRow=Math.floor(y/ROW_H);if(col<0)col=0;if(col>=NCOLS)col=NCOLS-1;if(dispRow<0||dispRow>=24)return-1;return rowToHour(dispRow)*NCOLS+col;}
 function paintQuickState(grid,idx,filled,color){var cell=grid.querySelector('[data-cell="'+idx+'"]');if(!cell)return;if(filled){var col=color||currentPlanColor();cell.style.background=hexToRGBA(col,.35);cell.style.border='1px solid '+hexToRGBA(col,.6);}else{cell.style.background='transparent';cell.style.border='1px dashed rgba(0,0,0,.12)';}}
-function bindPlanDrag(grid){if(grid._planDragBound)return;grid._planDragBound=true;var sx=0,sy=0,startIdx=-1,dir=null,paintErase=false,histDone=false,active=false;function start(e){if(!planMode)return;var pt=e.touches&&e.touches[0]?e.touches[0]:e;startIdx=cellIdxFromEvent(grid,e);sx=pt.clientX;sy=pt.clientY;dir=null;histDone=false;active=true;paintErase=startIdx>=0?!!planCells[startIdx]:false;}function move(e){if(!planMode||!active)return;var pt=e.touches&&e.touches[0]?e.touches[0]:e;var dx=pt.clientX-sx,dy=pt.clientY-sy;if(dir===null){if(Math.abs(dx)<8&&Math.abs(dy)<8)return;dir=Math.abs(dx)>Math.abs(dy)?'h':'v';if(dir==='v'){active=false;return;}if(!histDone){pushPlanHistory();histDone=true;}if(startIdx>=0){var pc=currentPlanColor();if(paintErase)delete planCells[startIdx];else planCells[startIdx]=pc;paintQuickState(grid,startIdx,!paintErase,pc);}}if(dir==='h'){e.preventDefault();var idx=cellIdxFromEvent(grid,e);if(idx>=0){var pc2=currentPlanColor();if(paintErase)delete planCells[idx];else planCells[idx]=pc2;paintQuickState(grid,idx,!paintErase,pc2);}}}function end(e){if(!planMode){active=false;return;}if(active&&dir==='h'){svPlan();renderTL();}else if(active&&dir===null&&startIdx>=0){if(!histDone)pushPlanHistory();var nowFill=!planCells[startIdx];var pc3=currentPlanColor();if(nowFill)planCells[startIdx]=pc3;else delete planCells[startIdx];paintQuickState(grid,startIdx,nowFill,pc3);svPlan();updatePlanStat();}active=false;dir=null;startIdx=-1;}grid.addEventListener('mousedown',start);grid.addEventListener('mousemove',move);window.addEventListener('mouseup',end);grid.addEventListener('touchstart',start,{passive:true});grid.addEventListener('touchmove',move,{passive:false});window.addEventListener('touchend',end);window.addEventListener('touchcancel',end);}
+function bindPlanDrag(grid){if(grid._planDragBound)return;grid._planDragBound=true;var sx=0,sy=0,startIdx=-1,paintErase=false,histDone=false,active=false;
+function start(e){if(!planMode)return;var pt=e.touches&&e.touches[0]?e.touches[0]:e;startIdx=cellIdxFromEvent(grid,e);sx=pt.clientX;sy=pt.clientY;histDone=false;active=true;paintErase=startIdx>=0?!!planCells[startIdx]:false;
+// 탭 즉시 칠하기
+if(startIdx>=0){if(!histDone){pushPlanHistory();histDone=true;}var pc0=currentPlanColor();if(paintErase)delete planCells[startIdx];else planCells[startIdx]=pc0;paintQuickState(grid,startIdx,!paintErase,pc0);}}
+function move(e){if(!planMode||!active)return;
+var pt=e.touches&&e.touches[0]?e.touches[0]:e;
+var dx=pt.clientX-sx,dy=pt.clientY-sy;
+if(Math.abs(dx)<3&&Math.abs(dy)<3)return;
+// 수평/수직 모두 허용
+if(e.cancelable)e.preventDefault();
+var idx=cellIdxFromEvent(grid,e);
+if(idx>=0){if(!histDone){pushPlanHistory();histDone=true;}var pc=currentPlanColor();if(paintErase)delete planCells[idx];else planCells[idx]=pc;paintQuickState(grid,idx,!paintErase,pc);}}
+function end(e){if(!planMode){active=false;return;}if(active&&histDone){svPlan();updatePlanStat();}else if(active&&startIdx>=0&&!histDone){// 단순 탭
+if(!histDone)pushPlanHistory();var nowFill=!planCells[startIdx];var pc3=currentPlanColor();if(nowFill)planCells[startIdx]=pc3;else delete planCells[startIdx];paintQuickState(grid,startIdx,nowFill,pc3);svPlan();updatePlanStat();}active=false;startIdx=-1;}
+grid.addEventListener('mousedown',start);grid.addEventListener('mousemove',move);window.addEventListener('mouseup',end);grid.addEventListener('touchstart',start,{passive:true});grid.addEventListener('touchmove',move,{passive:false});window.addEventListener('touchend',end);window.addEventListener('touchcancel',end);}
 function planTargetMins(){return Object.keys(planCells).length*COL_MINS;}
 function updatePlanStat(){var tgt=planTargetMins(),th=Math.floor(tgt/60),tm=tgt%60;var te=document.getElementById('planTarget');if(te)te.textContent=th+'h '+String(tm).padStart(2,'0')+'m';var actSec=getTSecs(),ah=Math.floor(actSec/3600),am=Math.floor((actSec%3600)/60);var ae=document.getElementById('planActual');if(ae)ae.textContent=ah+'h '+String(am).padStart(2,'0')+'m';var pct=tgt>0?Math.round(actSec/60/tgt*100):0;var pe=document.getElementById('planPct');if(pe)pe.textContent=pct+'%';}
 function renderTL(){var grid=document.getElementById('pGrid');if(!grid)return;var gr=grid.getBoundingClientRect();var wrap=document.getElementById('pScroll');var gridW=gr.width||grid.clientWidth||grid.offsetWidth||(wrap?wrap.clientWidth:220);if(gridW<20)gridW=220;window._planGridW=gridW;var colW=Math.floor((gridW-AXIS_W)/NCOLS);if(colW<4)colW=4;var totalH=24*ROW_H;grid.style.height=totalH+'px';grid.innerHTML='';
@@ -546,24 +560,20 @@ var cellW2=(gridW-AXIS_W)/NCOLS;
 for(var h2=0;h2<24;h2++){var dRow=hourToRow(h2);for(var c3=0;c3<NCOLS;c3++){var idx=h2*NCOLS+c3;var cv=planCells[idx];var filled=!!cv;if(!filled&&!planMode)continue;var cell=document.createElement('div');var baseStyle='position:absolute;top:'+(dRow*ROW_H+1)+'px;height:'+(ROW_H-2)+'px;left:'+(AXIS_W+c3*cellW2)+'px;width:'+cellW2+'px;box-sizing:border-box;';if(filled){var col=cellColor(cv);cell.style.cssText=baseStyle+'background:'+hexToRGBA(col,.35)+';border:1px solid '+hexToRGBA(col,.6)+';border-radius:1px;'}else{cell.style.cssText=baseStyle+'background:transparent;border:1px dashed rgba(0,0,0,.12);'}if(planMode){cell.style.cursor='pointer';cell.style.zIndex='6';cell.setAttribute('data-cell',idx);cell.className='plan-cell';}else{cell.style.zIndex=filled?'2':'4';cell.style.pointerEvents='none';}grid.appendChild(cell);}}
 tSess.forEach(function(s){drawCont(s.start,s.end||Date.now(),s.color);});
 if(aId&&aStart){var ac=(subjs.find(function(x){return x.id===aId;})||{}).color||'#a78bfa';drawCont(aStart,Date.now(),ac);}
-// 현재 시각 세로선
-// 현재 시각 빨간선 — 현재 시간 행에만 딱 한 칸
+// 현재 시각 빨간 세로선 — 현재 시간 칸 폭만큼, AXIS_W에서 시작
 var nowH=new Date().getHours();
 var nowDispRow=hourToRow(nowH);
 var nl=document.createElement('div');
-nl.id='ptNowLine';nl.className='pt-nowline';
-nl.style.top=(nowDispRow*ROW_H)+'px';
-nl.style.height=ROW_H+'px';
+nl.id='ptNowLine';
+nl.style.cssText='position:absolute;left:'+AXIS_W+'px;width:'+(gridW-AXIS_W)+'px;top:'+(nowDispRow*ROW_H)+'px;height:'+ROW_H+'px;border-top:1.5px solid rgba(220,38,38,.8);background:rgba(220,38,38,.06);z-index:10;pointer-events:none;box-sizing:border-box;';
 grid.appendChild(nl);
-// 1초마다 위치 갱신
 clearInterval(window._nowLineTimer);
 window._nowLineTimer=setInterval(function(){
   var el=document.getElementById('ptNowLine');
   if(!el)return clearInterval(window._nowLineTimer);
-  var h=new Date().getHours();
-  var r=hourToRow(h);
+  var h=new Date().getHours();var r=hourToRow(h);
   el.style.top=(r*ROW_H)+'px';
-},1000);
+},60000);
 bindPlanDrag(grid);updatePlanStat();}
 function scrollNow(){var sc=document.getElementById('pScroll');if(!sc)return;var now=new Date();sc.scrollTop=Math.max(0,(hourToRow(now.getHours())+now.getMinutes()/60)*ROW_H-160);}
 
