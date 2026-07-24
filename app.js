@@ -558,14 +558,45 @@ var _planPushTimer=null;
 function pushPlanToFirebase(){if(!window._fbReady||!window._fbUser)return;var uid=window._fbUser.uid;if(uid.indexOf('offline_')===0)return;clearTimeout(_planPushTimer);_planPushTimer=setTimeout(function(){window._fbSet('userdata/'+uid+'/planCells',{date:today(),cells:planCells});},800);}
 function svPlan(){svPlanLocal();pushPlanToFirebase();}
 function reloadPlanForToday(){try{planCells=JSON.parse(localStorage.getItem(planKey())||'{}');}catch(e){planCells={};}}
-function togglePlanMode(){planMode=!planMode;var btn=document.getElementById('planToggle'),sbtn=document.getElementById('planSaveBtn'),ubtn=document.getElementById('planUndoBtn'),pg=document.getElementById('pg-timer');if(btn){btn.classList.toggle('active',planMode);btn.textContent=planMode?'계획 수정 중':'계획짜기';}if(sbtn)sbtn.style.display=planMode?'inline-block':'none';if(ubtn)ubtn.style.display=planMode?'inline-block':'none';var rbtn=document.getElementById('planRedoBtn');if(rbtn)rbtn.style.display=planMode?'inline-block':'none';if(pg)pg.classList.toggle('plan-mode',planMode);if(planMode){_planHistory=[];_planRedo=[];updateUndoBtn();todoOpenSubjId=null;renderTodoPanel();
-  // 현재 선택 과목 색으로 칠해짐 안내
-  var useId=_ptSelId||selId;
-  var sub=useId?subjs.find(function(x){return x.id===useId;}):null;
-  toast(sub?'계획 모드: '+sub.name+' 색으로 칠해집니다':'계획 모드: 과목 칸을 먼저 탭하세요');
+function togglePlanMode(){planMode=!planMode;var btn=document.getElementById('planToggle'),sbtn=document.getElementById('planSaveBtn'),ubtn=document.getElementById('planUndoBtn'),pg=document.getElementById('pg-timer');if(btn){btn.classList.toggle('active',planMode);btn.textContent=planMode?'계획 수정 중':'계획짜기';}if(sbtn)sbtn.style.display=planMode?'inline-block':'none';if(ubtn)ubtn.style.display=planMode?'inline-block':'none';var rbtn=document.getElementById('planRedoBtn');if(rbtn)rbtn.style.display=planMode?'inline-block':'none';if(pg)pg.classList.toggle('plan-mode',planMode);
+_renderPlanColorBar(planMode);
+if(planMode){_planHistory=[];_planRedo=[];updateUndoBtn();todoOpenSubjId=null;renderTodoPanel();
+  var useId=_ptSelId||selId;var sub=useId?subjs.find(function(x){return x.id===useId;}):null;
+  toast(sub?sub.name+' 색으로 칠해집니다 (과목 버튼으로 변경)':'계획 모드 — 상단 과목 버튼으로 색 선택');
 }else{toast('계획 모드 종료');}
 renderTL();}
-function savePlan(){svPlan();planMode=false;var btn=document.getElementById('planToggle'),sbtn=document.getElementById('planSaveBtn'),pg=document.getElementById('pg-timer');if(btn){btn.classList.remove('active');btn.textContent='계획짜기';}if(sbtn)sbtn.style.display='none';var ub=document.getElementById('planUndoBtn');if(ub)ub.style.display='none';var rb=document.getElementById('planRedoBtn');if(rb)rb.style.display='none';if(pg)pg.classList.remove('plan-mode');renderTL();toast('계획이 저장되었습니다');}
+
+// 계획 모드 중 색 선택 바
+function _renderPlanColorBar(show){
+  var existing=document.getElementById('planColorBar');
+  if(existing)existing.remove();
+  if(!show)return;
+  var bar=document.createElement('div');
+  bar.id='planColorBar';
+  bar.style.cssText='display:flex;align-items:center;gap:6px;padding:5px 8px;background:#e8e3d8;border-bottom:1px solid rgba(0,0,0,.12);flex-shrink:0;overflow-x:auto;';
+  var lbl=document.createElement('span');
+  lbl.style.cssText='font-size:.5rem;color:#888;flex-shrink:0;font-weight:600;';
+  lbl.textContent='색:';
+  bar.appendChild(lbl);
+  subjs.forEach(function(sub){
+    var btn=document.createElement('button');
+    var isSel=(_ptSelId===sub.id||(!_ptSelId&&selId===sub.id));
+    btn.style.cssText='display:flex;align-items:center;gap:3px;background:'+(isSel?sub.color:'rgba(0,0,0,.06)')+';border:'+(isSel?'2px solid '+sub.color:'1px solid rgba(0,0,0,.12)')+';border-radius:6px;padding:3px 7px;cursor:pointer;font-size:.54rem;font-weight:700;color:'+(isSel?'#fff':sub.color)+';white-space:nowrap;flex-shrink:0;';
+    btn.innerHTML='<span style="width:8px;height:8px;border-radius:50%;background:'+sub.color+';display:inline-block;"></span>'+sub.name;
+    btn.onclick=function(e){
+      e.stopPropagation();
+      _ptSelId=sub.id;selId=sub.id;
+      _ptUpdateBar();
+      _renderPlanColorBar(true); // 선택 상태 갱신
+      toast(sub.name+' 색으로 변경됩니다');
+    };
+    bar.appendChild(btn);
+  });
+  // 타임테이블 패널 맨 위에 삽입
+  var ttPanel=document.querySelector('.pt-tt-panel');
+  if(ttPanel)ttPanel.insertBefore(bar,ttPanel.firstChild);
+}
+function savePlan(){svPlan();planMode=false;var btn=document.getElementById('planToggle'),sbtn=document.getElementById('planSaveBtn'),pg=document.getElementById('pg-timer');if(btn){btn.classList.remove('active');btn.textContent='계획짜기';}if(sbtn)sbtn.style.display='none';var ub=document.getElementById('planUndoBtn');if(ub)ub.style.display='none';var rb=document.getElementById('planRedoBtn');if(rb)rb.style.display='none';if(pg)pg.classList.remove('plan-mode');_renderPlanColorBar(false);renderTL();toast('계획이 저장되었습니다');}
 function cellIdxFromEvent(grid,e){var pt=e.touches&&e.touches[0]?e.touches[0]:(e.changedTouches&&e.changedTouches[0]?e.changedTouches[0]:e);if(!pt)return-1;var rect=grid.getBoundingClientRect();var x=pt.clientX-rect.left,y=pt.clientY-rect.top;var gw=rect.width||window._planGridW||grid.offsetWidth||220;if(x<AXIS_W)return-1;var cellW=(gw-AXIS_W)/NCOLS;var col=Math.floor((x-AXIS_W)/cellW);var dispRow=Math.floor(y/ROW_H);if(col<0)col=0;if(col>=NCOLS)col=NCOLS-1;if(dispRow<0||dispRow>=24)return-1;return rowToHour(dispRow)*NCOLS+col;}
 function paintQuickState(grid,idx,filled,color){var cell=grid.querySelector('[data-cell="'+idx+'"]');if(!cell)return;if(filled){var col=color||currentPlanColor();cell.style.background=hexToRGBA(col,.35);cell.style.border='1px solid '+hexToRGBA(col,.6);}else{cell.style.background='transparent';cell.style.border='1px dashed rgba(0,0,0,.12)';}}
 function bindPlanDrag(grid){if(grid._planDragBound)return;grid._planDragBound=true;var sx=0,sy=0,startIdx=-1,paintErase=false,histDone=false,active=false;
