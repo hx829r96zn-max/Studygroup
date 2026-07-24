@@ -258,7 +258,16 @@ function renderSL(){
       (function(idx){
         subjCell.onclick=function(e){
           e.stopPropagation();
-          if(planMode)return;
+          if(planMode){
+            // 계획 모드: 과목 선택해서 칠할 색 변경
+            _ptPickSubj(function(sid){
+              if(sid){_ptSelId=sid;_ptUpdateBar();
+                var sub2=subjs.find(function(x){return x.id===sid;});
+                if(sub2)toast(sub2.name+' 색으로 변경됩니다');
+              }
+            });
+            return;
+          }
           _ptPickSubj(function(sid){
             var rs=_ptGetRows();
             if(rs[idx].text&&rs[idx].text.trim()){
@@ -278,7 +287,15 @@ function renderSL(){
       (function(idx){
         subjCell.onclick=function(e){
           e.stopPropagation();
-          if(planMode)return;
+          if(planMode){
+            _ptPickSubj(function(sid){
+              if(sid){_ptSelId=sid;_ptUpdateBar();
+                var sub2=subjs.find(function(x){return x.id===sid;});
+                if(sub2)toast(sub2.name+' 색으로 변경됩니다');
+              }
+            });
+            return;
+          }
           _ptPickSubj(function(sid){
             var rs=_ptGetRows();
             if(rs[idx].text&&rs[idx].text.trim()){
