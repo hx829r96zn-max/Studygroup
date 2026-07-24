@@ -520,9 +520,11 @@ function _stopSil(id){sess.push({subjectId:id,color:(subjs.find(function(s){retu
 function planHex(){return(cfg&&cfg.themeC&&cfg.themeC['--plan'])||'#60a5fa';}
 function hexToRGBA(hex,a){hex=(hex||'#60a5fa').replace('#','');if(hex.length===3)hex=hex.split('').map(function(x){return x+x;}).join('');var r=parseInt(hex.substr(0,2),16),g=parseInt(hex.substr(2,2),16),b=parseInt(hex.substr(4,2),16);return'rgba('+r+','+g+','+b+','+a+')';}
 function currentPlanColor(){
-  // 할일 칸에서 선택한 과목(_ptSelId) 우선, 없으면 selId, 없으면 기본 색
   var useId=_ptSelId||selId;
-  if(useId){var s=subjs.find(function(x){return x.id===useId;});if(s)return s.color;}
+  if(useId){
+    var s=subjs.find(function(x){return x.id===useId;});
+    if(s&&s.color)return s.color;
+  }
   return planHex();
 }
 function cellColor(v){return(v&&typeof v==='string')?v:planHex();}
@@ -539,7 +541,13 @@ var _planPushTimer=null;
 function pushPlanToFirebase(){if(!window._fbReady||!window._fbUser)return;var uid=window._fbUser.uid;if(uid.indexOf('offline_')===0)return;clearTimeout(_planPushTimer);_planPushTimer=setTimeout(function(){window._fbSet('userdata/'+uid+'/planCells',{date:today(),cells:planCells});},800);}
 function svPlan(){svPlanLocal();pushPlanToFirebase();}
 function reloadPlanForToday(){try{planCells=JSON.parse(localStorage.getItem(planKey())||'{}');}catch(e){planCells={};}}
-function togglePlanMode(){planMode=!planMode;var btn=document.getElementById('planToggle'),sbtn=document.getElementById('planSaveBtn'),ubtn=document.getElementById('planUndoBtn'),pg=document.getElementById('pg-timer');if(btn){btn.classList.toggle('active',planMode);btn.textContent=planMode?'계획 수정 중':'계획짜기';}if(sbtn)sbtn.style.display=planMode?'inline-block':'none';if(ubtn)ubtn.style.display=planMode?'inline-block':'none';var rbtn=document.getElementById('planRedoBtn');if(rbtn)rbtn.style.display=planMode?'inline-block':'none';if(pg)pg.classList.toggle('plan-mode',planMode);if(planMode){_planHistory=[];_planRedo=[];updateUndoBtn();todoOpenSubjId=null;renderTodoPanel();}renderTL();toast(planMode?'계획 모드: 왼쪽 과목을 고르면 그 색으로 칠해집니다':'계획 모드 종료');}
+function togglePlanMode(){planMode=!planMode;var btn=document.getElementById('planToggle'),sbtn=document.getElementById('planSaveBtn'),ubtn=document.getElementById('planUndoBtn'),pg=document.getElementById('pg-timer');if(btn){btn.classList.toggle('active',planMode);btn.textContent=planMode?'계획 수정 중':'계획짜기';}if(sbtn)sbtn.style.display=planMode?'inline-block':'none';if(ubtn)ubtn.style.display=planMode?'inline-block':'none';var rbtn=document.getElementById('planRedoBtn');if(rbtn)rbtn.style.display=planMode?'inline-block':'none';if(pg)pg.classList.toggle('plan-mode',planMode);if(planMode){_planHistory=[];_planRedo=[];updateUndoBtn();todoOpenSubjId=null;renderTodoPanel();
+  // 현재 선택 과목 색으로 칠해짐 안내
+  var useId=_ptSelId||selId;
+  var sub=useId?subjs.find(function(x){return x.id===useId;}):null;
+  toast(sub?'계획 모드: '+sub.name+' 색으로 칠해집니다':'계획 모드: 과목 칸을 먼저 탭하세요');
+}else{toast('계획 모드 종료');}
+renderTL();}
 function savePlan(){svPlan();planMode=false;var btn=document.getElementById('planToggle'),sbtn=document.getElementById('planSaveBtn'),pg=document.getElementById('pg-timer');if(btn){btn.classList.remove('active');btn.textContent='계획짜기';}if(sbtn)sbtn.style.display='none';var ub=document.getElementById('planUndoBtn');if(ub)ub.style.display='none';var rb=document.getElementById('planRedoBtn');if(rb)rb.style.display='none';if(pg)pg.classList.remove('plan-mode');renderTL();toast('계획이 저장되었습니다');}
 function cellIdxFromEvent(grid,e){var pt=e.touches&&e.touches[0]?e.touches[0]:(e.changedTouches&&e.changedTouches[0]?e.changedTouches[0]:e);if(!pt)return-1;var rect=grid.getBoundingClientRect();var x=pt.clientX-rect.left,y=pt.clientY-rect.top;var gw=rect.width||window._planGridW||grid.offsetWidth||220;if(x<AXIS_W)return-1;var cellW=(gw-AXIS_W)/NCOLS;var col=Math.floor((x-AXIS_W)/cellW);var dispRow=Math.floor(y/ROW_H);if(col<0)col=0;if(col>=NCOLS)col=NCOLS-1;if(dispRow<0||dispRow>=24)return-1;return rowToHour(dispRow)*NCOLS+col;}
 function paintQuickState(grid,idx,filled,color){var cell=grid.querySelector('[data-cell="'+idx+'"]');if(!cell)return;if(filled){var col=color||currentPlanColor();cell.style.background=hexToRGBA(col,.35);cell.style.border='1px solid '+hexToRGBA(col,.6);}else{cell.style.background='transparent';cell.style.border='1px dashed rgba(0,0,0,.12)';}}
@@ -570,19 +578,20 @@ var cellW2=(gridW-AXIS_W)/NCOLS;
 for(var h2=0;h2<24;h2++){var dRow=hourToRow(h2);for(var c3=0;c3<NCOLS;c3++){var idx=h2*NCOLS+c3;var cv=planCells[idx];var filled=!!cv;if(!filled&&!planMode)continue;var cell=document.createElement('div');var baseStyle='position:absolute;top:'+(dRow*ROW_H+1)+'px;height:'+(ROW_H-2)+'px;left:'+(AXIS_W+c3*cellW2)+'px;width:'+cellW2+'px;box-sizing:border-box;';if(filled){var col=cellColor(cv);cell.style.cssText=baseStyle+'background:'+hexToRGBA(col,.35)+';border:1px solid '+hexToRGBA(col,.6)+';border-radius:1px;'}else{cell.style.cssText=baseStyle+'background:transparent;border:1px dashed rgba(0,0,0,.12);'}if(planMode){cell.style.cursor='pointer';cell.style.zIndex='6';cell.setAttribute('data-cell',idx);cell.className='plan-cell';}else{cell.style.zIndex=filled?'2':'4';cell.style.pointerEvents='none';}grid.appendChild(cell);}}
 tSess.forEach(function(s){drawCont(s.start,s.end||Date.now(),s.color);});
 if(aId&&aStart){var ac=(subjs.find(function(x){return x.id===aId;})||{}).color||'#a78bfa';drawCont(aStart,Date.now(),ac);}
-// 현재 시각 빨간 세로선 — 현재 시간 칸 폭만큼, AXIS_W에서 시작
-var nowH=new Date().getHours();
-var nowDispRow=hourToRow(nowH);
-var nl=document.createElement('div');
-nl.id='ptNowLine';
-nl.style.cssText='position:absolute;left:'+AXIS_W+'px;width:'+(gridW-AXIS_W)+'px;top:'+(nowDispRow*ROW_H)+'px;height:'+ROW_H+'px;border-top:1.5px solid rgba(220,38,38,.8);background:rgba(220,38,38,.06);z-index:10;pointer-events:none;box-sizing:border-box;';
-grid.appendChild(nl);
+// 현재 시각 빨간 세로선 — 현재 시간 행 왼쪽에 짧게
+var _nowH=new Date().getHours();
+var _nowRow=hourToRow(_nowH);
+var _nl=document.createElement('div');
+_nl.id='ptNowLine';
+_nl.style.cssText='position:absolute;left:'+AXIS_W+'px;top:'+(_nowRow*ROW_H)+'px;width:2px;height:'+ROW_H+'px;background:#ef4444;z-index:12;pointer-events:none;border-radius:1px;';
+grid.appendChild(_nl);
+// 1분마다 위치 갱신
 clearInterval(window._nowLineTimer);
 window._nowLineTimer=setInterval(function(){
   var el=document.getElementById('ptNowLine');
-  if(!el)return clearInterval(window._nowLineTimer);
-  var h=new Date().getHours();var r=hourToRow(h);
-  el.style.top=(r*ROW_H)+'px';
+  if(!el){clearInterval(window._nowLineTimer);return;}
+  var h=new Date().getHours();
+  el.style.top=(hourToRow(h)*ROW_H)+'px';
 },60000);
 bindPlanDrag(grid);updatePlanStat();}
 function scrollNow(){var sc=document.getElementById('pScroll');if(!sc)return;var now=new Date();sc.scrollTop=Math.max(0,(hourToRow(now.getHours())+now.getMinutes()/60)*ROW_H-160);}
