@@ -230,6 +230,48 @@ function _stNext(s){return s===null?'O':s==='O'?'X':s==='X'?'△':null;}
 function renderSL(){
   var w=document.getElementById('ptTbody');if(!w)return;
   w.innerHTML='';
+
+  /* ── 계획 모드: 과목 선택 전용 리스트 표시 ── */
+  if(planMode){
+    subjs.forEach(function(sub){
+      var isSel=(_ptSelId===sub.id);
+      var tr=document.createElement('div');
+      tr.className='pt-row';
+      tr.style.cssText='cursor:pointer;transition:opacity .15s,box-shadow .15s;'+
+        (isSel
+          ? 'opacity:1;box-shadow:inset 0 0 0 2px '+sub.color+';background:rgba('+_hexToRgb(sub.color)+',0.14);'
+          : 'opacity:0.32;');
+      // 과목 칸
+      var sc=document.createElement('div');sc.className='pt-row-subj';
+      var dot=document.createElement('div');dot.className='pt-row-dot';dot.style.background=sub.color;sc.appendChild(dot);
+      var nm=document.createElement('div');nm.className='pt-row-subj-name';nm.style.color=sub.color;nm.textContent=sub.name;sc.appendChild(nm);
+      tr.appendChild(sc);
+      // 빈 삭제칸
+      var dl=document.createElement('div');dl.className='pt-row-del empty';dl.textContent='✕';tr.appendChild(dl);
+      // 공부시간 표시
+      var secs=getSecs(sub.id);
+      var tx=document.createElement('div');tx.className='pt-row-txt';
+      tx.style.cssText='font-family:monospace;font-size:.56rem;color:#888;';
+      tx.textContent=secs>0?fmtSh(secs):'';
+      tr.appendChild(tx);
+      // 선택 표시
+      var st=document.createElement('div');st.className='pt-row-st';
+      st.textContent=isSel?'●':'';
+      st.style.color=sub.color;
+      tr.appendChild(st);
+      // 클릭 → 이 과목 선택
+      tr.onclick=function(e){
+        e.stopPropagation();
+        _ptSelId=sub.id;selId=sub.id;
+        _ptUpdateBar();renderSL();
+      };
+      w.appendChild(tr);
+    });
+    _ptUpdateBar();
+    return;
+  }
+
+  /* ── 일반 모드 ── */
   var rows=_ptGetRows();
   var lastSubjId='__none__';
 
@@ -243,26 +285,6 @@ function renderSL(){
 
     var tr=document.createElement('div');
     tr.className='pt-row'+(isActiveSub?' active-subj':'')+(isSubjRow?' subj-header-row':'');
-
-    /* ── 계획 모드: 행별 흐림 처리 ── */
-    if(planMode){
-      if(isSubjRow&&isActiveSub&&sub){
-        // 선택된 과목 헤더 행 → 밝게 + 강조
-        tr.style.opacity='1';
-        tr.style.boxShadow='inset 0 0 0 2px '+sub.color;
-        tr.style.background='rgba('+_hexToRgb(sub.color)+',0.15)';
-        tr.style.transition='opacity .15s,box-shadow .15s';
-      } else if(isSubjRow){
-        // 다른 과목 헤더 행 → 흐리게 (클릭은 가능)
-        tr.style.opacity='0.35';
-        tr.style.transition='opacity .15s';
-      } else {
-        // 일반 할일 행 → 흐리게 + 클릭 차단
-        tr.style.opacity='0.25';
-        tr.style.pointerEvents='none';
-        tr.style.transition='opacity .15s';
-      }
-    }
 
     /* 과목 칸 */
     var subjCell=document.createElement('div');subjCell.className='pt-row-subj';
@@ -498,13 +520,9 @@ function _ptStartEdit(idx,tc){
     var v=inp.value.trim();
     var rs2=_ptGetRows();
     rs2[idx].text=v;
-    // 다음 칸: 같은 과목으로, 과목칸은 null (엔터로 이어진 행은 과목칸 잠금)
     var nextSubjId=rs2[idx].subjId; // 같은 과목 유지
-    if(idx+1>=rs2.length){
-      rs2.push({subjId:nextSubjId,text:'',status:null});
-    } else if(!rs2[idx+1].subjId){
-      rs2[idx+1].subjId=nextSubjId; // 빈 칸이면 같은 과목으로
-    }
+    // 엔터 시 무조건 바로 아래에 새 줄 삽입
+    rs2.splice(idx+1,0,{subjId:nextSubjId,text:'',status:null});
     _ptSave(rs2);renderSL();
     setTimeout(function(){
       var allRows=document.querySelectorAll('#ptTbody .pt-row');
@@ -1182,35 +1200,68 @@ function _bindDayDetailSwipe(){
 function renderDayDetail(){
   var y=_detailYear,m=_detailMonth,d=_detailDay;
   var dt=new Date(y,m,d);var days=['일','월','화','수','목','금','토'];
-  var titleEl=document.getElementById('dayDetailTitle');if(titleEl)titleEl.textContent=(m+1)+'월 '+d+'일 ('+days[dt.getDay()]+')';
+  var titleEl=document.getElementById('dayDetailTitle');
+  if(titleEl)titleEl.textContent=(m+1)+'월 '+d+'일 ('+days[dt.getDay()]+')';
   var sc=getSecsDate(y,m,d),sh=Math.floor(sc/3600),sm2=Math.floor((sc%3600)/60),ss2=Math.floor(sc%60);
-  var secEl=document.getElementById('dayDetailSecs');if(secEl)secEl.textContent=sc>0?(sh+'h '+String(sm2).padStart(2,'0')+'m '+String(ss2).padStart(2,'0')+'s'):'기록 없음';
+  var secEl=document.getElementById('dayDetailSecs');
+  if(secEl)secEl.textContent=sc>0?(sh+'h '+String(sm2).padStart(2,'0')+'m '+String(ss2).padStart(2,'0')+'s'):'기록 없음';
   var daySess=sess.filter(function(s){var sd=new Date(s.start);return sd.getFullYear()===y&&sd.getMonth()===m&&sd.getDate()===d;});
-  var subjSecs={};daySess.forEach(function(s){var dur=Math.floor(((s.end||Date.now())-s.start)/1000);subjSecs[s.subjectId]=(subjSecs[s.subjectId]||0)+dur;});
+  var subjSecs={};
+  daySess.forEach(function(s){var dur=Math.floor(((s.end||Date.now())-s.start)/1000);subjSecs[s.subjectId]=(subjSecs[s.subjectId]||0)+dur;});
   var evalKey=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
   var evalText=dailyEvals[evalKey]||'';
-  var subjBarsHTML='';
-  subjs.forEach(function(sub){var sec=subjSecs[sub.id]||0;if(!sec)return;var sh2=Math.floor(sec/3600),sm3=Math.floor((sec%3600)/60);var ts=sh2>0?sh2+'h '+String(sm3).padStart(2,'0')+'m':sm3+'m';subjBarsHTML+='<div class="dd-subj-row"><div class="dd-subj-dot" style="background:'+sub.color+'"></div><div class="dd-subj-name">'+escapeHtml(sub.name)+'</div><div class="dd-subj-time">'+ts+'</div></div>';});
-  function miniGridHTML(){var W=140,H=260,AXIS=18,GW=W-AXIS,RH=H/24;var html='<svg width="'+W+'" height="'+H+'" style="display:block;overflow:visible">';for(var hh=0;hh<24;hh++){html+='<text x="'+AXIS/2+'" y="'+(hh*RH+RH/2+3)+'" text-anchor="middle" font-size="6" fill="rgba(255,255,255,.3)">'+hh+'</text>';html+='<line x1="'+AXIS+'" x2="'+W+'" y1="'+(hh*RH)+'" y2="'+(hh*RH)+'" stroke="rgba(255,255,255,.06)" stroke-width="0.5"/>';}daySess.forEach(function(s){var st2=new Date(s.start),en2=new Date(s.end||Date.now());var stMin=st2.getHours()*60+st2.getMinutes()+st2.getSeconds()/60,enMin=en2.getHours()*60+en2.getMinutes()+en2.getSeconds()/60;for(var h2=Math.floor(stMin/60);h2<=Math.min(23,Math.floor(enMin/60));h2++){var segS=Math.max(stMin,h2*60),segE=Math.min(enMin,(h2+1)*60);if(segE<=segS)continue;var x1=Math.round((segS-h2*60)*(GW/60)),x2=Math.round((segE-h2*60)*(GW/60));html+='<rect x="'+(AXIS+x1)+'" y="'+(h2*RH+0.5)+'" width="'+Math.max(1,x2-x1)+'" height="'+(RH-1)+'" fill="'+(s.color||'#a78bfa')+'"/>';}});return html+'</svg>';}
-  var tlEl=document.getElementById('dayDetailTimeline');
-  if(tlEl)tlEl.innerHTML=daySess.length?miniGridHTML():'<div style="display:flex;align-items:center;justify-content:center;height:100%;color:rgba(255,255,255,.35);font-size:.75rem;flex-direction:column;gap:6px"><div style="font-size:1.5rem">😴</div>공부 기록 없음</div>';
-  var evalEl=document.getElementById('dayDetailEval');if(evalEl){evalEl.textContent=evalText||'기록 없음';evalEl.style.color=evalText?'var(--ink)':'var(--ink3)';}
-  var todoEl=document.getElementById('dayDetailTodos');
-  if(todoEl){
-    var todoHtml='';
-    var ddKey=todoDateKeyFor(y,m,d);
-    subjs.forEach(function(sub){
-      var list=getTodoList(ddKey,sub.id);
-      if(!list.length)return;
-      todoHtml+='<div class="dd-todo-subj"><div class="dd-todo-subj-hd" style="color:'+sub.color+'">'+escapeHtml(sub.name)+'</div><div class="dd-todo-list">';
-      list.forEach(function(t){
-        todoHtml+='<div class="dd-todo-row"><div class="dd-todo-text'+(t.done?' done':'')+'">'+escapeHtml(t.text)+'</div><div class="dd-todo-mark '+(t.done?'done':'undone')+'">'+(t.done?'O':'X')+'</div></div>';
+
+  /* ── 그날의 플래너 (크게) ── */
+  var plEl=document.getElementById('dayDetailPlanner');
+  if(plEl){
+    var dkey='sg_ptrows_'+y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    var rows=null;
+    try{rows=JSON.parse(localStorage.getItem(dkey)||'null');}catch(e){}
+    var html='';
+    if(rows&&rows.length){
+      var lastSid='__none__';
+      var hasAny=false;
+      rows.forEach(function(row){
+        if(!row.text||!row.text.trim()){lastSid=row.subjId||lastSid;return;}
+        hasAny=true;
+        var sub=row.subjId?subjs.find(function(s){return s.id===row.subjId;}):null;
+        var showSubj=(sub&&sub.id!==lastSid);
+        var st=row.status||null;
+        var stLbl=st==='O'?'○':st==='X'?'✕':st==='△'?'△':'□';
+        var stClr=st==='O'?'#16734a':st==='X'?'#b91c1c':st==='△'?'#b45309':'rgba(0,0,0,.2)';
+        html+='<div class="dd-pl-row">';
+        html+='<div class="dd-pl-subj">';
+        if(showSubj&&sub){
+          html+='<div class="dd-pl-dot" style="background:'+sub.color+'"></div>';
+          html+='<div class="dd-pl-sname" style="color:'+sub.color+'">'+escapeHtml(sub.name)+'</div>';
+        }
+        html+='</div>';
+        html+='<div class="dd-pl-txt'+(st==='X'?' done':'')+'">'+escapeHtml(row.text)+'</div>';
+        html+='<div class="dd-pl-st" style="color:'+stClr+'">'+stLbl+'</div>';
+        html+='</div>';
+        if(sub)lastSid=sub.id;
       });
-      todoHtml+='</div></div>';
-    });
-    todoEl.innerHTML=todoHtml||'<div style="font-size:.78rem;color:var(--ink3);text-align:center;padding:10px 0">등록된 TODO가 없습니다</div>';
+      if(!hasAny)html='<div class="dd-pl-empty">작성된 플래너가 없습니다</div>';
+    } else {
+      html='<div class="dd-pl-empty">작성된 플래너가 없습니다</div>';
+    }
+    plEl.innerHTML=html;
   }
-  var subjContainer=document.querySelector('#dayDetailM .dd-subj-bars');if(subjContainer)subjContainer.innerHTML='<div class="dd-subj-hd">과목별 공부시간</div>'+(subjBarsHTML||'<div style="font-size:.76rem;color:var(--ink3);text-align:center;padding:6px 0">기록 없음</div>');
+
+  /* 과목별 공부시간 */
+  var subjBarsHTML='';
+  subjs.forEach(function(sub){
+    var sec=subjSecs[sub.id]||0;if(!sec)return;
+    var sh2=Math.floor(sec/3600),sm3=Math.floor((sec%3600)/60);
+    var ts=sh2>0?sh2+'h '+String(sm3).padStart(2,'0')+'m':sm3+'m';
+    subjBarsHTML+='<div class="dd-subj-row"><div class="dd-subj-dot" style="background:'+sub.color+'"></div><div class="dd-subj-name">'+escapeHtml(sub.name)+'</div><div class="dd-subj-time">'+ts+'</div></div>';
+  });
+  var subjContainer=document.querySelector('#dayDetailM .dd-subj-bars');
+  if(subjContainer)subjContainer.innerHTML='<div class="dd-subj-hd">과목별 공부시간</div>'+(subjBarsHTML||'<div style="font-size:.76rem;color:var(--ink3);text-align:center;padding:6px 0">기록 없음</div>');
+
+  /* 평가 */
+  var evalEl=document.getElementById('dayDetailEval');
+  if(evalEl){evalEl.textContent=evalText||'기록 없음';evalEl.style.color=evalText?'var(--ink)':'var(--ink3)';}
 }
 
 // 실시간 타임라인
