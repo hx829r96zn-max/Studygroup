@@ -243,10 +243,25 @@ function renderSL(){
 
     var tr=document.createElement('div');
     tr.className='pt-row'+(isActiveSub?' active-subj':'')+(isSubjRow?' subj-header-row':'');
-    // 계획 모드 + 선택된 과목 헤더 행: 빛(glow) 효과
-    if(planMode&&isSubjRow&&isActiveSub&&sub){
-      tr.style.boxShadow='inset 0 0 0 2px '+sub.color;
-      tr.style.background='rgba('+_hexToRgb(sub.color)+',0.12)';
+
+    /* ── 계획 모드: 행별 흐림 처리 ── */
+    if(planMode){
+      if(isSubjRow&&isActiveSub&&sub){
+        // 선택된 과목 헤더 행 → 밝게 + 강조
+        tr.style.opacity='1';
+        tr.style.boxShadow='inset 0 0 0 2px '+sub.color;
+        tr.style.background='rgba('+_hexToRgb(sub.color)+',0.15)';
+        tr.style.transition='opacity .15s,box-shadow .15s';
+      } else if(isSubjRow){
+        // 다른 과목 헤더 행 → 흐리게 (클릭은 가능)
+        tr.style.opacity='0.35';
+        tr.style.transition='opacity .15s';
+      } else {
+        // 일반 할일 행 → 흐리게 + 클릭 차단
+        tr.style.opacity='0.25';
+        tr.style.pointerEvents='none';
+        tr.style.transition='opacity .15s';
+      }
     }
 
     /* 과목 칸 */
@@ -550,9 +565,9 @@ function svPlan(){svPlanLocal();pushPlanToFirebase();}
 function reloadPlanForToday(){try{planCells=JSON.parse(localStorage.getItem(planKey())||'{}');}catch(e){planCells={};}}
 function _renderPlanColorBar(show){var ex=document.getElementById('planColorBar');if(ex)ex.remove();}
 function togglePlanMode(){planMode=!planMode;var btn=document.getElementById('planToggle'),sbtn=document.getElementById('planSaveBtn'),ubtn=document.getElementById('planUndoBtn'),pg=document.getElementById('pg-timer');if(btn){btn.classList.toggle('active',planMode);btn.textContent=planMode?'계획 수정 중':'계획짜기';}if(sbtn)sbtn.style.display=planMode?'inline-block':'none';if(ubtn)ubtn.style.display=planMode?'inline-block':'none';var rbtn=document.getElementById('planRedoBtn');if(rbtn)rbtn.style.display=planMode?'inline-block':'none';if(pg)pg.classList.toggle('plan-mode',planMode);if(planMode){_planHistory=[];_planRedo=[];updateUndoBtn();todoOpenSubjId=null;renderTodoPanel();}
-var tp=document.querySelector('.pt-todo-panel');if(tp)tp.style.cssText+='opacity:'+(planMode?'0.3':'1')+';pointer-events:'+(planMode?'none':'auto')+';transition:opacity .2s;';
+
 renderSL();renderTL();}
-function savePlan(){svPlan();planMode=false;var btn=document.getElementById('planToggle'),sbtn=document.getElementById('planSaveBtn'),pg=document.getElementById('pg-timer');if(btn){btn.classList.remove('active');btn.textContent='계획짜기';}if(sbtn)sbtn.style.display='none';var ub=document.getElementById('planUndoBtn');if(ub)ub.style.display='none';var rb=document.getElementById('planRedoBtn');if(rb)rb.style.display='none';if(pg)pg.classList.remove('plan-mode');var tp=document.querySelector('.pt-todo-panel');if(tp){tp.style.opacity='1';tp.style.pointerEvents='auto';}renderSL();renderTL();}
+function savePlan(){svPlan();planMode=false;var btn=document.getElementById('planToggle'),sbtn=document.getElementById('planSaveBtn'),pg=document.getElementById('pg-timer');if(btn){btn.classList.remove('active');btn.textContent='계획짜기';}if(sbtn)sbtn.style.display='none';var ub=document.getElementById('planUndoBtn');if(ub)ub.style.display='none';var rb=document.getElementById('planRedoBtn');if(rb)rb.style.display='none';if(pg)pg.classList.remove('plan-mode');renderSL();renderTL();}
 function cellIdxFromEvent(grid,e){var pt=e.touches&&e.touches[0]?e.touches[0]:(e.changedTouches&&e.changedTouches[0]?e.changedTouches[0]:e);if(!pt)return-1;var rect=grid.getBoundingClientRect();var x=pt.clientX-rect.left,y=pt.clientY-rect.top;var gw=rect.width||window._planGridW||grid.offsetWidth||220;if(x<AXIS_W)return-1;var cellW=(gw-AXIS_W)/NCOLS;var col=Math.floor((x-AXIS_W)/cellW);var dispRow=Math.floor(y/ROW_H);if(col<0)col=0;if(col>=NCOLS)col=NCOLS-1;if(dispRow<0||dispRow>=24)return-1;return rowToHour(dispRow)*NCOLS+col;}
 function paintQuickState(grid,idx,filled,color){var cell=grid.querySelector('[data-cell="'+idx+'"]');if(!cell)return;if(filled){var col=color||currentPlanColor();cell.style.background=hexToRGBA(col,.35);cell.style.border='1px solid '+hexToRGBA(col,.6);}else{cell.style.background='transparent';cell.style.border='1px dashed rgba(0,0,0,.12)';}}
 function bindPlanDrag(grid){if(grid._planDragBound)return;grid._planDragBound=true;var sx=0,sy=0,startIdx=-1,paintErase=false,histDone=false,active=false;
