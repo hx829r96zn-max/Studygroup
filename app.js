@@ -263,7 +263,7 @@ function renderSL(){
       tr.onclick=function(e){
         e.stopPropagation();
         _ptSelId=sub.id;selId=sub.id;
-        _ptUpdateBar();renderSL();
+        _ptUpdateBar();renderSL();renderTL();
       };
       w.appendChild(tr);
     });
@@ -615,20 +615,27 @@ var cellW2=(gridW-AXIS_W)/NCOLS;
 for(var h2=0;h2<24;h2++){var dRow=hourToRow(h2);for(var c3=0;c3<NCOLS;c3++){var idx=h2*NCOLS+c3;var cv=planCells[idx];var filled=!!cv;if(!filled&&!planMode)continue;var cell=document.createElement('div');var baseStyle='position:absolute;top:'+(dRow*ROW_H+1)+'px;height:'+(ROW_H-2)+'px;left:'+(AXIS_W+c3*cellW2)+'px;width:'+cellW2+'px;box-sizing:border-box;';if(filled){var col=cellColor(cv);cell.style.cssText=baseStyle+'background:'+hexToRGBA(col,.35)+';border:1px solid '+hexToRGBA(col,.6)+';border-radius:1px;'}else{cell.style.cssText=baseStyle+'background:transparent;border:1px dashed rgba(0,0,0,.12);'}if(planMode){cell.style.cursor='pointer';cell.style.zIndex='6';cell.setAttribute('data-cell',idx);cell.className='plan-cell';}else{cell.style.zIndex=filled?'2':'4';cell.style.pointerEvents='none';}grid.appendChild(cell);}}
 tSess.forEach(function(s){drawCont(s.start,s.end||Date.now(),s.color);});
 if(aId&&aStart){var ac=(subjs.find(function(x){return x.id===aId;})||{}).color||'#a78bfa';drawCont(aStart,Date.now(),ac);}
-// 현재 시각 빨간 세로선 — 초마다 실시간 이동
-var _nowH=new Date().getHours();
-var _nowRow=hourToRow(_nowH);
+// 현재 시각 빨간 세로선 — 분/초 단위로 칸 안에서 실시간 이동
 var _nl=document.createElement('div');
 _nl.id='ptNowLine';
-_nl.style.cssText='position:absolute;left:'+AXIS_W+'px;top:'+(_nowRow*ROW_H)+'px;width:2px;height:'+ROW_H+'px;background:#ef4444;z-index:12;pointer-events:none;border-radius:1px;';
+_nl.style.cssText='position:absolute;top:0;width:2px;height:'+ROW_H+'px;background:#ef4444;z-index:12;pointer-events:none;border-radius:1px;';
 grid.appendChild(_nl);
-clearInterval(window._nowLineTimer);
-window._nowLineTimer=setInterval(function(){
-  var el=document.getElementById('ptNowLine');
-  if(!el){clearInterval(window._nowLineTimer);return;}
-  var r=hourToRow(new Date().getHours());
-  el.style.top=(r*ROW_H)+'px';
-},1000);
+(function(){
+  var _gridW=gridW;
+  function upd(){
+    var el=document.getElementById('ptNowLine');
+    if(!el){clearInterval(window._nowLineTimer);return;}
+    var now=new Date();
+    var r=hourToRow(now.getHours());
+    var minFrac=(now.getMinutes()*60+now.getSeconds())/3600;
+    var cellAreaW=_gridW-AXIS_W;
+    el.style.top=(r*ROW_H)+'px';
+    el.style.left=(AXIS_W+minFrac*cellAreaW)+'px';
+  }
+  upd();
+  clearInterval(window._nowLineTimer);
+  window._nowLineTimer=setInterval(upd,1000);
+})();
 bindPlanDrag(grid);updatePlanStat();}
 function scrollNow(){var sc=document.getElementById('pScroll');if(!sc)return;var now=new Date();sc.scrollTop=Math.max(0,(hourToRow(now.getHours())+now.getMinutes()/60)*ROW_H-160);}
 

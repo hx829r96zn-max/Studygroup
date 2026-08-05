@@ -203,7 +203,7 @@ textarea.inp{resize:vertical;min-height:70px;}
 .pt-row-txt.done{color:#bbb;text-decoration:line-through;}
 .pt-row-txt input{background:transparent;border:none;outline:none;color:#1a1a1a;font-size:.62rem;font-family:'Noto Sans KR',sans-serif;width:100%;padding:0;}
 .pt-row-st{width:26px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:800;cursor:pointer;user-select:none;}
-.pt-add-more{flex-shrink:0;width:100%;padding:7px;background:#ede8de;border:none;border-top:1px solid rgba(0,0,0,.1);font-size:.62rem;color:#888;cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-weight:600;}
+.pt-add-more{flex-shrink:0;width:100%;padding:7px;background:#ede8de;border:none;border-top:1px solid rgba(0,0,0,.1);font-size:.62rem;color:#888;cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-weight:600;padding-bottom:calc(7px + 50px + env(safe-area-inset-bottom,0));}
 .pt-add-more:active{background:#e5e0d4;}
 
 /* 오른쪽: 타임테이블 */
